@@ -5,7 +5,7 @@
 * If you do not want to use render graph, compatibility mode is also supported for Unity 2023.3.0.
 * Seamlessly integrated into URP volume system.
 
-## How to add volumetric fog
+# How to add volumetric fog
 
 * Add volumetric fog renderer feature to you URP Renderer.
 * Enable post-processing both in your camera and URP Renderer.
@@ -13,7 +13,7 @@
 * Tick the "Enabled" checkbox, as fog is disabled by default.
 * If you still can not see the fog, play with the different volume parameters or try to increase the intensity of your lights.
 
-## Known limitations
+# Known limitations
 
 * Transparent objects are not blended correctly with fog.
 * When using forward or deferred rendering path, performance can be heavily affected when adding multiple additional lights, specially when using shadows. Forward+ is highly recommended for best performance.
@@ -22,5 +22,5 @@
 * For certain viewing angles it may be possible to notice more noise in some light regions.
 * Fog is only rendered up to a certain distance from the camera.
 
-## Preview
+# Preview
 ![alt-text](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Teaser.gif)
