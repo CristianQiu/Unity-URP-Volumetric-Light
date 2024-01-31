@@ -23,4 +23,4 @@
 * Fog is only rendered up to a certain distance from the camera.
 
 ## Preview
-![alt-text](https://github.com/CristianQiu/Unity-Packages-Gifs/tree/main/URP-Volumetric-Light/Teaser.gif)
+![alt-text](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Teaser.gif)
