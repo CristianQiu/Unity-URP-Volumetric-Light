@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.1] - 2024-02-01
+
+* Fixed non matching blur iterations in render graph and non rendergraph paths along with some typos.
+
 ## [0.1.0] - 2024-01-28
 
 * Initial Release. Verified in Unity 2022.3.18f1, 2023.2.7f1 and 2023.3.0b4.

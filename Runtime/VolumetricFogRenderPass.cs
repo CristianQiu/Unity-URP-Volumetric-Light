@@ -44,8 +44,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		public UniversalLightData lightData;
 		public TextureHandle halfResCameraDepthTarget;
 		public TextureHandle volumetricFogTarget;
-
-		public bool blurIterations;
 	}
 
 #endif
@@ -175,7 +173,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 			Blitter.BlitCameraTexture(cmd, volumetricFogRenderRTHandle, volumetricFogRenderRTHandle, volumetricFogMaterial, 0);
 
-			for (int i = 0; i <= fogVolume.blurIterations.value; ++i)
+			for (int i = 0; i < fogVolume.blurIterations.value; ++i)
 			{
 				Blitter.BlitCameraTexture(cmd, volumetricFogRenderRTHandle, volumetricFogAuxRenderRTHandle, volumetricFogMaterial, 1);
 				Blitter.BlitCameraTexture(cmd, volumetricFogAuxRenderRTHandle, volumetricFogRenderRTHandle, volumetricFogMaterial, 2);
@@ -380,9 +378,9 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		TextureHandle source = passData.source;
 		TextureHandle target = passData.target;
 
-		int blurIterationss = VolumeManager.instance.stack.GetComponent<VolumetricFogVolumeComponent>().blurIterations.value;
+		int blurIterations = VolumeManager.instance.stack.GetComponent<VolumetricFogVolumeComponent>().blurIterations.value;
 
-		for (int i = 0; i < blurIterationss; ++i)
+		for (int i = 0; i < blurIterations; ++i)
 		{
 			Blitter.BlitCameraTexture(unsafeCmd, source, target, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, passData.material, 1);
 			Blitter.BlitCameraTexture(unsafeCmd, target, source, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, passData.material, 2);
