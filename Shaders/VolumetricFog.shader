@@ -224,7 +224,7 @@ Shader "Hidden/VolumetricFog"
             #pragma vertex Vert
             #pragma fragment Frag
 
-#if UNITY_VERSION <= 202310
+#if UNITY_VERSION < 202310
             float4 _BlitTexture_TexelSize;
 #endif
 
