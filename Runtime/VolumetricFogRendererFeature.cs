@@ -5,7 +5,7 @@ using UnityEngine.Rendering.Universal;
 /// <summary>
 /// The volumetric fog renderer feature.
 /// </summary>
-[Tooltip("Adds support to render volumetric fog for the main directional light.")]
+[Tooltip("Adds support to render volumetric fog.")]
 [DisallowMultipleRendererFeature("Volumetric Fog")]
 public sealed class VolumetricFogRendererFeature : ScriptableRendererFeature
 {

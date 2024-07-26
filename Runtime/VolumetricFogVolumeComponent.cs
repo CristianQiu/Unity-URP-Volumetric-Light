@@ -72,7 +72,6 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	/// <inheritdoc/>
 	/// </summary>
 	/// <returns></returns>
-	/// <exception cref="System.NotImplementedException"></exception>
 	public bool IsTileCompatible()
 	{
 		return true;

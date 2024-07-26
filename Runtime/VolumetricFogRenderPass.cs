@@ -1,12 +1,11 @@
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 #if UNITY_2023_3_OR_NEWER
 using UnityEngine.Rendering.RenderGraphModule;
 #endif
-
-using UnityEngine.Rendering.Universal;
 
 /// <summary>
 /// The volumetric fog render pass.

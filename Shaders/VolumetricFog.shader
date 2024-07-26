@@ -27,7 +27,6 @@ Shader "Hidden/VolumetricFog"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/VolumeRendering.hlsl"
             #include "./DeclareDownsampledDepthTexture.hlsl"
 
-            // TODO: There is something weird when transparents receive shadows is off, where opaques seem to be ignored too, including alpha clip.
             #pragma multi_compile _ _FORWARD_PLUS
             #pragma multi_compile _ _SHADOWS_SOFT
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
@@ -141,9 +140,6 @@ Shader "Hidden/VolumetricFog"
                 float3 volumetricFogColor = float3(0.0, 0.0, 0.0);
                 float transmittance = 1.0;
 
-                // TODO: We could take the same steps up to depth buffer and unroll, performance would have much less variation.
-                // However, it would produce variable noise depending on what the distance is to depth buffer.
-                // Adding that to the already depth-weighted blur and having to compensate extinction for variable step lengths, I just prefer this approach.
                 UNITY_LOOP
                 for (int i = 0; i < _MaxSteps; ++i)
                 {

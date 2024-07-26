@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.4] - 2024-07-26
+
+* Removed some text and comments.
+
 ## [0.1.3] - 2024-07-07
 
 * Updated some texts referencing old Unity 2023.3 beta to replace them by Unity 6 to make it clear that this package should work on Unity 6. Tested in Unity 6000.0.9f1. 
