@@ -38,7 +38,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	public ClampedFloatParameter additionalLightsRadius = new ClampedFloatParameter(0.5f, 0.0f, 1.0f, false);
 
 	[Header("Performance & Quality")]
-	public ClampedIntParameter maxSteps = new ClampedIntParameter(64, 8, 128, false);
+	public ClampedIntParameter maxSteps = new ClampedIntParameter(64, 8, 256, false);
 	public ClampedIntParameter blurIterations = new ClampedIntParameter(2, 1, 4, false);
 	public BoolParameter enabled = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 

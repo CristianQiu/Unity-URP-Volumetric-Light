@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.5] - 2024-08-10
+
+* Increased the number of maximum steps that can be tweaked through the volume from 128 to 256.
+
 ## [0.1.4] - 2024-07-26
 
 * Removed some text and comments.
