@@ -85,9 +85,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	/// <returns></returns>
 	public bool IsActive()
 	{
-		bool validHeight = Mathf.Abs(maximumHeight.value - baseHeight.value) > 0.0f;
-
-		return enabled.value && density.value > 0.0f && validHeight;
+		return enabled.value && density.value > 0.0f;
 	}
 
 	#endregion
