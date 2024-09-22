@@ -106,7 +106,7 @@ Shader "Hidden/VolumetricFog"
                     float3 distToPos = additionalLightPos - currPosWS;
                     float distToPosMagnitudeSq = dot(distToPos, distToPos);
                     float t = saturate(distToPosMagnitudeSq / _AdditionalLightsRadiusSq);
-                    float newScattering = lerp(0.0, _AdditionalLightsScattering, t);
+                    float newScattering = lerp(0.0, _AdditionalLightsScattering, smoothstep(0.0, 1.0, t));
 
                     // accumulate the total color for additional lights
                     additionalLightsColor += (additionalLight.color * _Tint) * (additionalLight.shadowAttenuation * additionalLight.distanceAttenuation * phaseAdditionalLight * density * newScattering);

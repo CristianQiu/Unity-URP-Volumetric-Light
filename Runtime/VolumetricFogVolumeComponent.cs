@@ -19,27 +19,27 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	#region Public Attributes
 
 	[Header("Distances")]
-	public ClampedFloatParameter distance = new ClampedFloatParameter(128.0f, 16.0f, 512.0f, false);
+	public ClampedFloatParameter distance = new ClampedFloatParameter(128.0f, 16.0f, 512.0f);
 	public FloatParameter baseHeight = new FloatParameter(0.0f, true);
 	public FloatParameter maximumHeight = new FloatParameter(50.0f, true);
 
 	[Header("Lighting")]
-	public ClampedFloatParameter density = new ClampedFloatParameter(0.2f, 0.0f, 1.0f, false);
-	public MinFloatParameter attenuationDistance = new MinFloatParameter(128.0f, 0.05f, false);
-	public ColorParameter tint = new ColorParameter(Color.white, true, false, true, false);
+	public ClampedFloatParameter density = new ClampedFloatParameter(0.2f, 0.0f, 1.0f);
+	public MinFloatParameter attenuationDistance = new MinFloatParameter(128.0f, 0.05f);
+	public ColorParameter tint = new ColorParameter(Color.white, true, false, true);
 
 	[Header("Main Light")]
-	public ClampedFloatParameter mainLightAnisotropy = new ClampedFloatParameter(0.4f, 0.0f, 0.99f, false);
-	public ClampedFloatParameter mainLightScattering = new ClampedFloatParameter(0.15f, 0.0f, 1.0f, false);
+	public ClampedFloatParameter mainLightAnisotropy = new ClampedFloatParameter(0.4f, 0.0f, 0.99f);
+	public ClampedFloatParameter mainLightScattering = new ClampedFloatParameter(0.15f, 0.0f, 1.0f);
 
 	[Header("Additional Lights")]
-	public ClampedFloatParameter additionalLightsAnisotropy = new ClampedFloatParameter(0.25f, 0.0f, 0.99f, false);
-	public ClampedFloatParameter additionalLightsScattering = new ClampedFloatParameter(1.0f, 0.0f, 32.0f, false);
-	public ClampedFloatParameter additionalLightsRadius = new ClampedFloatParameter(0.5f, 0.0f, 1.0f, false);
+	public ClampedFloatParameter additionalLightsAnisotropy = new ClampedFloatParameter(0.25f, 0.0f, 0.99f);
+	public ClampedFloatParameter additionalLightsScattering = new ClampedFloatParameter(1.0f, 0.0f, 32.0f);
+	public ClampedFloatParameter additionalLightsRadius = new ClampedFloatParameter(0.5f, 0.0f, 1.0f);
 
 	[Header("Performance & Quality")]
-	public ClampedIntParameter maxSteps = new ClampedIntParameter(64, 8, 256, false);
-	public ClampedIntParameter blurIterations = new ClampedIntParameter(2, 1, 4, false);
+	public ClampedIntParameter maxSteps = new ClampedIntParameter(64, 8, 256);
+	public ClampedIntParameter blurIterations = new ClampedIntParameter(2, 1, 4);
 	public BoolParameter enabled = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 
 	#endregion
@@ -85,7 +85,9 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	/// <returns></returns>
 	public bool IsActive()
 	{
-		return enabled.value;
+		bool validHeight = Mathf.Abs(maximumHeight.value - baseHeight.value) > 0.0f;
+
+		return enabled.value && density.value > 0.0f && validHeight;
 	}
 
 	#endregion
