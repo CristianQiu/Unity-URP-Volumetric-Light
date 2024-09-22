@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.6] - 2024-09-22
+
+* Now the main light computations will be skipped when its volume scattering parameter is set to 0. The same will happen with additional lights and their scattering parameter. Slightly changed the falloff of the volume parameter "Additional Light Radius". 
+
 ## [0.1.5] - 2024-08-10
 
 * Increased the number of maximum steps that can be tweaked through the volume from 128 to 256.
