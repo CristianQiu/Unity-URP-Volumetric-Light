@@ -35,7 +35,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Header("Additional Lights")]
 	public ClampedFloatParameter additionalLightsAnisotropy = new ClampedFloatParameter(0.25f, 0.0f, 0.99f);
 	public ClampedFloatParameter additionalLightsScattering = new ClampedFloatParameter(1.0f, 0.0f, 32.0f);
-	public ClampedFloatParameter additionalLightsRadius = new ClampedFloatParameter(0.5f, 0.0f, 1.0f);
+	public ClampedFloatParameter additionalLightsRadius = new ClampedFloatParameter(0.2f, 0.0f, 1.0f);
 
 	[Header("Performance & Quality")]
 	public ClampedIntParameter maxSteps = new ClampedIntParameter(64, 8, 256);

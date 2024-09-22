@@ -35,6 +35,8 @@ Shader "Hidden/VolumetricFog"
             #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
 
             #pragma multi_compile_fragment _ _LIGHT_COOKIES
+            #pragma multi_compile_fragment _ _MAIN_LIGHT_DISABLED
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHTS_DISABLED
 
             #pragma vertex Vert
             #pragma fragment Frag
@@ -65,35 +67,41 @@ Shader "Hidden/VolumetricFog"
                 return _Density * t;
             }
 
-            // Gets the light color at one raymarch step.
-            float3 GetStepLightColor(float2 texcoord, float3 currPosWS, float3 rd, float phaseMainLight, float density)
+            // Gets the main light color at one raymarch step.
+            float3 GetStepMainLightColor(float3 currPosWS, float phaseMainLight, float density)
             {
+#if _MAIN_LIGHT_DISABLED
+                return float3(0.0, 0.0, 0.0);
+#endif
                 // get the main light with shadow attenuation already set
                 Light mainLight = GetMainLight(TransformWorldToShadowCoord(currPosWS));
-
 #if _LIGHT_COOKIES
                 // when light cookies are enabled and one is set for the main light, also factor it
                 mainLight.color *= SampleMainLightCookie(currPosWS);
 #endif
+                // return the final color
+                return (mainLight.color * _Tint) * (mainLight.shadowAttenuation * phaseMainLight * density * _MainLightScattering);
+            }
 
-                // calculate the color for the main light at this step
-                float3 mainLightColor = (mainLight.color * _Tint) * (mainLight.shadowAttenuation * phaseMainLight * density * _MainLightScattering);
-
-                // initialize the accumulated color from additional lights
-                float3 additionalLightsColor = float3(0.0, 0.0, 0.0);           
-
+            // Gets the accumulated color from additional lights at one raymarch step.
+            float3 GetStepAdditionalLightsColor(float2 texcoord, float3 currPosWS, float3 rd, float density)
+            {
+#if _ADDITIONAL_LIGHTS_DISABLED
+                return float3(0.0, 0.0, 0.0);
+#endif
 #if _FORWARD_PLUS
                 // Forward+ rendering path needs this data before the light loop
                 InputData inputData = (InputData)0;
                 inputData.normalizedScreenSpaceUV = texcoord;
                 inputData.positionWS = currPosWS;
 #endif
+                // initialize the accumulated color from additional lights
+                float3 additionalLightsColor = float3(0.0, 0.0, 0.0);   
 
                 // loop differently throught lights in Forward+ while considering Forward and Deferred too
                 LIGHT_LOOP_BEGIN(_CustomAdditionalLightsCount)
                     Light additionalLight = GetAdditionalPerObjectLight(lightIndex, currPosWS);
                     additionalLight.shadowAttenuation = AdditionalLightRealtimeShadow(lightIndex, currPosWS, additionalLight.direction);
-
 #if _LIGHT_COOKIES
                     // when light cookies are enabled and a cookie is set for this additional light also factor it
                     additionalLight.color *= SampleAdditionalLightCookie(lightIndex, currPosWS);
@@ -101,9 +109,14 @@ Shader "Hidden/VolumetricFog"
                     // calculate the phase function for this additional light
                     float phaseAdditionalLight = CornetteShanksPhaseFunction(_AdditionalLightsAnisotropy, dot(rd, additionalLight.direction));
 
+                    // See unity.render-pipelines.universal\ShaderLibrary\RealtimeLights.hlsl - GetAdditionalPerObjectLight
+#if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
+                    float4 additionalLightPos = _AdditionalLightsBuffer[lightIndex].position;
+#else
+                    float4 additionalLightPos = _AdditionalLightsPosition[lightIndex];
+#endif
                     // gradually reduce additional lights scattering to zero at their origin to try to avoid flicker-aliasing mainly due to bright spotlights
-                    float3 additionalLightPos = _AdditionalLightsPosition[lightIndex].xyz;
-                    float3 distToPos = additionalLightPos - currPosWS;
+                    float3 distToPos = additionalLightPos.xyz - currPosWS;
                     float distToPosMagnitudeSq = dot(distToPos, distToPos);
                     float t = saturate(distToPosMagnitudeSq / _AdditionalLightsRadiusSq);
                     float newScattering = lerp(0.0, _AdditionalLightsScattering, smoothstep(0.0, 1.0, t));
@@ -112,8 +125,7 @@ Shader "Hidden/VolumetricFog"
                     additionalLightsColor += (additionalLight.color * _Tint) * (additionalLight.shadowAttenuation * additionalLight.distanceAttenuation * phaseAdditionalLight * density * newScattering);
                 LIGHT_LOOP_END
 
-                // TODO: Add ambient?
-                return mainLightColor + additionalLightsColor;
+                return additionalLightsColor;
             }
 
             float4 Frag(Varyings input) : SV_Target
@@ -161,8 +173,12 @@ Shader "Hidden/VolumetricFog"
                     // attenuate transmittance
                     transmittance *= stepAttenuation;
 
-                    // calculate the color at this step and accumulate it
-                    float3 stepColor = GetStepLightColor(input.texcoord, currPosWS, rd, phaseMainLight, density);
+                    // calculate the colors at this step and accumulate them
+                    float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight, density);
+                    float3 additionalLightsColor = GetStepAdditionalLightsColor(input.texcoord, currPosWS, rd, density);
+
+                    // TODO: add ambient?
+                    float3 stepColor = mainLightColor + additionalLightsColor;
                     volumetricFogColor += (stepColor * (transmittance * stepLength));
                 }
 

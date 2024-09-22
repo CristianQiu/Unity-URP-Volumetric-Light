@@ -155,6 +155,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			int frameCount = Time.renderedFrameCount % 64;
 			float absortion = 1.0f / fogVolume.attenuationDistance.value;
 
+			EnableMainLight(volumetricFogMaterial, fogVolume.mainLightScattering.value > 0.0f);
+			EnableAdditionalLights(volumetricFogMaterial, fogVolume.additionalLightsScattering.value > 0.0f);
 			volumetricFogMaterial.SetInteger(FrameCountId, frameCount);
 			volumetricFogMaterial.SetInteger(CustomAdditionalLightsCountId, renderingData.lightData.additionalLightsCount);
 			volumetricFogMaterial.SetFloat(DistanceId, fogVolume.distance.value);
@@ -280,6 +282,32 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 	#region Methods
 
+	/// <summary>
+	/// Enables or disables the computations from the main light to influence the volumetric fog.
+	/// </summary>
+	/// <param name="volumetricFogMaterial"></param>
+	/// <param name="enabled"></param>
+	private static void EnableMainLight(Material volumetricFogMaterial, bool enabled)
+	{
+		if (enabled)
+			volumetricFogMaterial.DisableKeyword("_MAIN_LIGHT_DISABLED");
+		else
+			volumetricFogMaterial.EnableKeyword("_MAIN_LIGHT_DISABLED");
+	}
+
+	/// <summary>
+	/// Enables or disables the computations from additional lights to influence the volumetric fog.
+	/// </summary>
+	/// <param name="volumetricFogMaterial"></param>
+	/// <param name="enabled"></param>
+	private static void EnableAdditionalLights(Material volumetricFogMaterial, bool enabled)
+	{
+		if (enabled)
+			volumetricFogMaterial.DisableKeyword("_ADDITIONAL_LIGHTS_DISABLED");
+		else
+			volumetricFogMaterial.EnableKeyword("_ADDITIONAL_LIGHTS_DISABLED");
+	}
+
 #if UNITY_2023_3_OR_NEWER
 
 	/// <summary>
@@ -330,6 +358,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			float absortion = 1.0f / fogVolume.attenuationDistance.value;
 
 			Material volumetricFogMaterial = passData.material;
+			EnableMainLight(volumetricFogMaterial, fogVolume.mainLightScattering.value > 0.0f);
+			EnableAdditionalLights(volumetricFogMaterial, fogVolume.additionalLightsScattering.value > 0.0f);
 			volumetricFogMaterial.SetTexture(HalfResCameraDepthTextureId, passData.halfResCameraDepthTarget);
 			volumetricFogMaterial.SetInteger(FrameCountId, frameCount);
 			volumetricFogMaterial.SetInteger(CustomAdditionalLightsCountId, passData.lightData.additionalLightsCount);
