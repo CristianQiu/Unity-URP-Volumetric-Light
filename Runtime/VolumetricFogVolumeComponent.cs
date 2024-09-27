@@ -66,7 +66,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 
 	#region IPostProcessComponent Methods
 
-#if !UNITY_2023_3_OR_NEWER
+#if !UNITY_2023_1_OR_NEWER
 
 	/// <summary>
 	/// <inheritdoc/>
