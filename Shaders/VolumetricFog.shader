@@ -60,8 +60,6 @@ Shader "Hidden/VolumetricFog"
             float GetFogDensity(float posWSy)
             {
                 float t = saturate((posWSy - _BaseHeight) / (_MaximumHeight - _BaseHeight));
-
-                t *= t;
                 t = 1.0 - t;
 
                 return _Density * t;
@@ -115,11 +113,11 @@ Shader "Hidden/VolumetricFog"
 #else
                     float4 additionalLightPos = _AdditionalLightsPosition[lightIndex];
 #endif
+                    // TODO: This is only useful for spot lights. Additional lights can include directional lights and point lights too.
                     // gradually reduce additional lights scattering to zero at their origin to try to avoid flicker-aliasing mainly due to bright spotlights
                     float3 distToPos = additionalLightPos.xyz - currPosWS;
                     float distToPosMagnitudeSq = dot(distToPos, distToPos);
-                    float t = saturate(distToPosMagnitudeSq / _AdditionalLightsRadiusSq);
-                    float newScattering = lerp(0.0, _AdditionalLightsScattering, smoothstep(0.0, 1.0, t));
+                    float newScattering = smoothstep(0.0, _AdditionalLightsRadiusSq, distToPosMagnitudeSq) * _AdditionalLightsScattering;
 
                     // accumulate the total color for additional lights
                     additionalLightsColor += (additionalLight.color * _Tint) * (additionalLight.shadowAttenuation * additionalLight.distanceAttenuation * phaseAdditionalLight * density * newScattering);

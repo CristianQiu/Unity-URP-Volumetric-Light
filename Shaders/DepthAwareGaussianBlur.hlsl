@@ -39,8 +39,8 @@ float4 DepthAwareGaussianBlur(float2 uv, float2 dir, TEXTURE2D_X(textureToBlur),
     UNITY_UNROLL
     for (int j = 1; j <= KERNEL_RADIUS; ++j)
     {
-        float2 offset = (float)j * texelSizeTimesDir;
-        float2 uvSample = uv + offset;
+        float2 uvOffset = (float)j * texelSizeTimesDir;
+        float2 uvSample = uv + uvOffset;
 
         float rawDepth = SampleDownsampledSceneDepthConsiderReversedZ(uvSample);
         float linearEyeDepth = LinearEyeDepth(rawDepth, _ZBufferParams);
