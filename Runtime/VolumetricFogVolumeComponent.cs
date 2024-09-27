@@ -7,7 +7,7 @@ using UnityEngine.Rendering.Universal;
 /// </summary>
 #if UNITY_2023_1_OR_NEWER
 [VolumeComponentMenu("Custom/Volumetric Fog")]
-#if UNITY_2023_3_OR_NEWER
+#if UNITY_6000_0_OR_NEWER
 [VolumeRequiresRendererFeatures(typeof(VolumetricFogRendererFeature))]
 #endif
 [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]

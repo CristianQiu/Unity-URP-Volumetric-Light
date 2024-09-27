@@ -3,7 +3,7 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-#if UNITY_2023_3_OR_NEWER
+#if UNITY_6000_0_OR_NEWER
 using UnityEngine.Rendering.RenderGraphModule;
 #endif
 
@@ -14,7 +14,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 {
 	#region Definitions
 
-#if UNITY_2023_3_OR_NEWER
+#if UNITY_6000_0_OR_NEWER
 
 	/// <summary>
 	/// The subpasses the volumetric fog render pass is made of.
@@ -91,7 +91,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		downsampleDepthProfilingSampler = new ProfilingSampler("Downsample Depth");
 		renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
 
-#if UNITY_2023_3_OR_NEWER
+#if UNITY_6000_0_OR_NEWER
 		requiresIntermediateTexture = false;
 #endif
 
@@ -194,7 +194,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		CommandBufferPool.Release(cmd);
 	}
 
-#if UNITY_2023_3_OR_NEWER
+#if UNITY_6000_0_OR_NEWER
 
 	/// <summary>
 	/// <inheritdoc/>
@@ -308,7 +308,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			volumetricFogMaterial.EnableKeyword("_ADDITIONAL_LIGHTS_DISABLED");
 	}
 
-#if UNITY_2023_3_OR_NEWER
+#if UNITY_6000_0_OR_NEWER
 
 	/// <summary>
 	/// Creates and returns all the necessary render graph textures.
