@@ -37,9 +37,9 @@ float4 DepthAwareGaussianBlur(float2 uv, float2 dir, TEXTURE2D_X(textureToBlur),
     }
 
     UNITY_UNROLL
-    for (int j = 1; j <= KERNEL_RADIUS; ++j)
+    for (int i = 1; i <= KERNEL_RADIUS; ++i)
     {
-        float2 uvOffset = (float)j * texelSizeTimesDir;
+        float2 uvOffset = (float)i * texelSizeTimesDir;
         float2 uvSample = uv + uvOffset;
 
         float rawDepth = SampleDownsampledSceneDepthConsiderReversedZ(uvSample);
@@ -47,7 +47,7 @@ float4 DepthAwareGaussianBlur(float2 uv, float2 dir, TEXTURE2D_X(textureToBlur),
         float depthDiff = abs(centerLinearEyeDepth - linearEyeDepth);
         float r2 = BLUR_DEPTH_FALLOFF * depthDiff;
         float g = exp(-r2 * r2);
-        float weight = g * KernelWeights[j];
+        float weight = g * KernelWeights[i];
 
         float3 rgb = SAMPLE_TEXTURE2D_X(textureToBlur, sampler_TextureToBlur, uvSample).rgb;
         rgbResult += (rgb * weight);
