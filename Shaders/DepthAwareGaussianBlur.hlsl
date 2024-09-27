@@ -37,7 +37,7 @@ float4 DepthAwareGaussianBlur(float2 uv, float2 dir, TEXTURE2D_X(textureToBlur),
     }
 
     UNITY_UNROLL
-    for (int i = 1; i <= KERNEL_RADIUS; ++i)
+    for (i = 1; i <= KERNEL_RADIUS; ++i)
     {
         float2 uvOffset = (float)i * texelSizeTimesDir;
         float2 uvSample = uv + uvOffset;
