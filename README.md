@@ -1,8 +1,8 @@
 # About
 
-* Verified in Unity 2022.3.18f1, 2023.2.7f1 and 6000.0.9f1.
-* Supports additional lights, shadows and cookies. Render graph support is also available for Unity 6.
-* If you do not want to use render graph, compatibility mode is also supported for Unity 6.
+* Supported Unity versions are 2022.3, 2023.1, 2023.2 and Unity 6.
+* Render graph support for Unity 6. Compatibility mode is also supported.
+* Supports directional lights, point lights, and spot lights, including shadows and cookies for all of them.
 * Seamlessly integrated into URP volume system.
 
 # How to add volumetric fog
