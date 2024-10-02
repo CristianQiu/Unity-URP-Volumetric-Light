@@ -31,6 +31,8 @@ Shader "Hidden/DownsampleDepth"
 
             float Frag(Varyings input) : SV_Target
             {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
                 float4 depths = GATHER_RED_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, input.texcoord);
 
                 float minDepth = Min3(depths.x, depths.y, min(depths.z, depths.w));

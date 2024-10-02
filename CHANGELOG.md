@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.1] - 2024-10-02
+
+* Added Single pass VR rendering support.
+
 ## [0.2.0] - 2024-09-27
 
 * Mostly code cleanup and minor fixes regarding compatibility through different versions from 2022 to Unity 6. Tested with no warnings or errors in 2022.3.47f1, 2023.1.20f1, 2023.2.20f1 and 6000.0.18f1. Removed code referencing to a 2023.3 beta version which ultimately became Unity 6, so this package should not work any longer with 2023.3 beta versions : just upgrade to Unity 6.
