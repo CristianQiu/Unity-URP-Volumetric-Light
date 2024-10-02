@@ -210,6 +210,7 @@ Shader "Hidden/VolumetricFog"
 
             float4 Frag(Varyings input) : SV_Target
             {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 return DepthAwareGaussianBlur(input.texcoord, float2(1.0, 0.0), _BlitTexture, sampler_LinearClamp, _BlitTexture_TexelSize.xy);
             }
 
@@ -240,6 +241,7 @@ Shader "Hidden/VolumetricFog"
 
             float4 Frag(Varyings input) : SV_Target
             {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 return DepthAwareGaussianBlur(input.texcoord, float2(0.0, 1.0), _BlitTexture, sampler_LinearClamp, _BlitTexture_TexelSize.xy);
             }
 
@@ -270,6 +272,8 @@ Shader "Hidden/VolumetricFog"
 
             float4 Frag(Varyings input) : SV_Target
             {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
                 // get the full resolution depth and convert it to linear eye depth
                 float fullResDepth = LoadSceneDepth(input.positionCS.xy);
                 float linearFullResDepth = LinearEyeDepth(fullResDepth, _ZBufferParams);
