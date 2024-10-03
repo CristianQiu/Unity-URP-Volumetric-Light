@@ -4,6 +4,7 @@
 * Render graph support for Unity 6. Compatibility mode is also supported.
 * Supports directional lights, point lights, and spot lights, including shadows and cookies for all of them.
 * Seamlessly integrated into URP volume system.
+* Single pass VR rendering support. This is verified by users, since I do not work on VR. If you find any VR specific issue contact me and I will try to help. Multipass is not supported.
 
 # How to add volumetric fog
 
