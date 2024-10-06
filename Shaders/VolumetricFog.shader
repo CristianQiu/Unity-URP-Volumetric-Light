@@ -35,8 +35,8 @@ Shader "Hidden/VolumetricFog"
             #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
 
             #pragma multi_compile_fragment _ _LIGHT_COOKIES
-            #pragma multi_compile_fragment _ _MAIN_LIGHT_DISABLED
-            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHTS_DISABLED
+            #pragma multi_compile_fragment _ _MAIN_LIGHT_CONTRIBUTION_DISABLED
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED
 
             #pragma vertex Vert
             #pragma fragment Frag
@@ -46,11 +46,12 @@ Shader "Hidden/VolumetricFog"
             float _Distance;
             float _BaseHeight;
             float _MaximumHeight;
+            float _GroundHeight;
             float _Density;
             float _Absortion;
-            float3 _Tint;
             float _MainLightAnisotropy;
             float _MainLightScattering;
+            float3 _MainLightColorTint;
             float _AdditionalLightsAnisotropy;
             float _AdditionalLightsScattering;
             float _AdditionalLightsRadiusSq;
@@ -61,6 +62,7 @@ Shader "Hidden/VolumetricFog"
             {
                 float t = saturate((posWSy - _BaseHeight) / (_MaximumHeight - _BaseHeight));
                 t = 1.0 - t;
+                t = lerp(t, 0.0, posWSy < _GroundHeight);
 
                 return _Density * t;
             }
@@ -68,7 +70,7 @@ Shader "Hidden/VolumetricFog"
             // Gets the main light color at one raymarch step.
             float3 GetStepMainLightColor(float3 currPosWS, float phaseMainLight, float density)
             {
-#if _MAIN_LIGHT_DISABLED
+#if _MAIN_LIGHT_CONTRIBUTION_DISABLED
                 return float3(0.0, 0.0, 0.0);
 #endif
                 // get the main light with shadow attenuation already set
@@ -78,13 +80,13 @@ Shader "Hidden/VolumetricFog"
                 mainLight.color *= SampleMainLightCookie(currPosWS);
 #endif
                 // return the final color
-                return (mainLight.color * _Tint) * (mainLight.shadowAttenuation * phaseMainLight * density * _MainLightScattering);
+                return (mainLight.color * _MainLightColorTint) * (mainLight.shadowAttenuation * phaseMainLight * density * _MainLightScattering);
             }
 
             // Gets the accumulated color from additional lights at one raymarch step.
             float3 GetStepAdditionalLightsColor(float2 texcoord, float3 currPosWS, float3 rd, float density)
             {
-#if _ADDITIONAL_LIGHTS_DISABLED
+#if _ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED
                 return float3(0.0, 0.0, 0.0);
 #endif
 #if _FORWARD_PLUS
@@ -120,7 +122,7 @@ Shader "Hidden/VolumetricFog"
                     float newScattering = smoothstep(0.0, _AdditionalLightsRadiusSq, distToPosMagnitudeSq) * _AdditionalLightsScattering;
 
                     // accumulate the total color for additional lights
-                    additionalLightsColor += (additionalLight.color * _Tint) * (additionalLight.shadowAttenuation * additionalLight.distanceAttenuation * phaseAdditionalLight * density * newScattering);
+                    additionalLightsColor += (additionalLight.color * (additionalLight.shadowAttenuation * additionalLight.distanceAttenuation * phaseAdditionalLight * density * newScattering));
                 LIGHT_LOOP_END
 
                 return additionalLightsColor;
@@ -164,8 +166,12 @@ Shader "Hidden/VolumetricFog"
                     // calculate the current world position
                     float3 currPosWS = ro + rd * dist;
 
-                    // calculate density and attenuation
+                    // calculate density and continue if it is not meaningful
                     float density = GetFogDensity(currPosWS.y);
+                    if (density <= 0.0)
+                        continue;
+
+                    // calculate attenuation
                     float stepAttenuation = exp(minusStepLengthTimesAbsortion * density);
                     
                     // attenuate transmittance

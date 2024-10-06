@@ -13,6 +13,9 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	private SerializedDataParameter baseHeight;
 	private SerializedDataParameter maximumHeight;
 
+	private SerializedDataParameter enableGround;
+	private SerializedDataParameter groundHeight;
+
 	private SerializedDataParameter density;
 	private SerializedDataParameter attenuationDistance;
 	private SerializedDataParameter tint;
@@ -24,6 +27,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	private SerializedDataParameter enableAdditionalLightsContribution;
 	private SerializedDataParameter additionalLightsAnisotropy;
 	private SerializedDataParameter additionalLightsScattering;
+	private SerializedDataParameter additionalLightsRadius;
 
 	private SerializedDataParameter maxSteps;
 	private SerializedDataParameter blurIterations;
@@ -44,9 +48,12 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		baseHeight = Unpack(p.Find(x => x.baseHeight));
 		maximumHeight = Unpack(p.Find(x => x.maximumHeight));
 
+		enableGround = Unpack(p.Find(x => x.enableGround));
+		groundHeight = Unpack(p.Find(x => x.groundHeight));
+
 		density = Unpack(p.Find(x => x.density));
 		attenuationDistance = Unpack(p.Find(x => x.attenuationDistance));
-		tint = Unpack(p.Find(x => x.tint));
+		tint = Unpack(p.Find(x => x.mainLightColorTint));
 
 		enableMainLightContribution = Unpack(p.Find(x => x.enableMainLightContribution));
 		mainLightAnisotropy = Unpack(p.Find(x => x.mainLightAnisotropy));
@@ -55,6 +62,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		enableAdditionalLightsContribution = Unpack(p.Find(x => x.enableAdditionalLightsContribution));
 		additionalLightsAnisotropy = Unpack(p.Find(x => x.additionalLightsAnisotropy));
 		additionalLightsScattering = Unpack(p.Find(x => x.additionalLightsScattering));
+		additionalLightsRadius = Unpack(p.Find(x => x.additionalLightsRadius));
 
 		maxSteps = Unpack(p.Find(x => x.maxSteps));
 		blurIterations = Unpack(p.Find(x => x.blurIterations));
@@ -66,42 +74,48 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	/// </summary>
 	public override void OnInspectorGUI()
 	{
-		bool enabledMainLightContribution = enableMainLightContribution.overrideState.boolValue && enableMainLightContribution.value.boolValue;
-		bool enabledAdditionalLightsContribution = enableAdditionalLightsContribution.overrideState.boolValue && enableAdditionalLightsContribution.value.boolValue;
+		bool isEnabled = enabled.overrideState.boolValue && enabled.value.boolValue;
 
-		bool anyLightContributionEnabled = enabledMainLightContribution || enabledAdditionalLightsContribution;
-
-		PropertyField(distance);
-		PropertyField(baseHeight);
-		PropertyField(maximumHeight);
-
-		PropertyField(density);
-		PropertyField(attenuationDistance);
-
-		if (anyLightContributionEnabled)
-			PropertyField(tint);
-
-		PropertyField(enableMainLightContribution);
-		if (enabledMainLightContribution)
+		if (!isEnabled)
 		{
-			PropertyField(mainLightAnisotropy);
-			PropertyField(mainLightScattering);
+			PropertyField(enabled);
 		}
-
-		PropertyField(enableAdditionalLightsContribution);
-		if (enabledAdditionalLightsContribution)
+		else
 		{
-			PropertyField(additionalLightsAnisotropy);
-			PropertyField(additionalLightsScattering);
-		}
+			bool enabledMainLightContribution = enableMainLightContribution.overrideState.boolValue && enableMainLightContribution.value.boolValue;
+			bool enabledAdditionalLightsContribution = enableAdditionalLightsContribution.overrideState.boolValue && enableAdditionalLightsContribution.value.boolValue;
 
-		if (anyLightContributionEnabled)
-		{
+			PropertyField(distance);
+			PropertyField(baseHeight);
+			PropertyField(maximumHeight);
+
+			PropertyField(enableGround);
+			if (enableGround.overrideState.boolValue && enableGround.value.boolValue)
+				PropertyField(groundHeight);
+
+			PropertyField(density);
+			PropertyField(attenuationDistance);
+
+			PropertyField(enableMainLightContribution);
+			if (enabledMainLightContribution)
+			{
+				PropertyField(mainLightAnisotropy);
+				PropertyField(mainLightScattering);
+				PropertyField(tint);
+			}
+
+			PropertyField(enableAdditionalLightsContribution);
+			if (enabledAdditionalLightsContribution)
+			{
+				PropertyField(additionalLightsAnisotropy);
+				PropertyField(additionalLightsScattering);
+				PropertyField(additionalLightsRadius);
+			}
+
 			PropertyField(maxSteps);
 			PropertyField(blurIterations);
+			PropertyField(enabled);
 		}
-
-		PropertyField(enabled);
 	}
 
 	#endregion
