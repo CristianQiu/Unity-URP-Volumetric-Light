@@ -12,6 +12,7 @@
 * Enable post-processing both in your camera and URP Renderer.
 * Add a volume to your scene and add override: "Custom->Volumetric Fog".
 * Tick the "Enabled" checkbox, as fog is disabled by default.
+* Make sure that "Enable Main Light Contribution" and "Enable Additional Lights Contribution" are also enabled depending on your needs, as they are also disabled by default.
 * If you still can not see the fog, play with the different volume parameters or try to increase the intensity of your lights.
 
 # Known limitations

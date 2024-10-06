@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.0] - 2024-10-06
+
+* Added custom editor for the volumetric fog volume, which should slightly improve the usage. Added ground height parameter that allows fog to not be rendered below a certain height, for slightly better compatibility with transparencies like an ocean.
+The color tint now only affects the main light color which makes more sense. Many volume parameters have now a descriptive tooltip.
+
 ## [0.2.1] - 2024-10-02
 
 * Added Single pass VR rendering support.
