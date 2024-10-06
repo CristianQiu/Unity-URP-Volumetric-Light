@@ -155,8 +155,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			int frameCount = Time.renderedFrameCount % 64;
 			float absortion = 1.0f / fogVolume.attenuationDistance.value;
 
-			EnableMainLight(volumetricFogMaterial, fogVolume.mainLightScattering.value > 0.0f);
-			EnableAdditionalLights(volumetricFogMaterial, fogVolume.additionalLightsScattering.value > 0.0f);
+			EnableMainLight(volumetricFogMaterial, fogVolume.enableMainLightContribution.value);
+			EnableAdditionalLights(volumetricFogMaterial, fogVolume.enableAdditionalLightsContribution.value);
 			volumetricFogMaterial.SetInteger(FrameCountId, frameCount);
 			volumetricFogMaterial.SetInteger(CustomAdditionalLightsCountId, renderingData.lightData.additionalLightsCount);
 			volumetricFogMaterial.SetFloat(DistanceId, fogVolume.distance.value);
@@ -358,8 +358,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			float absortion = 1.0f / fogVolume.attenuationDistance.value;
 
 			Material volumetricFogMaterial = passData.material;
-			EnableMainLight(volumetricFogMaterial, fogVolume.mainLightScattering.value > 0.0f);
-			EnableAdditionalLights(volumetricFogMaterial, fogVolume.additionalLightsScattering.value > 0.0f);
+			EnableMainLight(volumetricFogMaterial, fogVolume.enableMainLightContribution.value);
+			EnableAdditionalLights(volumetricFogMaterial, fogVolume.enableAdditionalLightsContribution.value);
 			volumetricFogMaterial.SetTexture(HalfResCameraDepthTextureId, passData.halfResCameraDepthTarget);
 			volumetricFogMaterial.SetInteger(FrameCountId, frameCount);
 			volumetricFogMaterial.SetInteger(CustomAdditionalLightsCountId, passData.lightData.additionalLightsCount);
