@@ -56,11 +56,12 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int DistanceId = Shader.PropertyToID("_Distance");
 	private static readonly int BaseHeightId = Shader.PropertyToID("_BaseHeight");
 	private static readonly int MaximumHeightId = Shader.PropertyToID("_MaximumHeight");
+	private static readonly int GroundHeightId = Shader.PropertyToID("_GroundHeight");
 	private static readonly int DensityId = Shader.PropertyToID("_Density");
 	private static readonly int AbsortionId = Shader.PropertyToID("_Absortion");
-	private static readonly int TintId = Shader.PropertyToID("_Tint");
 	private static readonly int MainLightAnisotropyId = Shader.PropertyToID("_MainLightAnisotropy");
 	private static readonly int MainLightScatteringId = Shader.PropertyToID("_MainLightScattering");
+	private static readonly int MainLightColorTintId = Shader.PropertyToID("_MainLightColorTint");
 	private static readonly int AdditionalLightsAnisotropyId = Shader.PropertyToID("_AdditionalLightsAnisotropy");
 	private static readonly int AdditionalLightsScatteringId = Shader.PropertyToID("_AdditionalLightsScattering");
 	private static readonly int AdditionalLightsRadiusSqId = Shader.PropertyToID("_AdditionalLightsRadiusSq");
@@ -155,16 +156,17 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			int frameCount = Time.renderedFrameCount % 64;
 			float absortion = 1.0f / fogVolume.attenuationDistance.value;
 
-			EnableMainLight(volumetricFogMaterial, fogVolume.mainLightScattering.value > 0.0f);
-			EnableAdditionalLights(volumetricFogMaterial, fogVolume.additionalLightsScattering.value > 0.0f);
+			EnableMainLightContribution(volumetricFogMaterial, fogVolume.enableMainLightContribution.value);
+			EnableAdditionalLightsContribution(volumetricFogMaterial, fogVolume.enableAdditionalLightsContribution.value);
 			volumetricFogMaterial.SetInteger(FrameCountId, frameCount);
 			volumetricFogMaterial.SetInteger(CustomAdditionalLightsCountId, renderingData.lightData.additionalLightsCount);
 			volumetricFogMaterial.SetFloat(DistanceId, fogVolume.distance.value);
 			volumetricFogMaterial.SetFloat(BaseHeightId, fogVolume.baseHeight.value);
 			volumetricFogMaterial.SetFloat(MaximumHeightId, fogVolume.maximumHeight.value);
+			UpdateGroundHeightFromMaterial(volumetricFogMaterial, fogVolume);
 			volumetricFogMaterial.SetFloat(DensityId, fogVolume.density.value);
 			volumetricFogMaterial.SetFloat(AbsortionId, absortion);
-			volumetricFogMaterial.SetColor(TintId, fogVolume.tint.value);
+			volumetricFogMaterial.SetColor(MainLightColorTintId, fogVolume.mainLightColorTint.value);
 			volumetricFogMaterial.SetFloat(MainLightAnisotropyId, fogVolume.mainLightAnisotropy.value);
 			volumetricFogMaterial.SetFloat(MainLightScatteringId, fogVolume.mainLightScattering.value);
 			volumetricFogMaterial.SetFloat(AdditionalLightsAnisotropyId, fogVolume.additionalLightsAnisotropy.value);
@@ -287,12 +289,12 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// </summary>
 	/// <param name="volumetricFogMaterial"></param>
 	/// <param name="enabled"></param>
-	private static void EnableMainLight(Material volumetricFogMaterial, bool enabled)
+	private static void EnableMainLightContribution(Material volumetricFogMaterial, bool enabled)
 	{
 		if (enabled)
-			volumetricFogMaterial.DisableKeyword("_MAIN_LIGHT_DISABLED");
+			volumetricFogMaterial.DisableKeyword("_MAIN_LIGHT_CONTRIBUTION_DISABLED");
 		else
-			volumetricFogMaterial.EnableKeyword("_MAIN_LIGHT_DISABLED");
+			volumetricFogMaterial.EnableKeyword("_MAIN_LIGHT_CONTRIBUTION_DISABLED");
 	}
 
 	/// <summary>
@@ -300,12 +302,24 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// </summary>
 	/// <param name="volumetricFogMaterial"></param>
 	/// <param name="enabled"></param>
-	private static void EnableAdditionalLights(Material volumetricFogMaterial, bool enabled)
+	private static void EnableAdditionalLightsContribution(Material volumetricFogMaterial, bool enabled)
 	{
 		if (enabled)
-			volumetricFogMaterial.DisableKeyword("_ADDITIONAL_LIGHTS_DISABLED");
+			volumetricFogMaterial.DisableKeyword("_ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED");
 		else
-			volumetricFogMaterial.EnableKeyword("_ADDITIONAL_LIGHTS_DISABLED");
+			volumetricFogMaterial.EnableKeyword("_ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED");
+	}
+
+	/// <summary>
+	/// Updates the ground height parameter from the material.
+	/// </summary>
+	/// <param name="volumetricFogMaterial"></param>
+	/// <param name="volume"></param>
+	private static void UpdateGroundHeightFromMaterial(Material volumetricFogMaterial, VolumetricFogVolumeComponent volume)
+	{
+		float groundValue = float.MinValue;
+		groundValue = (volume.enableGround.overrideState && volume.enableGround.value) ? volume.groundHeight.value : groundValue;
+		volumetricFogMaterial.SetFloat(GroundHeightId, groundValue);
 	}
 
 #if UNITY_6000_0_OR_NEWER
@@ -358,17 +372,18 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			float absortion = 1.0f / fogVolume.attenuationDistance.value;
 
 			Material volumetricFogMaterial = passData.material;
-			EnableMainLight(volumetricFogMaterial, fogVolume.mainLightScattering.value > 0.0f);
-			EnableAdditionalLights(volumetricFogMaterial, fogVolume.additionalLightsScattering.value > 0.0f);
+			EnableMainLightContribution(volumetricFogMaterial, fogVolume.enableMainLightContribution.value);
+			EnableAdditionalLightsContribution(volumetricFogMaterial, fogVolume.enableAdditionalLightsContribution.value);
 			volumetricFogMaterial.SetTexture(HalfResCameraDepthTextureId, passData.halfResCameraDepthTarget);
 			volumetricFogMaterial.SetInteger(FrameCountId, frameCount);
 			volumetricFogMaterial.SetInteger(CustomAdditionalLightsCountId, passData.lightData.additionalLightsCount);
 			volumetricFogMaterial.SetFloat(DistanceId, fogVolume.distance.value);
 			volumetricFogMaterial.SetFloat(BaseHeightId, fogVolume.baseHeight.value);
 			volumetricFogMaterial.SetFloat(MaximumHeightId, fogVolume.maximumHeight.value);
+			UpdateGroundHeightFromMaterial(volumetricFogMaterial, fogVolume);
 			volumetricFogMaterial.SetFloat(DensityId, fogVolume.density.value);
 			volumetricFogMaterial.SetFloat(AbsortionId, absortion);
-			volumetricFogMaterial.SetColor(TintId, fogVolume.tint.value);
+			volumetricFogMaterial.SetColor(MainLightColorTintId, fogVolume.mainLightColorTint.value);
 			volumetricFogMaterial.SetFloat(MainLightAnisotropyId, fogVolume.mainLightAnisotropy.value);
 			volumetricFogMaterial.SetFloat(MainLightScatteringId, fogVolume.mainLightScattering.value);
 			volumetricFogMaterial.SetFloat(AdditionalLightsAnisotropyId, fogVolume.additionalLightsAnisotropy.value);

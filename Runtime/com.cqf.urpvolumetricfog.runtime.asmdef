@@ -1,5 +1,5 @@
 {
-    "name": "com.cqf.urpvolumetricfog",
+    "name": "com.cqf.urpvolumetricfog.runtime",
     "rootNamespace": "",
     "references": [
         "Unity.RenderPipelines.Core.Runtime",
