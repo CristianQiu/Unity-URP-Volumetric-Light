@@ -127,6 +127,26 @@ Shader "Hidden/VolumetricFog"
 
                 return additionalLightsColor;
             }
+            
+            float3 ComputeOrthoWorldSpacePosition(float2 uv, float depth, float4x4 invView)
+            {
+                // Convert UV to NDC (-1 to 1)
+                float2 ndc = uv * 2.0 - 1.0;
+
+                // Get the camera's world space position and forward vector
+                float3 cameraPosWS = invView[3].xyz;           // Camera position in world space
+                float3 cameraRightWS = normalize(invView[0].xyz); // Right vector of the camera
+                float3 cameraUpWS = normalize(invView[1].xyz);    // Up vector of the camera
+                float3 cameraForwardWS = normalize(invView[2].xyz); // Forward vector of the camera
+
+                // Calculate the world space position for the orthographic projection
+                float3 positionWS = cameraPosWS +
+                                    cameraRightWS * ndc.x * unity_OrthoParams.x -
+                                    cameraUpWS * ndc.y * unity_OrthoParams.y -
+                                    cameraForwardWS * depth;  // Depth is linear for orthographic cameras
+
+                return positionWS;
+            }
 
             float4 Frag(Varyings input) : SV_Target
             {
@@ -134,7 +154,15 @@ Shader "Hidden/VolumetricFog"
 
                 // prepare the ray origin and direction
                 float depth = SampleDownsampledSceneDepthConsiderReversedZ(input.texcoord);
-                float3 posWS = ComputeWorldSpacePosition(input.texcoord, depth, UNITY_MATRIX_I_VP);
+                float3 posWS;
+                if (unity_OrthoParams.w > 0.0)  // Orthographic projection
+                {
+                    posWS = ComputeOrthoWorldSpacePosition(input.texcoord, depth, UNITY_MATRIX_I_VP);
+                }
+                else
+                {
+                    posWS = ComputeWorldSpacePosition(input.texcoord, depth, UNITY_MATRIX_I_VP);
+                }
                 float3 ro = GetCameraPositionWS();
                 float3 offset = posWS - ro;
                 float offsetLength = length(offset);
