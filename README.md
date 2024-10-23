@@ -1,6 +1,10 @@
+# Requirements
+
+* Unity 2022.3, 2023.1, 2023.2 or Unity 6.
+* Shader model 4.5 or above.
+
 # About
 
-* Supported Unity versions are 2022.3, 2023.1, 2023.2 and Unity 6.
 * Render graph support for Unity 6. Compatibility mode is also supported.
 * Supports directional lights, point lights, and spot lights, including shadows and cookies for all of them.
 * Seamlessly integrated into URP volume system.
@@ -17,6 +21,7 @@
 
 # Known limitations
 
+* Orthographic projection is not supported.
 * Transparent objects are not blended correctly with fog.
 * When using forward or deferred rendering path, performance can be heavily affected when adding multiple additional lights, specially when using shadows. Forward+ is highly recommended for best performance.
 * Some of the settings are shared between all additional lights, like scattering or anisotropy.
