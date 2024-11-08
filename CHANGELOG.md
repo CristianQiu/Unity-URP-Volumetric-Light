@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.1] - 2024-11-08
+
+* Added missing tooltips from the volume. Minor tweak to the fog shader when there is more than 1 directional light in the scene.
+
 ## [0.3.0] - 2024-10-06
 
 * Added custom editor for the volumetric fog volume, which should slightly improve the usage. Added ground height parameter that allows fog to not be rendered below a certain height, for slightly better compatibility with transparencies like an ocean.

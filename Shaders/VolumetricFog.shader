@@ -115,11 +115,15 @@ Shader "Hidden/VolumetricFog"
 #else
                     float4 additionalLightPos = _AdditionalLightsPosition[lightIndex];
 #endif
-                    // TODO: This is only useful for spot lights. Additional lights can include directional lights and point lights too.
-                    // gradually reduce additional lights scattering to zero at their origin to try to avoid flicker-aliasing mainly due to bright spotlights
+                    // Note: This is useful for both spotlights and pointlights. For the latter it is specially true when the point light is inside some geometry and casts shadows.
+                    // Gradually reduce additional lights scattering to zero at their origin to try to avoid flicker-aliasing.
                     float3 distToPos = additionalLightPos.xyz - currPosWS;
                     float distToPosMagnitudeSq = dot(distToPos, distToPos);
                     float newScattering = smoothstep(0.0, _AdditionalLightsRadiusSq, distToPosMagnitudeSq) * _AdditionalLightsScattering;
+
+                    // Note: If directional lights are also considered as additional lights when more than 1 is used, ignore the previous code when it is a directional light.
+                    // They store direction in additionalLightPos.xyz and have .w set to 0, while point and spotlights have it set to 1.
+                    newScattering = lerp(1.0, newScattering, additionalLightPos.w);
 
                     // accumulate the total color for additional lights
                     additionalLightsColor += (additionalLight.color * (additionalLight.shadowAttenuation * additionalLight.distanceAttenuation * phaseAdditionalLight * density * newScattering));
@@ -166,8 +170,11 @@ Shader "Hidden/VolumetricFog"
                     // calculate the current world position
                     float3 currPosWS = ro + rd * dist;
 
-                    // calculate density and continue if it is not meaningful
+                     // calculate density
                     float density = GetFogDensity(currPosWS.y);
+                    
+                    // keep marching when there is not enough density
+                    UNITY_BRANCH
                     if (density <= 0.0)
                         continue;
 
