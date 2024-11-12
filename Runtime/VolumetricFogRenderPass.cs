@@ -226,7 +226,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			passData.material = downsampleDepthMaterial;
 			passData.materialPassIndex = 0;
 
-			builder.SetRenderAttachment(halfResCameraDepthTarget, 0);
+			builder.SetRenderAttachment(halfResCameraDepthTarget, 0, AccessFlags.WriteAll);
 			builder.UseTexture(resourceData.cameraDepth);
 			builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
 		}
@@ -241,7 +241,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			passData.lightData = lightData;
 			passData.halfResCameraDepthTarget = halfResCameraDepthTarget;
 
-			builder.SetRenderAttachment(volumetricFogRenderTarget, 0);
+			builder.SetRenderAttachment(volumetricFogRenderTarget, 0, AccessFlags.WriteAll);
 			builder.UseTexture(halfResCameraDepthTarget);
 			if (resourceData.mainShadowsTexture.IsValid())
 				builder.UseTexture(resourceData.mainShadowsTexture);
@@ -274,7 +274,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			passData.halfResCameraDepthTarget = halfResCameraDepthTarget;
 			passData.volumetricFogTarget = volumetricFogRenderTarget;
 
-			builder.SetRenderAttachment(volumetricFogCompositionTarget, 0);
+			builder.SetRenderAttachment(volumetricFogCompositionTarget, 0, AccessFlags.WriteAll);
 			builder.UseTexture(resourceData.cameraColor);
 			builder.UseTexture(resourceData.cameraDepth);
 			builder.UseTexture(halfResCameraDepthTarget);

@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.3] - 2024-11-12
+
+* Added more optimal flags for some textures usage in rendergraph.
+
 ## [0.3.2] - 2024-11-12
 
 * Added obsolete attributes to the overrided methods for Unity 6 and the non rendergraph path to avoid warnings in certain situations.
