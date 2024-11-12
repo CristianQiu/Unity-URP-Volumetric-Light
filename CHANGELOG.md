@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.2] - 2024-11-12
+
+* Added obsolete attributes to the overrided methods for Unity 6 and the non rendergraph path to avoid warnings in certain situations.
+
 ## [0.3.1] - 2024-11-08
 
 * Added missing tooltips from the volume. Minor tweak to the fog shader when there is more than 1 directional light in the scene.

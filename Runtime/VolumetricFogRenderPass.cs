@@ -4,6 +4,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
 #if UNITY_6000_0_OR_NEWER
+using System;
 using UnityEngine.Rendering.RenderGraphModule;
 #endif
 
@@ -109,6 +110,9 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// </summary>
 	/// <param name="cmd"></param>
 	/// <param name="renderingData"></param>
+#if UNITY_6000_0_OR_NEWER
+	[Obsolete]
+#endif
 	public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
 	{
 		base.OnCameraSetup(cmd, ref renderingData);
@@ -139,6 +143,9 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// </summary>
 	/// <param name="context"></param>
 	/// <param name="renderingData"></param>
+#if UNITY_6000_0_OR_NEWER
+	[Obsolete]
+#endif
 	public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
 	{
 		CommandBuffer cmd = CommandBufferPool.Get();
