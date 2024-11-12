@@ -261,7 +261,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			// going to make any difference.
 			builder.UseTexture(volumetricFogRenderTarget, AccessFlags.ReadWrite);
 			builder.UseTexture(volumetricFogAuxRenderTarget, AccessFlags.ReadWrite);
-			builder.SetRenderFunc((PassData data, UnsafeGraphContext context) => ExecuteUnsafeBlurPass(data, context)); ;
+			builder.SetRenderFunc((PassData data, UnsafeGraphContext context) => ExecuteUnsafeBlurPass(data, context));
 		}
 
 		using (IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass("Volumetric Fog Composition Pass", out PassData passData, profilingSampler))
