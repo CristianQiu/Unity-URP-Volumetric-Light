@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.4] - 2024-11-16
+
+* Tweaked the minimum distance from the volume that can be set for the fog to be rendered.
+
 ## [0.3.3] - 2024-11-12
 
 * Added more optimal flags for some textures usage in rendergraph.
