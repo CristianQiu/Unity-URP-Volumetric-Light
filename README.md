@@ -1,3 +1,7 @@
+# Known Bugs
+
+* There seems to be issues with volumetric shadows from additional lights when "Transparent Receive Shadows" is off in the URP Renderer. If you are having issues with volumetric shadows from point and spot lights you may need to turn the setting on.
+
 # Requirements
 
 * Unity 2022.3, 2023.1, 2023.2 or Unity 6.
