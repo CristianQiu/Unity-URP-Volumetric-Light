@@ -20,7 +20,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 
 	[Header("Distances")]
 	[Tooltip("The maximum distance from the camera that the fog will be rendered up to.")]
-	public ClampedFloatParameter distance = new ClampedFloatParameter(128.0f, 0.1f, 512.0f);
+	public ClampedFloatParameter distance = new ClampedFloatParameter(128.0f, 0.0f, 512.0f);
 	[Tooltip("The world height at which the fog will have the density specified in the volume.")]
 	public FloatParameter baseHeight = new FloatParameter(0.0f, true);
 	[Tooltip("The world height at which the fog will have no density at all.")]
@@ -109,7 +109,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	/// <returns></returns>
 	public bool IsActive()
 	{
-		return enabled.value && density.value > 0.0f;
+		return enabled.value && distance.value > 0.0f && groundHeight.value < maximumHeight.value && density.value > 0.0f;
 	}
 
 	#endregion

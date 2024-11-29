@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.5] - 2024-11-29
+
+* Additional checks to skip rendering when not necessary.
+
 ## [0.3.4] - 2024-11-16
 
 * Tweaked the minimum distance from the volume that can be set for the fog to be rendered.
