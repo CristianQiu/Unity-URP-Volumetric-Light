@@ -222,12 +222,12 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		{
 			passData.stage = PassStage.DownsampleDepth;
 			passData.target = halfResCameraDepthTarget;
-			passData.source = resourceData.cameraDepth;
+			passData.source = resourceData.cameraDepthTexture;
 			passData.material = downsampleDepthMaterial;
 			passData.materialPassIndex = 0;
 
 			builder.SetRenderAttachment(halfResCameraDepthTarget, 0, AccessFlags.WriteAll);
-			builder.UseTexture(resourceData.cameraDepth);
+			builder.UseTexture(resourceData.cameraDepthTexture);
 			builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
 		}
 
@@ -276,7 +276,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 			builder.SetRenderAttachment(volumetricFogCompositionTarget, 0, AccessFlags.WriteAll);
 			builder.UseTexture(resourceData.cameraColor);
-			builder.UseTexture(resourceData.cameraDepth);
+			builder.UseTexture(resourceData.cameraDepthTexture);
 			builder.UseTexture(halfResCameraDepthTarget);
 			builder.UseTexture(volumetricFogRenderTarget);
 			builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));

@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.6] - 2024-12-02
+
+* Set proper texture usage flags for the camera depth texture and rendergraph path.
+
 ## [0.3.5] - 2024-11-29
 
 * Additional checks to skip rendering when not necessary.
