@@ -1,7 +1,6 @@
 # Requirements
 
 * Unity 2022.3, 2023.1, 2023.2 or Unity 6.
-* Shader model 4.5 or above.
 
 # About
 
@@ -26,8 +25,9 @@
 # Known limitations
 
 * Orthographic projection is not supported.
-* Transparent objects are not blended correctly with fog.
+* WebGL is not supported.
 * When using forward or deferred rendering path, performance can be heavily affected when adding multiple additional lights, specially when using shadows. Forward+ is highly recommended for best performance.
+* Transparent objects are not blended correctly with fog.
 * Some of the settings are shared between all additional lights, like scattering or anisotropy.
 * It is currently not possible to selectively exclude additional lights from the volumetric fog.
 * For certain viewing angles it may be possible to notice more noise in some light regions.

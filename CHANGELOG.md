@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.7] - 2024-12-29
+
+* Removed shader model 4.5 requirement for broader support.
+* Solved issues related to OpenGL.
+
 ## [0.3.6] - 2024-12-02
 
 * Set proper texture usage flags for the camera depth texture and rendergraph path.
