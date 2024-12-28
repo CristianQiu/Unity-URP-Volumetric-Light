@@ -74,7 +74,8 @@ Shader "Hidden/VolumetricFog"
                 return float3(0.0, 0.0, 0.0);
 #endif
                 // get the main light with shadow attenuation already set
-                Light mainLight = GetMainLight(TransformWorldToShadowCoord(currPosWS));
+                // Light mainLight = GetMainLight(TransformWorldToShadowCoord(currPosWS));
+                Light mainLight = GetMainLight();
 #if _LIGHT_COOKIES
                 // when light cookies are enabled and one is set for the main light, also factor it
                 mainLight.color *= SampleMainLightCookie(currPosWS);
@@ -189,7 +190,7 @@ Shader "Hidden/VolumetricFog"
 
                     // calculate the colors at this step and accumulate them
                     float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight, density);
-                    float3 additionalLightsColor = GetStepAdditionalLightsColor(input.texcoord, currPosWS, rd, density);
+                    float3 additionalLightsColor = float3(0.0, 0.0, 0.0);//GetStepAdditionalLightsColor(input.texcoord, currPosWS, rd, density);
 
                     // TODO: add ambient?
                     float3 stepColor = mainLightColor + additionalLightsColor;
