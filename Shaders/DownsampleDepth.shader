@@ -23,7 +23,7 @@ Shader "Hidden/DownsampleDepth"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             
-            #pragma target 4.5
+            // #pragma target 4.5
             #pragma editor_sync_compilation
 
             #pragma vertex Vert
@@ -33,7 +33,14 @@ Shader "Hidden/DownsampleDepth"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                float4 depths = GATHER_RED_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, input.texcoord);
+                // float4 depths = GATHER_RED_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, input.texcoord);
+                uint2 fullResUpperCorner = uint2(input.positionCS.xy * 2.0);
+
+                float4 depths;
+                depths.x = LoadSceneDepth(fullResUpperCorner);
+                depths.y = LoadSceneDepth(fullResUpperCorner + uint2(1, 0));
+                depths.z = LoadSceneDepth(fullResUpperCorner + uint2(0, 1));
+                depths.w = LoadSceneDepth(fullResUpperCorner + uint2(1, 1));
 
                 float minDepth = Min3(depths.x, depths.y, min(depths.z, depths.w));
                 float maxDepth = Max3(depths.x, depths.y, max(depths.z, depths.w));

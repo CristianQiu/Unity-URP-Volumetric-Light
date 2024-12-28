@@ -10,7 +10,7 @@ static const float KernelWeights[] = { 0.2026, 0.1790, 0.1240, 0.0672, 0.0285 };
 float4 DepthAwareGaussianBlur(float2 uv, float2 dir, TEXTURE2D_X(textureToBlur), SAMPLER(sampler_TextureToBlur), float2 textureToBlurTexelSizeXy)
 {
     float4 centerSample = SAMPLE_TEXTURE2D_X(textureToBlur, sampler_TextureToBlur, uv);
-    float centerRawDepth = SampleDownsampledSceneDepthConsiderReversedZ(uv);
+    float centerRawDepth = SampleDownsampledSceneDepth(uv);
     float centerLinearEyeDepth = LinearEyeDepth(centerRawDepth, _ZBufferParams);
 
     float3 rgbResult = centerSample.rgb * KernelWeights[0];
@@ -24,7 +24,7 @@ float4 DepthAwareGaussianBlur(float2 uv, float2 dir, TEXTURE2D_X(textureToBlur),
         float2 uvOffset = (float)i * texelSizeTimesDir;
         float2 uvSample = uv + uvOffset;
 
-        float rawDepth = SampleDownsampledSceneDepthConsiderReversedZ(uvSample);
+        float rawDepth = SampleDownsampledSceneDepth(uvSample);
         float linearEyeDepth = LinearEyeDepth(rawDepth, _ZBufferParams);
         float depthDiff = abs(centerLinearEyeDepth - linearEyeDepth);
         float r2 = BLUR_DEPTH_FALLOFF * depthDiff;
@@ -42,7 +42,7 @@ float4 DepthAwareGaussianBlur(float2 uv, float2 dir, TEXTURE2D_X(textureToBlur),
         float2 uvOffset = (float)i * texelSizeTimesDir;
         float2 uvSample = uv + uvOffset;
 
-        float rawDepth = SampleDownsampledSceneDepthConsiderReversedZ(uvSample);
+        float rawDepth = SampleDownsampledSceneDepth(uvSample);
         float linearEyeDepth = LinearEyeDepth(rawDepth, _ZBufferParams);
         float depthDiff = abs(centerLinearEyeDepth - linearEyeDepth);
         float r2 = BLUR_DEPTH_FALLOFF * depthDiff;
