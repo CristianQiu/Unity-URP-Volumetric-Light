@@ -137,7 +137,10 @@ Shader "Hidden/VolumetricFog"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 // prepare the ray origin and direction
-                float depth = SampleDownsampledSceneDepthConsiderReversedZ(input.texcoord);
+                float depth = SampleDownsampledSceneDepth(input.texcoord);
+#if !UNITY_REVERSED_Z
+                depth = lerp(UNITY_NEAR_CLIP_VALUE, 1.0, depth);
+#endif
                 float3 posWS = ComputeWorldSpacePosition(input.texcoord, depth, UNITY_MATRIX_I_VP);
                 float3 ro = GetCameraPositionWS();
                 float3 offset = posWS - ro;
@@ -319,7 +322,7 @@ Shader "Hidden/VolumetricFog"
                 {
                     // sample the lower resolution depth and convert to linear eye depth
                     float2 uv = uvs[i];
-                    float depth = SampleDownsampledSceneDepthConsiderReversedZ(uv);
+                    float depth = SampleDownsampledSceneDepth(uv);
                     float linearEyeDepth = LinearEyeDepth(depth, _ZBufferParams);
 
                     // check the depth distance
