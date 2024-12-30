@@ -9,7 +9,7 @@ float4 _HalfResCameraDepthTexture_TexelSize;
 // Samples the half resolution camera depth texture.
 float SampleDownsampledSceneDepth(float2 uv)
 {
-	return SAMPLE_TEXTURE2D_X(_HalfResCameraDepthTexture, sampler_PointClamp, uv).r;
+    return SAMPLE_TEXTURE2D_X(_HalfResCameraDepthTexture, sampler_PointClamp, uv).r;
 }
 
 #endif
