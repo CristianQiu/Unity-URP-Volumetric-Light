@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.0] - 2025-01-01
+
+* Shadow sampling during raymarching now ignores whether soft shadows are enabled and its quality level. This greatly enhances performance when using soft shadows with a barely noticeable loss in quality.
+* Changed blur to use point sampling instead of bilinear since source and target are the same size.
+* Added back shader model 4.5 instruction to increase the downsample depth pass performance, while also having an alternate path to support cases where it is not possible to use it.
+
 ## [0.3.7] - 2024-12-29
 
 * Removed shader model 4.5 requirement for broader support.

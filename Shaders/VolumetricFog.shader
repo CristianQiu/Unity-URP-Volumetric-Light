@@ -26,6 +26,7 @@ Shader "Hidden/VolumetricFog"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/VolumeRendering.hlsl"
             #include "./DeclareDownsampledDepthTexture.hlsl"
+            #include "./VolumetricShadows.hlsl"
 
             #pragma multi_compile _ _FORWARD_PLUS
             #pragma multi_compile _ _SHADOWS_SOFT
@@ -57,34 +58,6 @@ Shader "Hidden/VolumetricFog"
             float _AdditionalLightsRadiusSq;
             int _MaxSteps;
 
-            // This is a copy of SampleShadowmap from Shadows.hlsl. 
-            real VolumetricSampleShadowmap(TEXTURE2D_SHADOW_PARAM(ShadowMap, sampler_ShadowMap), float4 shadowCoord, ShadowSamplingData samplingData, half4 shadowParams, bool isPerspectiveProjection = true)
-            {
-                if (isPerspectiveProjection)
-                    shadowCoord.xyz /= shadowCoord.w;
-
-                // For volumetric shadows, we want to avoid using soft shadows for increased performance.
-                real attenuation = real(SAMPLE_TEXTURE2D_SHADOW(ShadowMap, sampler_ShadowMap, shadowCoord.xyz));
-                real shadowStrength = shadowParams.x;
-                attenuation = LerpWhiteTo(attenuation, shadowStrength);
-                
-                return BEYOND_SHADOW_FAR(shadowCoord) ? 1.0 : attenuation;
-            }
-
-            // This is a copy of MainLightRealTimeShadow from Shadows.hlsl. 
-            half VolumetricMainLightRealtimeShadow(float4 shadowCoord)
-            {
-                #if !defined(MAIN_LIGHT_CALCULATE_SHADOWS)
-                    return half(1.0);
-                #elif defined(_MAIN_LIGHT_SHADOWS_SCREEN) && !defined(_SURFACE_TYPE_TRANSPARENT)
-                    return SampleScreenSpaceShadowmap(shadowCoord);
-                #else
-                    ShadowSamplingData shadowSamplingData = GetMainLightShadowSamplingData();
-                    half4 shadowParams = GetMainLightShadowParams();
-                    return VolumetricSampleShadowmap(TEXTURE2D_ARGS(_MainLightShadowmapTexture, sampler_LinearClampCompare), shadowCoord, shadowSamplingData, shadowParams, false);
-                #endif
-            }
-
             // Gets the fog density at the given world height.
             float GetFogDensity(float posWSy)
             {
@@ -101,8 +74,10 @@ Shader "Hidden/VolumetricFog"
 #if _MAIN_LIGHT_CONTRIBUTION_DISABLED
                 return float3(0.0, 0.0, 0.0);
 #endif
-                // get the main light with shadow attenuation already set
-                Light mainLight = GetMainLight(TransformWorldToShadowCoord(currPosWS));
+                // get the main light and set its data
+                Light mainLight = GetMainLight();
+                float4 shadowCoord = TransformWorldToShadowCoord(currPosWS);
+                mainLight.shadowAttenuation = VolumetricMainLightRealtimeShadow(shadowCoord);
 #if _LIGHT_COOKIES
                 // when light cookies are enabled and one is set for the main light, also factor it
                 mainLight.color *= SampleMainLightCookie(currPosWS);
@@ -125,11 +100,11 @@ Shader "Hidden/VolumetricFog"
 #endif
                 // initialize the accumulated color from additional lights
                 float3 additionalLightsColor = float3(0.0, 0.0, 0.0);   
-
-                // loop differently throught lights in Forward+ while considering Forward and Deferred too
+                
+                // loop differently through lights in Forward+ while considering Forward and Deferred too
                 LIGHT_LOOP_BEGIN(_CustomAdditionalLightsCount)
                     Light additionalLight = GetAdditionalPerObjectLight(lightIndex, currPosWS);
-                    additionalLight.shadowAttenuation = AdditionalLightRealtimeShadow(lightIndex, currPosWS, additionalLight.direction);
+                    additionalLight.shadowAttenuation = VolumetricAdditionalLightRealtimeShadow(lightIndex, currPosWS, additionalLight.direction);
 #if _LIGHT_COOKIES
                     // when light cookies are enabled and a cookie is set for this additional light also factor it
                     additionalLight.color *= SampleAdditionalLightCookie(lightIndex, currPosWS);
@@ -137,7 +112,7 @@ Shader "Hidden/VolumetricFog"
                     // calculate the phase function for this additional light
                     float phaseAdditionalLight = CornetteShanksPhaseFunction(_AdditionalLightsAnisotropy, dot(rd, additionalLight.direction));
 
-                    // See unity.render-pipelines.universal\ShaderLibrary\RealtimeLights.hlsl - GetAdditionalPerObjectLight
+                    // See universal\ShaderLibrary\RealtimeLights.hlsl - GetAdditionalPerObjectLight
 #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
                     float4 additionalLightPos = _AdditionalLightsBuffer[lightIndex].position;
 #else
@@ -201,7 +176,7 @@ Shader "Hidden/VolumetricFog"
                     // calculate the current world position
                     float3 currPosWS = ro + rd * dist;
 
-                     // calculate density
+                    // calculate density
                     float density = GetFogDensity(currPosWS.y);
                     
                     // keep marching when there is not enough density
