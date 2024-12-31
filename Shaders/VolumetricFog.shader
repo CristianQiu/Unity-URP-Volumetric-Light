@@ -57,6 +57,34 @@ Shader "Hidden/VolumetricFog"
             float _AdditionalLightsRadiusSq;
             int _MaxSteps;
 
+            // This is a copy of SampleShadowmap from Shadows.hlsl. 
+            real VolumetricSampleShadowmap(TEXTURE2D_SHADOW_PARAM(ShadowMap, sampler_ShadowMap), float4 shadowCoord, ShadowSamplingData samplingData, half4 shadowParams, bool isPerspectiveProjection = true)
+            {
+                if (isPerspectiveProjection)
+                    shadowCoord.xyz /= shadowCoord.w;
+
+                // For volumetric shadows, we want to avoid using soft shadows for increased performance.
+                real attenuation = real(SAMPLE_TEXTURE2D_SHADOW(ShadowMap, sampler_ShadowMap, shadowCoord.xyz));
+                real shadowStrength = shadowParams.x;
+                attenuation = LerpWhiteTo(attenuation, shadowStrength);
+                
+                return BEYOND_SHADOW_FAR(shadowCoord) ? 1.0 : attenuation;
+            }
+
+            // This is a copy of MainLightRealTimeShadow from Shadows.hlsl. 
+            half VolumetricMainLightRealtimeShadow(float4 shadowCoord)
+            {
+                #if !defined(MAIN_LIGHT_CALCULATE_SHADOWS)
+                    return half(1.0);
+                #elif defined(_MAIN_LIGHT_SHADOWS_SCREEN) && !defined(_SURFACE_TYPE_TRANSPARENT)
+                    return SampleScreenSpaceShadowmap(shadowCoord);
+                #else
+                    ShadowSamplingData shadowSamplingData = GetMainLightShadowSamplingData();
+                    half4 shadowParams = GetMainLightShadowParams();
+                    return VolumetricSampleShadowmap(TEXTURE2D_ARGS(_MainLightShadowmapTexture, sampler_LinearClampCompare), shadowCoord, shadowSamplingData, shadowParams, false);
+                #endif
+            }
+
             // Gets the fog density at the given world height.
             float GetFogDensity(float posWSy)
             {
