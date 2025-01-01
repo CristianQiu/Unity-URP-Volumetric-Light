@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using Unity.Collections;
 
 #if UNITY_6000_0_OR_NEWER
 using System;
@@ -52,6 +53,16 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 	#region Private Attributes
 
+	private const int MaxPerCameraVisibleLights = 256;
+
+	private static readonly float[] Anisotropies = new float[MaxPerCameraVisibleLights];
+	private static readonly float[] Scatterings = new float[MaxPerCameraVisibleLights];
+	private static readonly float[] RadiiSq = new float[MaxPerCameraVisibleLights];
+
+	private static readonly int AnisotropiesArrayId = Shader.PropertyToID("_Anisotropies");
+	private static readonly int ScatteringsArrayId = Shader.PropertyToID("_Scatterings");
+	private static readonly int RadiiSqArrayId = Shader.PropertyToID("_RadiiSq");
+
 	private static readonly int FrameCountId = Shader.PropertyToID("_FrameCount");
 	private static readonly int CustomAdditionalLightsCountId = Shader.PropertyToID("_CustomAdditionalLightsCount");
 	private static readonly int DistanceId = Shader.PropertyToID("_Distance");
@@ -63,9 +74,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int MainLightAnisotropyId = Shader.PropertyToID("_MainLightAnisotropy");
 	private static readonly int MainLightScatteringId = Shader.PropertyToID("_MainLightScattering");
 	private static readonly int MainLightColorTintId = Shader.PropertyToID("_MainLightColorTint");
-	private static readonly int AdditionalLightsAnisotropyId = Shader.PropertyToID("_AdditionalLightsAnisotropy");
-	private static readonly int AdditionalLightsScatteringId = Shader.PropertyToID("_AdditionalLightsScattering");
-	private static readonly int AdditionalLightsRadiusSqId = Shader.PropertyToID("_AdditionalLightsRadiusSq");
 	private static readonly int MaxStepsId = Shader.PropertyToID("_MaxSteps");
 
 	private static readonly int HalfResCameraDepthTextureId = Shader.PropertyToID("_HalfResCameraDepthTexture");
@@ -165,6 +173,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 			EnableMainLightContribution(volumetricFogMaterial, fogVolume.enableMainLightContribution.value);
 			EnableAdditionalLightsContribution(volumetricFogMaterial, fogVolume.enableAdditionalLightsContribution.value);
+			UpdateLightsProperties(fogVolume, volumetricFogMaterial, renderingData.lightData.visibleLights);
 			volumetricFogMaterial.SetInteger(FrameCountId, frameCount);
 			volumetricFogMaterial.SetInteger(CustomAdditionalLightsCountId, renderingData.lightData.additionalLightsCount);
 			volumetricFogMaterial.SetFloat(DistanceId, fogVolume.distance.value);
@@ -176,9 +185,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			volumetricFogMaterial.SetColor(MainLightColorTintId, fogVolume.mainLightColorTint.value);
 			volumetricFogMaterial.SetFloat(MainLightAnisotropyId, fogVolume.mainLightAnisotropy.value);
 			volumetricFogMaterial.SetFloat(MainLightScatteringId, fogVolume.mainLightScattering.value);
-			volumetricFogMaterial.SetFloat(AdditionalLightsAnisotropyId, fogVolume.additionalLightsAnisotropy.value);
-			volumetricFogMaterial.SetFloat(AdditionalLightsScatteringId, fogVolume.additionalLightsScattering.value);
-			volumetricFogMaterial.SetFloat(AdditionalLightsRadiusSqId, fogVolume.additionalLightsRadius.value * fogVolume.additionalLightsRadius.value);
 			volumetricFogMaterial.SetInteger(MaxStepsId, fogVolume.maxSteps.value);
 
 			Blitter.BlitCameraTexture(cmd, volumetricFogRenderRTHandle, volumetricFogRenderRTHandle, volumetricFogMaterial, 0);
@@ -318,6 +324,44 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	}
 
 	/// <summary>
+	/// Updates the lights parameters from the material.
+	/// </summary>
+	/// <param name="fogVolume"></param>
+	/// <param name="volumetricFogMaterial"></param>
+	/// <param name="visibleLights"></param>
+	private static void UpdateLightsProperties(VolumetricFogVolumeComponent fogVolume, Material volumetricFogMaterial, NativeArray<VisibleLight> visibleLights)
+	{
+		int length = visibleLights.Length;
+
+		// TODO: The main light is also in visibleLights, and it is placed at index 0. Other directional lights seem to be placed after it.
+		for (int i = 0; i < MaxPerCameraVisibleLights; ++i)
+		{
+			float anisotropy = fogVolume.additionalLightsAnisotropy.value;
+			float scattering = fogVolume.additionalLightsScattering.value;
+			float radius = fogVolume.additionalLightsRadius.value;
+
+			if (i < length)
+			{
+				// TODO: Avoid using GetComponent.
+				if (visibleLights[i].light.TryGetComponent(out VolumetricLightOverride volumetricLight))
+				{
+					anisotropy = volumetricLight.Anisotropy;
+					scattering = volumetricLight.Scattering;
+					radius = volumetricLight.Radius;
+				}
+			}
+
+			Anisotropies[i] = anisotropy;
+			Scatterings[i] = scattering;
+			RadiiSq[i] = radius * radius;
+		}
+
+		volumetricFogMaterial.SetFloatArray(AnisotropiesArrayId, Anisotropies);
+		volumetricFogMaterial.SetFloatArray(ScatteringsArrayId, Scatterings);
+		volumetricFogMaterial.SetFloatArray(RadiiSqArrayId, RadiiSq);
+	}
+
+	/// <summary>
 	/// Updates the ground height parameter from the material.
 	/// </summary>
 	/// <param name="volumetricFogMaterial"></param>
@@ -381,6 +425,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			Material volumetricFogMaterial = passData.material;
 			EnableMainLightContribution(volumetricFogMaterial, fogVolume.enableMainLightContribution.value);
 			EnableAdditionalLightsContribution(volumetricFogMaterial, fogVolume.enableAdditionalLightsContribution.value);
+			UpdateLightsProperties(fogVolume, volumetricFogMaterial, passData.lightData.visibleLights);
 			volumetricFogMaterial.SetTexture(HalfResCameraDepthTextureId, passData.halfResCameraDepthTarget);
 			volumetricFogMaterial.SetInteger(FrameCountId, frameCount);
 			volumetricFogMaterial.SetInteger(CustomAdditionalLightsCountId, passData.lightData.additionalLightsCount);
@@ -393,9 +438,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			volumetricFogMaterial.SetColor(MainLightColorTintId, fogVolume.mainLightColorTint.value);
 			volumetricFogMaterial.SetFloat(MainLightAnisotropyId, fogVolume.mainLightAnisotropy.value);
 			volumetricFogMaterial.SetFloat(MainLightScatteringId, fogVolume.mainLightScattering.value);
-			volumetricFogMaterial.SetFloat(AdditionalLightsAnisotropyId, fogVolume.additionalLightsAnisotropy.value);
-			volumetricFogMaterial.SetFloat(AdditionalLightsScatteringId, fogVolume.additionalLightsScattering.value);
-			volumetricFogMaterial.SetFloat(AdditionalLightsRadiusSqId, fogVolume.additionalLightsRadius.value * fogVolume.additionalLightsRadius.value);
 			volumetricFogMaterial.SetInteger(MaxStepsId, fogVolume.maxSteps.value);
 		}
 		else if (stage == PassStage.CompositeFog)

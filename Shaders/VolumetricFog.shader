@@ -42,6 +42,12 @@ Shader "Hidden/VolumetricFog"
             #pragma vertex Vert
             #pragma fragment Frag
 
+            #define MaxPerCameraVisibleLights 256
+
+            float _Anisotropies[MaxPerCameraVisibleLights];
+            float _Scatterings[MaxPerCameraVisibleLights];
+            float _RadiiSq[MaxPerCameraVisibleLights];
+
             int _FrameCount;
             uint _CustomAdditionalLightsCount;
             float _Distance;
@@ -53,9 +59,6 @@ Shader "Hidden/VolumetricFog"
             float _MainLightAnisotropy;
             float _MainLightScattering;
             float3 _MainLightColorTint;
-            float _AdditionalLightsAnisotropy;
-            float _AdditionalLightsScattering;
-            float _AdditionalLightsRadiusSq;
             int _MaxSteps;
 
             // Gets the fog density at the given world height.
@@ -103,6 +106,12 @@ Shader "Hidden/VolumetricFog"
                 
                 // loop differently through lights in Forward+ while considering Forward and Deferred too
                 LIGHT_LOOP_BEGIN(_CustomAdditionalLightsCount)
+                    int i = lightIndex;
+
+                    float additionalLightAnisotropy = _Anisotropies[i];
+                    float additionalLightScattering = _Scatterings[i];
+                    float additionalLightRadiusSq = _RadiiSq[i];
+
                     Light additionalLight = GetAdditionalPerObjectLight(lightIndex, currPosWS);
                     additionalLight.shadowAttenuation = VolumetricAdditionalLightRealtimeShadow(lightIndex, currPosWS, additionalLight.direction);
 #if _LIGHT_COOKIES
@@ -110,7 +119,7 @@ Shader "Hidden/VolumetricFog"
                     additionalLight.color *= SampleAdditionalLightCookie(lightIndex, currPosWS);
 #endif
                     // calculate the phase function for this additional light
-                    float phaseAdditionalLight = CornetteShanksPhaseFunction(_AdditionalLightsAnisotropy, dot(rd, additionalLight.direction));
+                    float phaseAdditionalLight = CornetteShanksPhaseFunction(additionalLightAnisotropy, dot(rd, additionalLight.direction));
 
                     // See universal\ShaderLibrary\RealtimeLights.hlsl - GetAdditionalPerObjectLight
 #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
@@ -122,7 +131,7 @@ Shader "Hidden/VolumetricFog"
                     // Gradually reduce additional lights scattering to zero at their origin to try to avoid flicker-aliasing.
                     float3 distToPos = additionalLightPos.xyz - currPosWS;
                     float distToPosMagnitudeSq = dot(distToPos, distToPos);
-                    float newScattering = smoothstep(0.0, _AdditionalLightsRadiusSq, distToPosMagnitudeSq) * _AdditionalLightsScattering;
+                    float newScattering = smoothstep(0.0, additionalLightRadiusSq, distToPosMagnitudeSq) * additionalLightScattering;
 
                     // Note: If directional lights are also considered as additional lights when more than 1 is used, ignore the previous code when it is a directional light.
                     // They store direction in additionalLightPos.xyz and have .w set to 0, while point and spotlights have it set to 1.
