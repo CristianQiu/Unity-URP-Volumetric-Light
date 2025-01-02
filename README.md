@@ -1,6 +1,6 @@
 # Requirements
 
-* Unity 2022.3, 2023.1, 2023.2 or Unity 6.
+Unity 2022.3, 2023.1, 2023.2 or Unity 6.
 
 # Features
 
@@ -25,7 +25,7 @@
 * WebGL is not supported.
 * When using forward or deferred rendering path, performance can be heavily affected when adding multiple additional lights. Forward+ is highly recommended for best performance when support for additional lights is needed.
 * Transparent objects are not blended correctly with fog.
-* It may be possible to notice more noise in some light regions at certain viewing angles.
+* It may be possible to notice more noise in some light regions at certain view angles.
 * Fog is only rendered up to a certain distance from the camera.
 
 # Known Bugs
@@ -40,10 +40,9 @@ Some of which are (in no particular order):
 * Orthographic projection support.
 * WebGL / WebGPU support.
 * Further improvements on performance.
-* And of course... bug fixing! Do not hesitate to open issues for anything that you find unexpected.
+* And of course... bug fixing! Do not hesitate to open issues for anything that you find unexpected or buggy.
 
 # Preview
 URP Garden | URP Terminal
 :-:|:-:|:-:|
-![Garden](Assets~/Images/Terrain-Fog.png) | ![Terminal](Assets~/Images/Garden-Fog.png)
-![alt-text](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Teaser.gif)
+![Garden](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Garden.gif) | ![Terminal](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Terminal.gif)
