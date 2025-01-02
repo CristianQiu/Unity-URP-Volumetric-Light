@@ -5,7 +5,7 @@
 # About
 
 * Render graph support for Unity 6. Compatibility mode is also supported.
-* Supports directional lights, point lights, and spot lights, including shadows and cookies for all of them.
+* Support for directional lights, point lights, and spot lights, including shadows and light cookies for all of them.
 * Seamlessly integrated into URP volume system.
 * Single pass VR rendering support. This is verified by users, since I do not work on VR. If you find any VR specific issue contact me and I will try to help. Multipass is not supported.
 
@@ -16,11 +16,8 @@
 * Add a volume to your scene and add override: "Custom->Volumetric Fog".
 * Tick the "Enabled" checkbox, as fog is disabled by default.
 * Make sure that "Enable Main Light Contribution" and "Enable Additional Lights Contribution" are also enabled depending on your needs, as they are also disabled by default.
+* For spot and point lights, add the component "VolumetricAdditionalLight" to those lights that you want to contribute to the volumetric fog.
 * If you still can not see the fog, play with the different volume parameters or try to increase the intensity of your lights.
-
-# Known Bugs
-
-* There seems to be issues with volumetric shadows from additional lights when "Transparent Receive Shadows" is off in the URP Renderer. If you are having issues with volumetric shadows from point and spot lights you may need to turn the setting on.
 
 # Known limitations
 
@@ -28,10 +25,22 @@
 * WebGL is not supported.
 * When using forward or deferred rendering path, performance can be heavily affected when adding multiple additional lights, specially when using shadows. Forward+ is highly recommended for best performance.
 * Transparent objects are not blended correctly with fog.
-* Some of the settings are shared between all additional lights, like scattering or anisotropy.
-* It is currently not possible to selectively exclude additional lights from the volumetric fog.
 * For certain viewing angles it may be possible to notice more noise in some light regions.
 * Fog is only rendered up to a certain distance from the camera.
+
+# Known Bugs
+
+* There seems to be issues with volumetric shadows from additional lights when "Transparent Receive Shadows" is off in the URP Renderer. If you are having issues with volumetric shadows from point and spot lights you may need to turn the setting on.
+
+# TODO
+
+There are a few things that I would like to work on at "some, who knows when" point.
+Some of which are (in no particular order):
+
+* Orthographic projection support.
+* WebGL / WebGPU support.
+* Further improvements on performance.
+* And of course, bug fixing! Do not hesitate to open issues to post any bug that you find! 
 
 # Preview
 ![alt-text](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Teaser.gif)
