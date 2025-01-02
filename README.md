@@ -43,6 +43,8 @@ Some of which are (in no particular order):
 * And of course... bug fixing! Do not hesitate to open issues for anything that you find unexpected or buggy.
 
 # Preview
-URP Garden | URP Terminal
-:-:|:-:|:-:|
-![Garden](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Garden.gif) | ![Terminal](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Terminal.gif)
+URP Japanese Garden<br><br>
+![Garden](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Garden.gif)
+
+URP Terminal<br><br>
+![Terminal](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Terminal.gif)
