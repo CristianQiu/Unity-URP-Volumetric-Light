@@ -133,16 +133,16 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		cameraTargetDescriptor.width /= 2;
 		cameraTargetDescriptor.height /= 2;
 		cameraTargetDescriptor.graphicsFormat = GraphicsFormat.R32_SFloat;
-		RenderingUtils.ReAllocateIfNeeded(ref halfResCameraDepthRTHandle, cameraTargetDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HalfResCameraDepth");
+		RenderingUtils.ReAllocateIfNeeded(ref halfResCameraDepthRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: "_HalfResCameraDepth");
 
 		cameraTargetDescriptor.colorFormat = RenderTextureFormat.ARGBHalf;
-		RenderingUtils.ReAllocateIfNeeded(ref volumetricFogRenderRTHandle, cameraTargetDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_VolumetricFog");
-		RenderingUtils.ReAllocateIfNeeded(ref volumetricFogAuxRenderRTHandle, cameraTargetDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_VolumetricFogAux");
+		RenderingUtils.ReAllocateIfNeeded(ref volumetricFogRenderRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: "_VolumetricFog");
+		RenderingUtils.ReAllocateIfNeeded(ref volumetricFogAuxRenderRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: "_VolumetricFogAux");
 
 		cameraTargetDescriptor.width = originalResolution.x;
 		cameraTargetDescriptor.height = originalResolution.y;
 		cameraTargetDescriptor.colorFormat = originalColorFormat;
-		RenderingUtils.ReAllocateIfNeeded(ref volumetricFogCompositionRTHandle, cameraTargetDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_VolumetricFogComposition");
+		RenderingUtils.ReAllocateIfNeeded(ref volumetricFogCompositionRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: "_VolumetricFogComposition");
 	}
 
 	/// <summary>
@@ -412,8 +412,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		halfResCameraDepthTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, "_HalfResCameraDepth", false);
 
 		cameraTargetDescriptor.colorFormat = RenderTextureFormat.ARGBHalf;
-		volumetricFogRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, "_VolumetricFog", false, FilterMode.Bilinear);
-		volumetricFogAuxRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, "_VolumetricFogAux", false, FilterMode.Bilinear);
+		volumetricFogRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, "_VolumetricFog", false);
+		volumetricFogAuxRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, "_VolumetricFogAux", false);
 
 		cameraTargetDescriptor.width = originalResolution.x;
 		cameraTargetDescriptor.height = originalResolution.y;
