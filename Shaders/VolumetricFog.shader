@@ -105,7 +105,7 @@ Shader "Hidden/VolumetricFog"
                 
                 // loop differently through lights in Forward+ while considering Forward and Deferred too
                 LIGHT_LOOP_BEGIN(_CustomAdditionalLightsCount)
-                    int i = (lightIndex >= _MainLightIndex) ? (lightIndex + 1) : lightIndex;
+                    uint i = ((int)lightIndex >= _MainLightIndex) ? (lightIndex + 1) : lightIndex;
                     float additionalLightScattering = _Scatterings[i];
 
                     UNITY_BRANCH
