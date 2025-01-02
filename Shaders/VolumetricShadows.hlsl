@@ -4,7 +4,7 @@
 real VolumetricSampleShadowmap(TEXTURE2D_SHADOW_PARAM(ShadowMap, sampler_ShadowMap), float4 shadowCoord, ShadowSamplingData samplingData, half4 shadowParams, bool isPerspectiveProjection = true)
 {
     if (isPerspectiveProjection)
-        shadowCoord.xyz /= shadowCoord.w;
+        shadowCoord.xyz /= max(0.00001, shadowCoord.w);
 
     // For volumetric shadows, we want to avoid using soft shadows for increased performance.
     real attenuation = real(SAMPLE_TEXTURE2D_SHADOW(ShadowMap, sampler_ShadowMap, shadowCoord.xyz));

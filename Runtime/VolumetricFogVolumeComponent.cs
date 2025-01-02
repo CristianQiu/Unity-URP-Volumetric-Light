@@ -51,12 +51,6 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Header("Additional Lights")]
 	[Tooltip("Disabling this will avoid computing additional lights contribution to fog, which in most cases will lead to better performance.")]
 	public BoolParameter enableAdditionalLightsContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
-	[Tooltip("Higher values will make the fog affected by additional lights to appear brighter when directly looking to the light source. The higher the value the less the brightness will spread when looking away from the light.")]
-	public ClampedFloatParameter additionalLightsAnisotropy = new ClampedFloatParameter(0.25f, 0.0f, 0.99f);
-	[Tooltip("Higher values will make fog affected by additional lights to appear brighter.")]
-	public ClampedFloatParameter additionalLightsScattering = new ClampedFloatParameter(1.0f, 0.0f, 16.0f);
-	[Tooltip("Sets a falloff radius for point and spotlights. A higher value reduces noise towards the origin of the light")]
-	public ClampedFloatParameter additionalLightsRadius = new ClampedFloatParameter(0.2f, 0.0f, 1.0f);
 
 	[Header("Performance & Quality")]
 	[Tooltip("Raymarching steps. Greater values will increase the fog quality at the expense of performance.")]

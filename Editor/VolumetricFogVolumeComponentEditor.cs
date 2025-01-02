@@ -25,9 +25,6 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	private SerializedDataParameter mainLightScattering;
 
 	private SerializedDataParameter enableAdditionalLightsContribution;
-	private SerializedDataParameter additionalLightsAnisotropy;
-	private SerializedDataParameter additionalLightsScattering;
-	private SerializedDataParameter additionalLightsRadius;
 
 	private SerializedDataParameter maxSteps;
 	private SerializedDataParameter blurIterations;
@@ -60,9 +57,6 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		mainLightScattering = Unpack(p.Find(x => x.mainLightScattering));
 
 		enableAdditionalLightsContribution = Unpack(p.Find(x => x.enableAdditionalLightsContribution));
-		additionalLightsAnisotropy = Unpack(p.Find(x => x.additionalLightsAnisotropy));
-		additionalLightsScattering = Unpack(p.Find(x => x.additionalLightsScattering));
-		additionalLightsRadius = Unpack(p.Find(x => x.additionalLightsRadius));
 
 		maxSteps = Unpack(p.Find(x => x.maxSteps));
 		blurIterations = Unpack(p.Find(x => x.blurIterations));
@@ -105,12 +99,6 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 			}
 
 			PropertyField(enableAdditionalLightsContribution);
-			if (enabledAdditionalLightsContribution)
-			{
-				PropertyField(additionalLightsAnisotropy);
-				PropertyField(additionalLightsScattering);
-				PropertyField(additionalLightsRadius);
-			}
 
 			PropertyField(maxSteps);
 			PropertyField(blurIterations);

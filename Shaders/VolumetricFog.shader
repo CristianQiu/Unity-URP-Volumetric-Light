@@ -49,6 +49,7 @@ Shader "Hidden/VolumetricFog"
             float _RadiiSq[MaxPerCameraVisibleLights];
 
             int _FrameCount;
+            int _MainLightIndex;
             uint _CustomAdditionalLightsCount;
             float _Distance;
             float _BaseHeight;
@@ -56,8 +57,6 @@ Shader "Hidden/VolumetricFog"
             float _GroundHeight;
             float _Density;
             float _Absortion;
-            float _MainLightAnisotropy;
-            float _MainLightScattering;
             float3 _MainLightColorTint;
             int _MaxSteps;
 
@@ -86,7 +85,7 @@ Shader "Hidden/VolumetricFog"
                 mainLight.color *= SampleMainLightCookie(currPosWS);
 #endif
                 // return the final color
-                return (mainLight.color * _MainLightColorTint) * (mainLight.shadowAttenuation * phaseMainLight * density * _MainLightScattering);
+                return (mainLight.color * _MainLightColorTint) * (mainLight.shadowAttenuation * phaseMainLight * density * _Scatterings[_MainLightIndex]);
             }
 
             // Gets the accumulated color from additional lights at one raymarch step.
@@ -106,10 +105,14 @@ Shader "Hidden/VolumetricFog"
                 
                 // loop differently through lights in Forward+ while considering Forward and Deferred too
                 LIGHT_LOOP_BEGIN(_CustomAdditionalLightsCount)
-                    int i = lightIndex;
+                    int i = (lightIndex >= _MainLightIndex) ? (lightIndex + 1) : lightIndex;
+                    float additionalLightScattering = _Scatterings[i];
+
+                    UNITY_BRANCH
+                    if (additionalLightScattering <= 0.0)
+                        continue;
 
                     float additionalLightAnisotropy = _Anisotropies[i];
-                    float additionalLightScattering = _Scatterings[i];
                     float additionalLightRadiusSq = _RadiiSq[i];
 
                     Light additionalLight = GetAdditionalPerObjectLight(lightIndex, currPosWS);
@@ -135,7 +138,7 @@ Shader "Hidden/VolumetricFog"
 
                     // Note: If directional lights are also considered as additional lights when more than 1 is used, ignore the previous code when it is a directional light.
                     // They store direction in additionalLightPos.xyz and have .w set to 0, while point and spotlights have it set to 1.
-                    newScattering = lerp(1.0, newScattering, additionalLightPos.w);
+                    // newScattering = lerp(1.0, newScattering, additionalLightPos.w);
 
                     // accumulate the total color for additional lights
                     additionalLightsColor += (additionalLight.color * (additionalLight.shadowAttenuation * additionalLight.distanceAttenuation * phaseAdditionalLight * density * newScattering));
@@ -163,8 +166,12 @@ Shader "Hidden/VolumetricFog"
                 float stepLength = _Distance / (float)_MaxSteps;
                 float jitter = stepLength * InterleavedGradientNoise(input.positionCS.xy, _FrameCount);
 
+#if _MAIN_LIGHT_CONTRIBUTION_DISABLED
+                float phaseMainLight = 0.0;
+#else
                 // calculate the phase function for the main light and part of the extinction factor
-                float phaseMainLight = CornetteShanksPhaseFunction(_MainLightAnisotropy, dot(rd, GetMainLight().direction));
+                float phaseMainLight = CornetteShanksPhaseFunction(_Anisotropies[_MainLightIndex], dot(rd, GetMainLight().direction));
+#endif
                 float minusStepLengthTimesAbsortion = -stepLength * _Absortion;
                 
                 // initialize the volumetric fog color and transmittance
