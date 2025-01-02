@@ -2,7 +2,7 @@
 
 * Unity 2022.3, 2023.1, 2023.2 or Unity 6.
 
-# About
+# Features
 
 * Render graph support for Unity 6. Compatibility mode is also supported.
 * Support for directional lights, point lights, and spot lights, including shadows and light cookies for all of them.
@@ -23,9 +23,9 @@
 
 * Orthographic projection is not supported.
 * WebGL is not supported.
-* When using forward or deferred rendering path, performance can be heavily affected when adding multiple additional lights, specially when using shadows. Forward+ is highly recommended for best performance.
+* When using forward or deferred rendering path, performance can be heavily affected when adding multiple additional lights. Forward+ is highly recommended for best performance when support for additional lights is needed.
 * Transparent objects are not blended correctly with fog.
-* For certain viewing angles it may be possible to notice more noise in some light regions.
+* It may be possible to notice more noise in some light regions at certain viewing angles.
 * Fog is only rendered up to a certain distance from the camera.
 
 # Known Bugs
@@ -34,13 +34,16 @@
 
 # TODO
 
-There are a few things that I would like to work on at "some, who knows when" point.
+There are a few things that I would like to add at some point.
 Some of which are (in no particular order):
 
 * Orthographic projection support.
 * WebGL / WebGPU support.
 * Further improvements on performance.
-* And of course, bug fixing! Do not hesitate to open issues to post any bug that you find! 
+* And of course... bug fixing! Do not hesitate to open issues for anything that you find unexpected.
 
 # Preview
+URP Garden | URP Terminal
+:-:|:-:|:-:|
+![Garden](Assets~/Images/Terrain-Fog.png) | ![Terminal](Assets~/Images/Garden-Fog.png)
 ![alt-text](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Teaser.gif)
