@@ -1,7 +1,9 @@
 # Changelog
 
-## [0.4.0] - 2025-01-01
+## [0.4.0] - 2025-01-02
 
+* A new component has been added: VolumetricAdditionalLight. This component now must be added to each point and spot light that you want to influence the volumetric fog. Because of that, now it is possible to have different settings per light.
+The main light settings are still configured in the volume, as it should still be used with Unity's volume workflow (mainly for blending purposes).
 * Shadow sampling during raymarching now ignores whether soft shadows are enabled and its quality level. This greatly enhances performance when using soft shadows with a barely noticeable loss in quality.
 * Changed blur to use point sampling instead of bilinear since source and target are the same size.
 * Added back shader model 4.5 instruction to increase the downsample depth pass performance, while also having an alternate path to support cases where it is not possible to use it.
