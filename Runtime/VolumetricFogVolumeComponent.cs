@@ -20,7 +20,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 
 	[Header("Distances")]
 	[Tooltip("The maximum distance from the camera that the fog will be rendered up to.")]
-	public ClampedFloatParameter distance = new ClampedFloatParameter(128.0f, 0.0f, 512.0f);
+	public ClampedFloatParameter distance = new ClampedFloatParameter(64.0f, 0.0f, 512.0f);
 	[Tooltip("The world height at which the fog will have the density specified in the volume.")]
 	public FloatParameter baseHeight = new FloatParameter(0.0f, true);
 	[Tooltip("The world height at which the fog will have no density at all.")]
@@ -54,7 +54,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 
 	[Header("Performance & Quality")]
 	[Tooltip("Raymarching steps. Greater values will increase the fog quality at the expense of performance.")]
-	public ClampedIntParameter maxSteps = new ClampedIntParameter(64, 8, 256);
+	public ClampedIntParameter maxSteps = new ClampedIntParameter(128, 8, 256);
 	[Tooltip("The number of times that the fog texture will be blurred. Higher values lead to softer volumetric god rays at the cost of some performance.")]
 	public ClampedIntParameter blurIterations = new ClampedIntParameter(2, 1, 4);
 	[Tooltip("Disabling this will completely remove any feature from the volumetric fog from being rendered at all.")]
