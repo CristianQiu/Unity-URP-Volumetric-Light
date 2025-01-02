@@ -173,7 +173,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			bool enableMainLightContribution = fogVolume.enableMainLightContribution.value && fogVolume.mainLightScattering.value > 0.0f && renderingData.lightData.mainLightIndex > -1;
 			EnableMainLightContribution(volumetricFogMaterial, enableMainLightContribution);
 			EnableAdditionalLightsContribution(volumetricFogMaterial, fogVolume.enableAdditionalLightsContribution.value);
-			UpdateLightsProperties(fogVolume, volumetricFogMaterial, renderingData.lightData.visibleLights, renderingData.lightData.mainLightIndex);
+			UpdateLightsProperties(enableMainLightContribution, fogVolume, volumetricFogMaterial, renderingData.lightData.visibleLights, renderingData.lightData.mainLightIndex);
 			volumetricFogMaterial.SetInteger(FrameCountId, frameCount);
 			volumetricFogMaterial.SetInteger(MainLightIndexId, renderingData.lightData.mainLightIndex);
 			volumetricFogMaterial.SetInteger(CustomAdditionalLightsCountId, renderingData.lightData.additionalLightsCount);
@@ -325,13 +325,14 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// <summary>
 	/// Updates the lights parameters from the material.
 	/// </summary>
+	/// <param name="enableMainLightContribution"></param>
 	/// <param name="fogVolume"></param>
 	/// <param name="volumetricFogMaterial"></param>
 	/// <param name="visibleLights"></param>
 	/// <param name="mainLightIndex"></param>
-	private static void UpdateLightsProperties(VolumetricFogVolumeComponent fogVolume, Material volumetricFogMaterial, NativeArray<VisibleLight> visibleLights, int mainLightIndex)
+	private static void UpdateLightsProperties(bool enableMainLightContribution, VolumetricFogVolumeComponent fogVolume, Material volumetricFogMaterial, NativeArray<VisibleLight> visibleLights, int mainLightIndex)
 	{
-		if (!fogVolume.enableMainLightContribution.value && !fogVolume.enableAdditionalLightsContribution.value)
+		if (!enableMainLightContribution && !fogVolume.enableAdditionalLightsContribution.value)
 			return;
 
 		// ScriptableCullingParameters.maximumVisibleLights determines the length of this array.
@@ -355,9 +356,12 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 				}
 				else if (visibleLights[i].light.TryGetComponent(out VolumetricAdditionalLight volumetricLight))
 				{
-					anisotropy = volumetricLight.Anisotropy;
-					scattering = volumetricLight.Scattering;
-					radius = volumetricLight.Radius;
+					if (volumetricLight.enabled)
+					{
+						anisotropy = volumetricLight.Anisotropy;
+						scattering = volumetricLight.Scattering;
+						radius = volumetricLight.Radius;
+					}
 				}
 			}
 
@@ -436,7 +440,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			bool enableMainLightContribution = fogVolume.enableMainLightContribution.value && fogVolume.mainLightScattering.value > 0.0f && passData.lightData.mainLightIndex > -1;
 			EnableMainLightContribution(volumetricFogMaterial, enableMainLightContribution);
 			EnableAdditionalLightsContribution(volumetricFogMaterial, fogVolume.enableAdditionalLightsContribution.value);
-			UpdateLightsProperties(fogVolume, volumetricFogMaterial, passData.lightData.visibleLights, passData.lightData.mainLightIndex);
+			UpdateLightsProperties(enableMainLightContribution, fogVolume, volumetricFogMaterial, passData.lightData.visibleLights, passData.lightData.mainLightIndex);
 			volumetricFogMaterial.SetTexture(HalfResCameraDepthTextureId, passData.halfResCameraDepthTarget);
 			volumetricFogMaterial.SetInteger(FrameCountId, frameCount);
 			volumetricFogMaterial.SetInteger(MainLightIndexId, passData.lightData.mainLightIndex);
