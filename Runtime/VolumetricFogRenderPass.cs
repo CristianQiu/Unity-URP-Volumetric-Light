@@ -63,8 +63,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int ScatteringsArrayId = Shader.PropertyToID("_Scatterings");
 	private static readonly int RadiiSqArrayId = Shader.PropertyToID("_RadiiSq");
 
-	private static readonly int MainLightIndexId = Shader.PropertyToID("_MainLightIndex");
 	private static readonly int FrameCountId = Shader.PropertyToID("_FrameCount");
+	private static readonly int MainLightIndexId = Shader.PropertyToID("_MainLightIndex");
 	private static readonly int CustomAdditionalLightsCountId = Shader.PropertyToID("_CustomAdditionalLightsCount");
 	private static readonly int DistanceId = Shader.PropertyToID("_Distance");
 	private static readonly int BaseHeightId = Shader.PropertyToID("_BaseHeight");
