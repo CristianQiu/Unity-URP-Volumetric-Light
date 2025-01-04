@@ -1,3 +1,6 @@
+#ifndef DEPTH_AWARE_GAUSSIAN_BLUR_INCLUDED
+#define DEPTH_AWARE_GAUSSIAN_BLUR_INCLUDED
+
 #include "./DeclareDownsampledDepthTexture.hlsl"
 
 #define KERNEL_RADIUS 4
@@ -56,3 +59,5 @@ float4 DepthAwareGaussianBlur(float2 uv, float2 dir, TEXTURE2D_X(textureToBlur),
 
     return float4(rgbResult / weights, centerSample.a);
 }
+
+#endif

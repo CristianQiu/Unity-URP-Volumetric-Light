@@ -28,7 +28,7 @@ public sealed class VolumetricAdditionalLight : MonoBehaviour
 	public float Anisotropy
 	{
 		get { return anisotropy; }
-		set { anisotropy = Mathf.Clamp01(value); }
+		set { anisotropy = Mathf.Clamp(value, 0.0f, 0.99f); }
 	}
 
 	public float Scattering

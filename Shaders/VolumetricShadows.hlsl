@@ -1,3 +1,6 @@
+#ifndef VOLUMETRIC_SHADOWS_INCLUDED
+#define VOLUMETRIC_SHADOWS_INCLUDED
+
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
 
 // Copied and modified from SampleShadowmap from universal/ShaderLibrary/Shadows.hlsl. 
@@ -62,3 +65,5 @@ half VolumetricAdditionalLightRealtimeShadow(int lightIndex, float3 positionWS, 
         return half(1.0);
     #endif
 }
+
+#endif
