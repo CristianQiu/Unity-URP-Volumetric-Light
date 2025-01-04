@@ -335,10 +335,10 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		if (!enableMainLightContribution && !fogVolume.enableAdditionalLightsContribution.value)
 			return;
 
-		// ScriptableCullingParameters.maximumVisibleLights determines the length of this array.
-		// In forward+, it defaults to 256, but deferred and deferred+ may have an even higher
-		// amount set. Since this package works best in forward+ and deferred+ is still in alpha on
-		// 6000.1, we just assume to have a maximum of 256.
+		// ScriptableCullingParameters.maximumVisibleLights determines the length of this array. In
+		// forward+, it defaults to 256, but deferred and deferred+ may have an even higher amount
+		// set. Since this package works best in forward+ and deferred+ is still in alpha on 6000.1,
+		// we just assume to have a maximum of 256.
 		int length = visibleLights.Length;
 
 		for (int i = 0; i < MaxPerCameraVisibleLights; ++i)
