@@ -27,6 +27,7 @@ Shader "Hidden/VolumetricFog"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/VolumeRendering.hlsl"
             #include "./DeclareDownsampledDepthTexture.hlsl"
             #include "./VolumetricShadows.hlsl"
+            #include "./ProjectionUtils.hlsl"
 
             #pragma multi_compile _ _FORWARD_PLUS
             #pragma multi_compile _ _SHADOWS_SOFT
@@ -42,11 +43,9 @@ Shader "Hidden/VolumetricFog"
             #pragma vertex Vert
             #pragma fragment Frag
 
-            #define MaxPerCameraVisibleLights 256
-
-            float _Anisotropies[MaxPerCameraVisibleLights];
-            float _Scatterings[MaxPerCameraVisibleLights];
-            float _RadiiSq[MaxPerCameraVisibleLights];
+            float _Anisotropies[MAX_VISIBLE_LIGHTS];
+            float _Scatterings[MAX_VISIBLE_LIGHTS];
+            float _RadiiSq[MAX_VISIBLE_LIGHTS];
 
             int _FrameCount;
             int _MainLightIndex;
@@ -247,7 +246,11 @@ Shader "Hidden/VolumetricFog"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                return DepthAwareGaussianBlur(input.texcoord, float2(1.0, 0.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy);
+                UNITY_BRANCH
+                if (unity_OrthoParams.w <= 0.0)
+                    return DepthAwareGaussianBlurPerspective(input.texcoord, float2(1.0, 0.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy);
+                else
+                    return DepthAwareGaussianBlurOrthographic(input.texcoord, float2(1.0, 0.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy);
             }
 
             ENDHLSL
@@ -279,7 +282,11 @@ Shader "Hidden/VolumetricFog"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                return DepthAwareGaussianBlur(input.texcoord, float2(0.0, 1.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy);
+                UNITY_BRANCH
+                if (unity_OrthoParams.w <= 0.0)
+                    return DepthAwareGaussianBlurPerspective(input.texcoord, float2(1.0, 0.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy);
+                else
+                    return DepthAwareGaussianBlurOrthographic(input.texcoord, float2(1.0, 0.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy);
             }
 
             ENDHLSL
@@ -300,6 +307,7 @@ Shader "Hidden/VolumetricFog"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "./DeclareDownsampledDepthTexture.hlsl"
+            #include "./ProjectionUtils.hlsl"
 
             #pragma vertex Vert
             #pragma fragment Frag
@@ -313,7 +321,7 @@ Shader "Hidden/VolumetricFog"
 
                 // get the full resolution depth and convert it to linear eye depth
                 float fullResDepth = LoadSceneDepth(input.positionCS.xy);
-                float linearFullResDepth = LinearEyeDepth(fullResDepth, _ZBufferParams);
+                float linearFullResDepth = LinearEyeDepthConsiderProjection(fullResDepth);
 
                 // get the texel size from the downsampled depth texture
                 float2 texelSize = _HalfResCameraDepthTexture_TexelSize.xy;
@@ -342,7 +350,7 @@ Shader "Hidden/VolumetricFog"
                     // sample the lower resolution depth and convert to linear eye depth
                     float2 uv = uvs[i];
                     float depth = SampleDownsampledSceneDepth(uv);
-                    float linearEyeDepth = LinearEyeDepth(depth, _ZBufferParams);
+                    float linearEyeDepth = LinearEyeDepthConsiderProjection(depth);
 
                     // check the depth distance
                     float depthDist = abs(linearFullResDepth - linearEyeDepth);
