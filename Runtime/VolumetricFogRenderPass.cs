@@ -44,6 +44,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 		public UniversalLightData lightData;
 		public TextureHandle halfResCameraDepthTarget;
+		public bool orthographic;
 		public TextureHandle volumetricFogTarget;
 	}
 
@@ -63,6 +64,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int ScatteringsArrayId = Shader.PropertyToID("_Scatterings");
 	private static readonly int RadiiSqArrayId = Shader.PropertyToID("_RadiiSq");
 
+	private static readonly int IsOrthographicId = Shader.PropertyToID("_IsOrthographic");
 	private static readonly int FrameCountId = Shader.PropertyToID("_FrameCount");
 	private static readonly int MainLightIndexId = Shader.PropertyToID("_MainLightIndex");
 	private static readonly int CustomAdditionalLightsCountId = Shader.PropertyToID("_CustomAdditionalLightsCount");
@@ -174,6 +176,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			EnableMainLightContribution(volumetricFogMaterial, enableMainLightContribution);
 			EnableAdditionalLightsContribution(volumetricFogMaterial, fogVolume.enableAdditionalLightsContribution.value);
 			UpdateLightsProperties(enableMainLightContribution, fogVolume, volumetricFogMaterial, renderingData.lightData.visibleLights, renderingData.lightData.mainLightIndex);
+			volumetricFogMaterial.SetInteger(IsOrthographicId, renderingData.cameraData.camera.orthographic ? 1 : 0);
 			volumetricFogMaterial.SetInteger(FrameCountId, frameCount);
 			volumetricFogMaterial.SetInteger(MainLightIndexId, renderingData.lightData.mainLightIndex);
 			volumetricFogMaterial.SetInteger(CustomAdditionalLightsCountId, renderingData.lightData.additionalLightsCount);
@@ -245,6 +248,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			passData.materialPassIndex = 0;
 			passData.lightData = lightData;
 			passData.halfResCameraDepthTarget = halfResCameraDepthTarget;
+			passData.orthographic = cameraData.camera.orthographic;
 
 			builder.SetRenderAttachment(volumetricFogRenderTarget, 0, AccessFlags.WriteAll);
 			builder.UseTexture(halfResCameraDepthTarget);
@@ -261,6 +265,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			passData.target = volumetricFogAuxRenderTarget;
 			passData.source = volumetricFogRenderTarget;
 			passData.material = volumetricFogMaterial;
+			passData.orthographic = cameraData.camera.orthographic;
 
 			// Access flags are theoretically incorrect for one separable blur pass, but it is not
 			// going to make any difference.
@@ -278,6 +283,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			passData.materialPassIndex = 3;
 			passData.halfResCameraDepthTarget = halfResCameraDepthTarget;
 			passData.volumetricFogTarget = volumetricFogRenderTarget;
+			passData.orthographic = cameraData.camera.orthographic;
 
 			builder.SetRenderAttachment(volumetricFogCompositionTarget, 0, AccessFlags.WriteAll);
 			builder.UseTexture(resourceData.cameraColor);
@@ -437,11 +443,12 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			float absortion = 1.0f / fogVolume.attenuationDistance.value;
 
 			Material volumetricFogMaterial = passData.material;
+			volumetricFogMaterial.SetTexture(HalfResCameraDepthTextureId, passData.halfResCameraDepthTarget);
 			bool enableMainLightContribution = fogVolume.enableMainLightContribution.value && fogVolume.mainLightScattering.value > 0.0f && passData.lightData.mainLightIndex > -1;
 			EnableMainLightContribution(volumetricFogMaterial, enableMainLightContribution);
 			EnableAdditionalLightsContribution(volumetricFogMaterial, fogVolume.enableAdditionalLightsContribution.value);
 			UpdateLightsProperties(enableMainLightContribution, fogVolume, volumetricFogMaterial, passData.lightData.visibleLights, passData.lightData.mainLightIndex);
-			volumetricFogMaterial.SetTexture(HalfResCameraDepthTextureId, passData.halfResCameraDepthTarget);
+			volumetricFogMaterial.SetInteger(IsOrthographicId, passData.orthographic ? 1 : 0);
 			volumetricFogMaterial.SetInteger(FrameCountId, frameCount);
 			volumetricFogMaterial.SetInteger(MainLightIndexId, passData.lightData.mainLightIndex);
 			volumetricFogMaterial.SetInteger(CustomAdditionalLightsCountId, passData.lightData.additionalLightsCount);
