@@ -4,10 +4,12 @@ Unity 2022.3, 2023.1, 2023.2 or Unity 6.
 
 # Features
 
-* Render graph support for Unity 6. Compatibility mode is also supported.
-* Support for directional lights, point lights, and spot lights, including shadows and light cookies for all of them.
+* Render graph support for Unity 6.
+* Compatibility mode is also supported.
+* Support for the main light, spot lights and point lights.
+* Shadows and light cookies support.
 * Seamlessly integrated into URP volume system.
-* Single pass VR rendering support. This is verified by users, since I do not work on VR. If you find any VR specific issue contact me and I will try to help. Multipass is not supported.
+* Single pass VR rendering support. This is verified by users, since I do not work on VR.
 
 # How to add volumetric fog
 
@@ -23,6 +25,7 @@ Unity 2022.3, 2023.1, 2023.2 or Unity 6.
 
 * Orthographic projection is not supported.
 * WebGL is not supported.
+* Multipass VR rendering is not supported.
 * When using forward or deferred rendering path, performance can be heavily affected when adding multiple additional lights. Forward+ is highly recommended for best performance when support for additional lights is needed.
 * Transparent objects are not blended correctly with fog.
 * It may be possible to notice more noise in some light regions at certain view angles.
@@ -30,8 +33,7 @@ Unity 2022.3, 2023.1, 2023.2 or Unity 6.
 
 # Known Bugs
 
-* There seems to be issues with volumetric shadows from additional lights when "Transparent Receive Shadows" is off in the URP Renderer. If you are having issues with volumetric shadows from point and spot lights you may need to turn the setting on. See https://github.com/CristianQiu/Unity-URP-Volumetric-Light/issues/10.
-* In 6000.0.32f1, and likely some other Unity 6 previous versions, the above issue also affects the main light, regardless of whether compatibility mode is enabled or not. 
+* There is an issue with volumetric shadows from lights when "Transparent Receive Shadows" is off in the URP Renderer. If you are having issues with volumetric shadows from lights you may need to turn the setting on. See https://github.com/CristianQiu/Unity-URP-Volumetric-Light/issues/10.
 
 # TODO
 

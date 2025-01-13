@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1] - 2025-01-13
+
+* Address issue with lights potentially picking wrong parameters to affect the volumetric fog depending on whether there is a main light enabled in the scene.
+* Correctly clamp the anisotropy value for additional lights when setting the property from code.
+* Renamed main light parameters from the volume to not have the prefix "Main Light..." since additional lights are no longer displayed there since 0.4.0.
+* Minor cleanups.
+
 ## [0.4.0] - 2025-01-02
 
 * A new component has been added: VolumetricAdditionalLight. This component now must be added to each point and spot light that you want to influence the volumetric fog. Because of that, now it is possible to have different settings per light.
