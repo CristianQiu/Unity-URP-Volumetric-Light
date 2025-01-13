@@ -146,6 +146,25 @@ Shader "Hidden/VolumetricFog"
                 return additionalLightsColor;
             }
 
+            void ComputeOrthoParams(float2 uv, float depth, out float3 ro, out float3 rd)
+            {
+                float2 ndc = uv * 2.0 - 1.0;
+
+                float4x4 viewMatrix = UNITY_MATRIX_V;
+
+                float3 camRightWs = normalize(viewMatrix[0].xyz);
+                float3 camUpWs = normalize(viewMatrix[1].xyz);
+                float3 camFwdWs = normalize(-viewMatrix[2].xyz);
+
+                float3 posWs = GetCameraPositionWS() + 
+                (camRightWs * (ndc.x * unity_OrthoParams.x)) +
+                (camUpWs * (ndc.y * unity_OrthoParams.y)) +
+                (camFwdWs * depth);
+
+                rd = camFwdWs;
+                ro = posWs - rd * depth;
+            }
+
             float4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -155,11 +174,25 @@ Shader "Hidden/VolumetricFog"
 #if !UNITY_REVERSED_Z
                 depth = lerp(UNITY_NEAR_CLIP_VALUE, 1.0, depth);
 #endif
-                float3 posWS = ComputeWorldSpacePosition(input.texcoord, depth, UNITY_MATRIX_I_VP);
-                float3 ro = GetCameraPositionWS();
-                float3 offset = posWS - ro;
-                float offsetLength = length(offset);
-                float3 rd = offset / offsetLength;
+                float3 posWS;
+                float3 ro;
+                float offsetLength;
+                float3 rd;
+                
+                if (unity_OrthoParams.w <= 0.0)
+                {
+                    ro = = GetCameraPositionWS();
+                    float3 posWS = ComputeWorldSpacePosition(input.texcoord, depth, UNITY_MATRIX_I_VP);
+                    float3 offset = posWS - ro;
+                    float offsetLength = length(offset);
+                    float3 rd = offset / offsetLength;
+                }
+                else
+                {
+                    depth = LinearEyeDepthOrthographic(depth);
+                    ComputeOrthoParams(input.texcoord, depth, ro, rd);
+                    offsetLength = depth;
+                }
 
                 // calculate the step length and jitter
                 float stepLength = _Distance / (float)_MaxSteps;
@@ -284,9 +317,9 @@ Shader "Hidden/VolumetricFog"
 
                 UNITY_BRANCH
                 if (unity_OrthoParams.w <= 0.0)
-                    return DepthAwareGaussianBlurPerspective(input.texcoord, float2(1.0, 0.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy);
+                    return DepthAwareGaussianBlurPerspective(input.texcoord, float2(0.0, 1.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy);
                 else
-                    return DepthAwareGaussianBlurOrthographic(input.texcoord, float2(1.0, 0.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy);
+                    return DepthAwareGaussianBlurOrthographic(input.texcoord, float2(0.0, 1.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy);
             }
 
             ENDHLSL
@@ -350,7 +383,7 @@ Shader "Hidden/VolumetricFog"
                     // sample the lower resolution depth and convert to linear eye depth
                     float2 uv = uvs[i];
                     float depth = SampleDownsampledSceneDepth(uv);
-                    float linearEyeDepth = LinearEyeDepthConsiderProjection(depth);
+                    float linearEyeDepth = LinearEyeDepthConsiderProjection(fullResDepth);
 
                     // check the depth distance
                     float depthDist = abs(linearFullResDepth - linearEyeDepth);
