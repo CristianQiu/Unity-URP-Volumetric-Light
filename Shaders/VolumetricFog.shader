@@ -181,7 +181,7 @@ Shader "Hidden/VolumetricFog"
                 
                 if (unity_OrthoParams.w <= 0.0)
                 {
-                    ro = = GetCameraPositionWS();
+                    ro = GetCameraPositionWS();
                     float3 posWS = ComputeWorldSpacePosition(input.texcoord, depth, UNITY_MATRIX_I_VP);
                     float3 offset = posWS - ro;
                     float offsetLength = length(offset);
