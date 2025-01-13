@@ -72,7 +72,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int GroundHeightId = Shader.PropertyToID("_GroundHeight");
 	private static readonly int DensityId = Shader.PropertyToID("_Density");
 	private static readonly int AbsortionId = Shader.PropertyToID("_Absortion");
-	private static readonly int MainLightColorTintId = Shader.PropertyToID("_MainLightColorTint");
+	private static readonly int TintId = Shader.PropertyToID("_Tint");
 	private static readonly int MaxStepsId = Shader.PropertyToID("_MaxSteps");
 
 	private static readonly int HalfResCameraDepthTextureId = Shader.PropertyToID("_HalfResCameraDepthTexture");
@@ -170,7 +170,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			int frameCount = Time.renderedFrameCount % 64;
 			float absortion = 1.0f / fogVolume.attenuationDistance.value;
 
-			bool enableMainLightContribution = fogVolume.enableMainLightContribution.value && fogVolume.mainLightScattering.value > 0.0f && renderingData.lightData.mainLightIndex > -1;
+			bool enableMainLightContribution = fogVolume.enableMainLightContribution.value && fogVolume.scattering.value > 0.0f && renderingData.lightData.mainLightIndex > -1;
 			EnableMainLightContribution(volumetricFogMaterial, enableMainLightContribution);
 			EnableAdditionalLightsContribution(volumetricFogMaterial, fogVolume.enableAdditionalLightsContribution.value);
 			UpdateLightsProperties(enableMainLightContribution, fogVolume, volumetricFogMaterial, renderingData.lightData.visibleLights, renderingData.lightData.mainLightIndex);
@@ -183,7 +183,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			UpdateGroundHeightFromMaterial(volumetricFogMaterial, fogVolume);
 			volumetricFogMaterial.SetFloat(DensityId, fogVolume.density.value);
 			volumetricFogMaterial.SetFloat(AbsortionId, absortion);
-			volumetricFogMaterial.SetColor(MainLightColorTintId, fogVolume.mainLightColorTint.value);
+			volumetricFogMaterial.SetColor(TintId, fogVolume.tint.value);
 			volumetricFogMaterial.SetInteger(MaxStepsId, fogVolume.maxSteps.value);
 
 			Blitter.BlitCameraTexture(cmd, volumetricFogRenderRTHandle, volumetricFogRenderRTHandle, volumetricFogMaterial, 0);
@@ -351,8 +351,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			{
 				if (i == mainLightIndex)
 				{
-					anisotropy = fogVolume.mainLightAnisotropy.value;
-					scattering = fogVolume.mainLightScattering.value;
+					anisotropy = fogVolume.anisotropy.value;
+					scattering = fogVolume.scattering.value;
 				}
 				else if (visibleLights[i].light.TryGetComponent(out VolumetricAdditionalLight volumetricLight))
 				{
@@ -428,6 +428,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static void UpdateVolumetricFogMaterialProperties(PassData passData)
 	{
 		PassStage stage = passData.stage;
+		Material volumetricFogMaterial = passData.material;
 
 		if (stage == PassStage.RenderFog)
 		{
@@ -436,8 +437,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			int frameCount = Time.renderedFrameCount % 64;
 			float absortion = 1.0f / fogVolume.attenuationDistance.value;
 
-			Material volumetricFogMaterial = passData.material;
-			bool enableMainLightContribution = fogVolume.enableMainLightContribution.value && fogVolume.mainLightScattering.value > 0.0f && passData.lightData.mainLightIndex > -1;
+			bool enableMainLightContribution = fogVolume.enableMainLightContribution.value && fogVolume.scattering.value > 0.0f && passData.lightData.mainLightIndex > -1;
 			EnableMainLightContribution(volumetricFogMaterial, enableMainLightContribution);
 			EnableAdditionalLightsContribution(volumetricFogMaterial, fogVolume.enableAdditionalLightsContribution.value);
 			UpdateLightsProperties(enableMainLightContribution, fogVolume, volumetricFogMaterial, passData.lightData.visibleLights, passData.lightData.mainLightIndex);
@@ -451,12 +451,11 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			UpdateGroundHeightFromMaterial(volumetricFogMaterial, fogVolume);
 			volumetricFogMaterial.SetFloat(DensityId, fogVolume.density.value);
 			volumetricFogMaterial.SetFloat(AbsortionId, absortion);
-			volumetricFogMaterial.SetColor(MainLightColorTintId, fogVolume.mainLightColorTint.value);
+			volumetricFogMaterial.SetColor(TintId, fogVolume.tint.value);
 			volumetricFogMaterial.SetInteger(MaxStepsId, fogVolume.maxSteps.value);
 		}
 		else if (stage == PassStage.CompositeFog)
 		{
-			Material volumetricFogMaterial = passData.material;
 			volumetricFogMaterial.SetTexture(VolumetricFogTextureId, passData.volumetricFogTarget);
 		}
 	}
@@ -482,15 +481,12 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	{
 		CommandBuffer unsafeCmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
 
-		TextureHandle source = passData.source;
-		TextureHandle target = passData.target;
-
 		int blurIterations = VolumeManager.instance.stack.GetComponent<VolumetricFogVolumeComponent>().blurIterations.value;
 
 		for (int i = 0; i < blurIterations; ++i)
 		{
-			Blitter.BlitCameraTexture(unsafeCmd, source, target, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, passData.material, 1);
-			Blitter.BlitCameraTexture(unsafeCmd, target, source, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, passData.material, 2);
+			Blitter.BlitCameraTexture(unsafeCmd, passData.source, passData.target, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, passData.material, 1);
+			Blitter.BlitCameraTexture(unsafeCmd, passData.target, passData.source, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, passData.material, 2);
 		}
 	}
 

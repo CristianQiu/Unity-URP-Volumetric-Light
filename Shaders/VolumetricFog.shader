@@ -57,7 +57,7 @@ Shader "Hidden/VolumetricFog"
             float _GroundHeight;
             float _Density;
             float _Absortion;
-            float3 _MainLightColorTint;
+            float3 _Tint;
             int _MaxSteps;
 
             // Gets the fog density at the given world height.
@@ -85,7 +85,7 @@ Shader "Hidden/VolumetricFog"
                 mainLight.color *= SampleMainLightCookie(currPosWS);
 #endif
                 // return the final color
-                return (mainLight.color * _MainLightColorTint) * (mainLight.shadowAttenuation * phaseMainLight * density * _Scatterings[_MainLightIndex]);
+                return (mainLight.color * _Tint) * (mainLight.shadowAttenuation * phaseMainLight * density * _Scatterings[_MainLightIndex]);
             }
 
             // Gets the accumulated color from additional lights at one raymarch step.
@@ -105,6 +105,8 @@ Shader "Hidden/VolumetricFog"
                 
                 // loop differently through lights in Forward+ while considering Forward and Deferred too
                 LIGHT_LOOP_BEGIN(_CustomAdditionalLightsCount)
+                    // TODO: Check how Unity maps visible light index to additional light index from the render pass.
+                    // I believe it is what the light loop index represents.
                     uint i = ((int)lightIndex >= _MainLightIndex && _MainLightIndex >= 0) ? (lightIndex + 1) : lightIndex;
                     float additionalLightScattering = _Scatterings[i];
 
