@@ -149,7 +149,7 @@ Shader "Hidden/VolumetricFog"
             }
 
             // Computes the needed ray origin and direction for orthographic projection.
-            void ComputeOrthoParams(float2 uv, float depth, out float3 ro, out float3 rd)
+            float3 ComputeOrthoWPos(float2 uv, float depth, out float3 ro, out float3 rd)
             {
                 float2 ndc = uv * 2.0 - 1.0;
 
@@ -166,6 +166,8 @@ Shader "Hidden/VolumetricFog"
 
                 rd = camFwdWs;
                 ro = posWs - rd * depth;
+
+                return posWs;
             }
 
             float4 Frag(Varyings input) : SV_Target
@@ -177,11 +179,12 @@ Shader "Hidden/VolumetricFog"
 #if !UNITY_REVERSED_Z
                 depth = lerp(UNITY_NEAR_CLIP_VALUE, 1.0, depth);
 #endif
-                float3 posWS;
                 float3 ro;
-                float offsetLength;
                 float3 rd;
-                
+                float3 posWS;
+                float offsetLength;
+                float3 rdPhase;
+
                 UNITY_BRANCH
                 if (_IsOrthographic < 1)
                 {
@@ -190,12 +193,14 @@ Shader "Hidden/VolumetricFog"
                     float3 offset = posWS - ro;
                     offsetLength = length(offset);
                     rd = offset / offsetLength;
+                    rdPhase = rd;
                 }
                 else
                 {
                     depth = LinearEyeDepthOrthographic(depth);
-                    ComputeOrthoParams(input.texcoord, depth, ro, rd);
+                    posWS = ComputeOrthoWPos(input.texcoord, depth, ro, rd);
                     offsetLength = depth;
+                    rdPhase = normalize(posWS - GetCameraPositionWS());
                 }
 
                 // calculate the step length and jitter
@@ -206,7 +211,8 @@ Shader "Hidden/VolumetricFog"
                 float phaseMainLight = 0.0;
 #else
                 // calculate the phase function for the main light and part of the extinction factor
-                float phaseMainLight = CornetteShanksPhaseFunction(_Anisotropies[_MainLightIndex], dot(rd, GetMainLight().direction));
+                // note that we fake the view ray dir for orthographic, as it would otherwise mean that the main light will always have the same phase
+                float phaseMainLight = CornetteShanksPhaseFunction(_Anisotropies[_MainLightIndex], dot(rdPhase, GetMainLight().direction));
 #endif
                 float minusStepLengthTimesAbsortion = -stepLength * _Absortion;
                 
