@@ -399,7 +399,7 @@ Shader "Hidden/VolumetricFog"
                     // sample the lower resolution depth and convert to linear eye depth
                     float2 uv = uvs[i];
                     float depth = SampleDownsampledSceneDepth(uv);
-                    float linearEyeDepth = LinearEyeDepthConsiderProjection(fullResDepth, _IsOrthographic);
+                    float linearEyeDepth = LinearEyeDepthConsiderProjection(depth, _IsOrthographic);
 
                     // check the depth distance
                     float depthDist = abs(linearFullResDepth - linearEyeDepth);
