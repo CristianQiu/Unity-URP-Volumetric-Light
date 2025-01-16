@@ -42,11 +42,11 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("Disabling this will avoid computing the main light contribution to fog, which in most cases will lead to better performance.")]
 	public BoolParameter enableMainLightContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("Higher values will make the fog affected by the main light to appear brighter when directly looking to the main light. The higher the value the less the brightness will spread when looking away from the light.")]
-	public ClampedFloatParameter mainLightAnisotropy = new ClampedFloatParameter(0.4f, 0.0f, 0.99f);
+	public ClampedFloatParameter anisotropy = new ClampedFloatParameter(0.4f, 0.0f, 0.99f);
 	[Tooltip("Higher values will make fog affected by the main light to appear brighter.")]
-	public ClampedFloatParameter mainLightScattering = new ClampedFloatParameter(0.15f, 0.0f, 1.0f);
+	public ClampedFloatParameter scattering = new ClampedFloatParameter(0.15f, 0.0f, 1.0f);
 	[Tooltip("A multiplier color to tint the main light fog.")]
-	public ColorParameter mainLightColorTint = new ColorParameter(Color.white, true, false, true);
+	public ColorParameter tint = new ColorParameter(Color.white, true, false, true);
 
 	[Header("Additional Lights")]
 	[Tooltip("Disabling this will avoid computing additional lights contribution to fog, which in most cases will lead to better performance.")]

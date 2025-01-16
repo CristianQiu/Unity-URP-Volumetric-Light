@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
 /// <summary>
-/// This is a component that can be added to additional lights to override some parameters that will
+/// This is a component that can be added to additional lights to set the parameters that will
 /// affect how this light is considered for the volumetric fog effect.
 /// </summary>
 [DisallowMultipleComponent]

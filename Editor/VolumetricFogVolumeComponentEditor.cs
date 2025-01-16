@@ -18,11 +18,11 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
 	private SerializedDataParameter density;
 	private SerializedDataParameter attenuationDistance;
-	private SerializedDataParameter tint;
 
 	private SerializedDataParameter enableMainLightContribution;
-	private SerializedDataParameter mainLightAnisotropy;
-	private SerializedDataParameter mainLightScattering;
+	private SerializedDataParameter anisotropy;
+	private SerializedDataParameter scattering;
+	private SerializedDataParameter tint;
 
 	private SerializedDataParameter enableAdditionalLightsContribution;
 
@@ -39,28 +39,28 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	/// </summary>
 	public override void OnEnable()
 	{
-		PropertyFetcher<VolumetricFogVolumeComponent> p = new PropertyFetcher<VolumetricFogVolumeComponent>(serializedObject);
+		PropertyFetcher<VolumetricFogVolumeComponent> pf = new PropertyFetcher<VolumetricFogVolumeComponent>(serializedObject);
 
-		distance = Unpack(p.Find(x => x.distance));
-		baseHeight = Unpack(p.Find(x => x.baseHeight));
-		maximumHeight = Unpack(p.Find(x => x.maximumHeight));
+		distance = Unpack(pf.Find(x => x.distance));
+		baseHeight = Unpack(pf.Find(x => x.baseHeight));
+		maximumHeight = Unpack(pf.Find(x => x.maximumHeight));
 
-		enableGround = Unpack(p.Find(x => x.enableGround));
-		groundHeight = Unpack(p.Find(x => x.groundHeight));
+		enableGround = Unpack(pf.Find(x => x.enableGround));
+		groundHeight = Unpack(pf.Find(x => x.groundHeight));
 
-		density = Unpack(p.Find(x => x.density));
-		attenuationDistance = Unpack(p.Find(x => x.attenuationDistance));
-		tint = Unpack(p.Find(x => x.mainLightColorTint));
+		density = Unpack(pf.Find(x => x.density));
+		attenuationDistance = Unpack(pf.Find(x => x.attenuationDistance));
 
-		enableMainLightContribution = Unpack(p.Find(x => x.enableMainLightContribution));
-		mainLightAnisotropy = Unpack(p.Find(x => x.mainLightAnisotropy));
-		mainLightScattering = Unpack(p.Find(x => x.mainLightScattering));
+		enableMainLightContribution = Unpack(pf.Find(x => x.enableMainLightContribution));
+		anisotropy = Unpack(pf.Find(x => x.anisotropy));
+		scattering = Unpack(pf.Find(x => x.scattering));
+		tint = Unpack(pf.Find(x => x.tint));
 
-		enableAdditionalLightsContribution = Unpack(p.Find(x => x.enableAdditionalLightsContribution));
+		enableAdditionalLightsContribution = Unpack(pf.Find(x => x.enableAdditionalLightsContribution));
 
-		maxSteps = Unpack(p.Find(x => x.maxSteps));
-		blurIterations = Unpack(p.Find(x => x.blurIterations));
-		enabled = Unpack(p.Find(x => x.enabled));
+		maxSteps = Unpack(pf.Find(x => x.maxSteps));
+		blurIterations = Unpack(pf.Find(x => x.blurIterations));
+		enabled = Unpack(pf.Find(x => x.enabled));
 	}
 
 	/// <summary>
@@ -73,37 +73,37 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		if (!isEnabled)
 		{
 			PropertyField(enabled);
+			return;
 		}
-		else
+
+		bool enabledGround = enableGround.overrideState.boolValue && enableGround.value.boolValue;
+		bool enabledMainLightContribution = enableMainLightContribution.overrideState.boolValue && enableMainLightContribution.value.boolValue;
+		bool enabledAdditionalLightsContribution = enableAdditionalLightsContribution.overrideState.boolValue && enableAdditionalLightsContribution.value.boolValue;
+
+		PropertyField(distance);
+		PropertyField(baseHeight);
+		PropertyField(maximumHeight);
+
+		PropertyField(enableGround);
+		if (enabledGround)
+			PropertyField(groundHeight);
+
+		PropertyField(density);
+		PropertyField(attenuationDistance);
+
+		PropertyField(enableMainLightContribution);
+		if (enabledMainLightContribution)
 		{
-			bool enabledMainLightContribution = enableMainLightContribution.overrideState.boolValue && enableMainLightContribution.value.boolValue;
-			bool enabledAdditionalLightsContribution = enableAdditionalLightsContribution.overrideState.boolValue && enableAdditionalLightsContribution.value.boolValue;
-
-			PropertyField(distance);
-			PropertyField(baseHeight);
-			PropertyField(maximumHeight);
-
-			PropertyField(enableGround);
-			if (enableGround.overrideState.boolValue && enableGround.value.boolValue)
-				PropertyField(groundHeight);
-
-			PropertyField(density);
-			PropertyField(attenuationDistance);
-
-			PropertyField(enableMainLightContribution);
-			if (enabledMainLightContribution)
-			{
-				PropertyField(mainLightAnisotropy);
-				PropertyField(mainLightScattering);
-				PropertyField(tint);
-			}
-
-			PropertyField(enableAdditionalLightsContribution);
-
-			PropertyField(maxSteps);
-			PropertyField(blurIterations);
-			PropertyField(enabled);
+			PropertyField(anisotropy);
+			PropertyField(scattering);
+			PropertyField(tint);
 		}
+
+		PropertyField(enableAdditionalLightsContribution);
+
+		PropertyField(maxSteps);
+		PropertyField(blurIterations);
+		PropertyField(enabled);
 	}
 
 	#endregion
