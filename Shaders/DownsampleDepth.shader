@@ -81,10 +81,10 @@ Shader "Hidden/DownsampleDepth"
 
                 uint2 fullResTopLeftCorner = uint2(input.positionCS.xy * 2.0);
 
-                depths.x = LoadSceneDepth(fullResTopLeftCorner);
-                depths.y = LoadSceneDepth(fullResTopLeftCorner + uint2(1, 0));
-                depths.z = LoadSceneDepth(fullResTopLeftCorner + uint2(0, 1));
-                depths.w = LoadSceneDepth(fullResTopLeftCorner + uint2(1, 1));
+                depths.x = LoadSceneDepth(fullResTopLeftCorner + uint2(0, 1));
+                depths.y = LoadSceneDepth(fullResTopLeftCorner + uint2(1, 1));
+                depths.z = LoadSceneDepth(fullResTopLeftCorner + uint2(1, 0));
+                depths.w = LoadSceneDepth(fullResTopLeftCorner);
 
                 float minDepth = Min3(depths.x, depths.y, min(depths.z, depths.w));
                 float maxDepth = Max3(depths.x, depths.y, max(depths.z, depths.w));
