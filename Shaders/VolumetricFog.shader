@@ -293,11 +293,7 @@ Shader "Hidden/VolumetricFog"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                UNITY_BRANCH
-                if (_IsOrthographic < 1)
-                    return DepthAwareGaussianBlurPerspective(input.texcoord, float2(1.0, 0.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy);
-                else
-                    return DepthAwareGaussianBlurOrthographic(input.texcoord, float2(1.0, 0.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy);
+                return DepthAwareGaussianBlur(input.texcoord, float2(1.0, 0.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy, _IsOrthographic);
             }
 
             ENDHLSL
@@ -331,11 +327,7 @@ Shader "Hidden/VolumetricFog"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                UNITY_BRANCH
-                if (_IsOrthographic < 1)
-                    return DepthAwareGaussianBlurPerspective(input.texcoord, float2(0.0, 1.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy);
-                else
-                    return DepthAwareGaussianBlurOrthographic(input.texcoord, float2(0.0, 1.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy);
+                return DepthAwareGaussianBlur(input.texcoord, float2(0.0, 1.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy, _IsOrthographic);
             }
 
             ENDHLSL

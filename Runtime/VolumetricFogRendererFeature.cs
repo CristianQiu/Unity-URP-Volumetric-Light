@@ -18,6 +18,7 @@ public sealed class VolumetricFogRendererFeature : ScriptableRendererFeature
 
 	private Material downsampleDepthMaterial;
 	private Material volumetricFogMaterial;
+
 	private VolumetricFogRenderPass volumetricFogRenderPass;
 
 	#endregion
