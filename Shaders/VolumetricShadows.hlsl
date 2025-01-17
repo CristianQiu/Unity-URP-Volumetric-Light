@@ -3,7 +3,7 @@
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
 
-// Copied and modified from SampleShadowmap from universal/ShaderLibrary/Shadows.hlsl. 
+// Copied and modified from SampleShadowmap from Shadows.hlsl. 
 real VolumetricSampleShadowmap(TEXTURE2D_SHADOW_PARAM(ShadowMap, sampler_ShadowMap), float4 shadowCoord, ShadowSamplingData samplingData, half4 shadowParams, bool isPerspectiveProjection = true)
 {
     if (isPerspectiveProjection)
@@ -17,7 +17,7 @@ real VolumetricSampleShadowmap(TEXTURE2D_SHADOW_PARAM(ShadowMap, sampler_ShadowM
     return BEYOND_SHADOW_FAR(shadowCoord) ? 1.0 : attenuation;
 }
 
-// Copied and modified from MainLightRealTimeShadow from universal/ShaderLibrary/Shadows.hlsl. 
+// Copied and modified from MainLightRealTimeShadow from Shadows.hlsl. 
 half VolumetricMainLightRealtimeShadow(float4 shadowCoord)
 {
     #if !defined(MAIN_LIGHT_CALCULATE_SHADOWS)
@@ -31,7 +31,7 @@ half VolumetricMainLightRealtimeShadow(float4 shadowCoord)
     #endif
 }
 
-// Copied and modified from AdditionalLightRealtimeShadow from universal/ShaderLibrary/Shadows.hlsl. 
+// Copied and modified from AdditionalLightRealtimeShadow from Shadows.hlsl. 
 half VolumetricAdditionalLightRealtimeShadow(int lightIndex, float3 positionWS, half3 lightDirection)
 {
     #if defined(ADDITIONAL_LIGHT_CALCULATE_SHADOWS)
