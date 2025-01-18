@@ -9,7 +9,7 @@ Shader "Hidden/VolumetricFog"
 
         Pass
         {
-            Name "VolumetricFog"
+            Name "VolumetricFogRender"
 
             ZTest Always
             ZWrite Off
@@ -42,14 +42,13 @@ Shader "Hidden/VolumetricFog"
             #pragma vertex Vert
             #pragma fragment Frag
 
-            float _Anisotropies[MAX_VISIBLE_LIGHTS];
-            float _Scatterings[MAX_VISIBLE_LIGHTS];
+            float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
+            float _Scatterings[MAX_VISIBLE_LIGHTS + 1];
             float _RadiiSq[MAX_VISIBLE_LIGHTS];
 
             // unity_OrthoParams.w is not working for me neither in 2022 or Unity 6.
             int _IsOrthographic;
             int _FrameCount;
-            int _MainLightIndex;
             uint _CustomAdditionalLightsCount;
             float _Distance;
             float _BaseHeight;
@@ -85,7 +84,7 @@ Shader "Hidden/VolumetricFog"
                 mainLight.color *= SampleMainLightCookie(currPosWS);
 #endif
                 // return the final color
-                return (mainLight.color * _Tint) * (mainLight.shadowAttenuation * phaseMainLight * density * _Scatterings[_MainLightIndex]);
+                return (mainLight.color * _Tint) * (mainLight.shadowAttenuation * phaseMainLight * density * _Scatterings[_CustomAdditionalLightsCount]);
             }
 
             // Gets the accumulated color from additional lights at one raymarch step.
@@ -105,17 +104,14 @@ Shader "Hidden/VolumetricFog"
                 
                 // loop differently through lights in Forward+ while considering Forward and Deferred too
                 LIGHT_LOOP_BEGIN(_CustomAdditionalLightsCount)
-                    // TODO: Check how Unity maps visible light index to additional light index from the render pass.
-                    // I believe it is what the light loop index represents.
-                    uint i = ((int)lightIndex >= _MainLightIndex && _MainLightIndex >= 0) ? (lightIndex + 1) : lightIndex;
-                    float additionalLightScattering = _Scatterings[i];
+                    float additionalLightScattering = _Scatterings[lightIndex];
 
                     UNITY_BRANCH
                     if (additionalLightScattering <= 0.0)
                         continue;
 
-                    float additionalLightAnisotropy = _Anisotropies[i];
-                    float additionalLightRadiusSq = _RadiiSq[i];
+                    float additionalLightAnisotropy = _Anisotropies[lightIndex];
+                    float additionalLightRadiusSq = _RadiiSq[lightIndex];
 
                     Light additionalLight = GetAdditionalPerObjectLight(lightIndex, currPosWS);
                     additionalLight.shadowAttenuation = VolumetricAdditionalLightRealtimeShadow(lightIndex, currPosWS, additionalLight.direction);
@@ -213,7 +209,7 @@ Shader "Hidden/VolumetricFog"
 #else
                 // calculate the phase function for the main light and part of the extinction factor
                 // note that we fake the view ray dir for orthographic, as it would otherwise mean that the main light will always have the same phase
-                float phaseMainLight = CornetteShanksPhaseFunction(_Anisotropies[_MainLightIndex], dot(rdPhase, GetMainLight().direction));
+                float phaseMainLight = CornetteShanksPhaseFunction(_Anisotropies[_CustomAdditionalLightsCount], dot(rdPhase, GetMainLight().direction));
 #endif
                 float minusStepLengthTimesAbsortion = -stepLength * _Absortion;
                 
@@ -266,7 +262,7 @@ Shader "Hidden/VolumetricFog"
 
         Pass
         {
-            Name "VolumetricFogHorizontalBlur"
+            Name "HorizontalBlur"
             
             ZTest Always
             ZWrite Off
@@ -300,7 +296,7 @@ Shader "Hidden/VolumetricFog"
 
         Pass
         {
-            Name "VolumetricFogVerticalBlur"
+            Name "VerticalBlur"
             
             ZTest Always
             ZWrite Off
@@ -334,7 +330,7 @@ Shader "Hidden/VolumetricFog"
 
         Pass
         {
-            Name "VolumetricFogComposition"
+            Name "UpsampleComposition"
             
             ZTest Always
             ZWrite Off
@@ -362,21 +358,26 @@ Shader "Hidden/VolumetricFog"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 // get the full resolution depth and convert it to linear eye depth
-                float fullResDepth = LoadSceneDepth(input.positionCS.xy);
+                float fullResDepth = SampleSceneDepth(input.texcoord);
                 float linearFullResDepth = LinearEyeDepthConsiderProjection(fullResDepth, _IsOrthographic);
 
-                // get the texel size from the downsampled depth texture
-                float2 texelSize = _HalfResCameraDepthTexture_TexelSize.xy;
-
                 // calculate the UVs to sample the downsampled depths
-                float2 topLeftUv = input.texcoord - (texelSize * 0.5);
+                float2 halfResTexelSize = _HalfResCameraDepthTexture_TexelSize.xy;
+                float2 halfResTopLeftCornerUv = input.texcoord - (halfResTexelSize * 0.5);
                 float2 uvs[4] = 
                 {
-                    topLeftUv + float2(0.0, texelSize.y),
-                    topLeftUv + texelSize.xy,
-                    topLeftUv + float2(texelSize.x, 0.0),
-                    topLeftUv,
+                    halfResTopLeftCornerUv + float2(0.0, halfResTexelSize.y),
+                    halfResTopLeftCornerUv + halfResTexelSize.xy,
+                    halfResTopLeftCornerUv + float2(halfResTexelSize.x, 0.0),
+                    halfResTopLeftCornerUv,
                 };
+
+                float4 downsampledDepths;
+
+                downsampledDepths.x = SampleDownsampledSceneDepth(uvs[0]);
+                downsampledDepths.y = SampleDownsampledSceneDepth(uvs[1]);
+                downsampledDepths.z = SampleDownsampledSceneDepth(uvs[2]);
+                downsampledDepths.w = SampleDownsampledSceneDepth(uvs[3]);
 
                 // initialize variables to validate the depths
                 int numValidDepths = 0;
@@ -409,14 +410,10 @@ Shader "Hidden/VolumetricFog"
                     numValidDepths += (depthDist < relativeDepthThreshold); 
                 }
 
-                float4 volumetricFog;
-
                 // use bilinear sampling if depths are similar, and point sampling otherwise
-                UNITY_BRANCH
-                if (numValidDepths == 4)
-                    volumetricFog = SAMPLE_TEXTURE2D_X(_VolumetricFogTexture, sampler_LinearClamp, input.texcoord);
-                else
-                    volumetricFog = SAMPLE_TEXTURE2D_X(_VolumetricFogTexture, sampler_PointClamp, nearestUv);
+                float4 volumetricFogPoint = SAMPLE_TEXTURE2D_X(_VolumetricFogTexture, sampler_PointClamp, nearestUv);
+                float4 volumetricFogBilinear = SAMPLE_TEXTURE2D_X(_VolumetricFogTexture, sampler_LinearClamp, input.texcoord);
+                float4 volumetricFog = lerp(volumetricFogPoint, volumetricFogBilinear, numValidDepths == 4);
 
                 float4 cameraColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_BlitTexture, input.texcoord);
 
