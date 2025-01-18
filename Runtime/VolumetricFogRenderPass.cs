@@ -16,8 +16,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 {
 	#region Definitions
 
-#if UNITY_6000_0_OR_NEWER
-
 	/// <summary>
 	/// Downsampling factor for the camera depth texture that the volumetric fog will use to render the fog.
 	/// </summary>
@@ -26,6 +24,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		// TODO: Add quarter downsample factor.
 		Half = 2,
 	}
+
+#if UNITY_6000_0_OR_NEWER
 
 	/// <summary>
 	/// The subpasses the volumetric fog render pass is made of.
