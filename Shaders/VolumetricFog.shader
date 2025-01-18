@@ -42,10 +42,6 @@ Shader "Hidden/VolumetricFog"
             #pragma vertex Vert
             #pragma fragment Frag
 
-            float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
-            float _Scatterings[MAX_VISIBLE_LIGHTS + 1];
-            float _RadiiSq[MAX_VISIBLE_LIGHTS];
-
             int _FrameCount;
             uint _CustomAdditionalLightsCount;
             float _Distance;
@@ -56,6 +52,10 @@ Shader "Hidden/VolumetricFog"
             float _Absortion;
             float3 _Tint;
             int _MaxSteps;
+
+            float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
+            float _Scatterings[MAX_VISIBLE_LIGHTS + 1];
+            float _RadiiSq[MAX_VISIBLE_LIGHTS];
 
             // Gets the fog density at the given world height.
             float GetFogDensity(float posWSy)
@@ -260,7 +260,7 @@ Shader "Hidden/VolumetricFog"
 
         Pass
         {
-            Name "HorizontalBlur"
+            Name "VolumetricFogHorizontalBlur"
             
             ZTest Always
             ZWrite Off
@@ -292,7 +292,7 @@ Shader "Hidden/VolumetricFog"
 
         Pass
         {
-            Name "VerticalBlur"
+            Name "VolumetricFogVerticalBlur"
             
             ZTest Always
             ZWrite Off
@@ -324,7 +324,7 @@ Shader "Hidden/VolumetricFog"
 
         Pass
         {
-            Name "UpsampleComposition"
+            Name "VolumetricFogUpsampleComposition"
             
             ZTest Always
             ZWrite Off
