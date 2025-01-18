@@ -132,6 +132,9 @@ Shader "Hidden/VolumetricFog"
                     float distToPosMagnitudeSq = dot(distToPos, distToPos);
                     float newScattering = smoothstep(0.0, additionalLightRadiusSq, distToPosMagnitudeSq) * additionalLightScattering;
 
+                    // I think this looks better, it hides the subtle seam that is created due to different rate of increase/decrease
+                    newScattering = newScattering * newScattering;
+                    
                     // Note: If directional lights are also considered as additional lights when more than 1 is used, ignore the previous code when it is a directional light.
                     // They store direction in additionalLightPos.xyz and have .w set to 0, while point and spotlights have it set to 1.
                     // newScattering = lerp(1.0, newScattering, additionalLightPos.w);

@@ -51,8 +51,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		public Material material;
 		public int materialPassIndex;
 		public int materialAdditionalPassIndex;
-		public LocalKeyword mainLightKeyword;
-		public LocalKeyword additionalLightsKeyword;
 
 		public TextureHandle downsampledCameraDepthTarget;
 		public TextureHandle volumetricFogRenderTarget;
@@ -101,9 +99,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private Material downsampleDepthMaterial;
 	private Material volumetricFogMaterial;
 
-	private LocalKeyword mainLightContributionKeyword;
-	private LocalKeyword additionalLightsContributionKeyword;
-
 	private RTHandle downsampledCameraDepthRTHandle;
 	private RTHandle volumetricFogRenderRTHandle;
 	private RTHandle volumetricFogBlurRTHandle;
@@ -133,9 +128,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 		this.downsampleDepthMaterial = downsampleDepthMaterial;
 		this.volumetricFogMaterial = volumetricFogMaterial;
-
-		mainLightContributionKeyword = new LocalKeyword(volumetricFogMaterial.shader, "_MAIN_LIGHT_CONTRIBUTION_DISABLED");
-		additionalLightsContributionKeyword = new LocalKeyword(volumetricFogMaterial.shader, "_ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED");
 
 		InitializePassesIndices();
 	}
@@ -207,7 +199,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		using (new ProfilingScope(cmd, profilingSampler))
 		{
 			volumetricFogMaterial.SetTexture(DownsampledCameraDepthTextureId, downsampledCameraDepthRTHandle);
-			UpdateVolumetricFogMaterialParameters(volumetricFogMaterial, mainLightContributionKeyword, additionalLightsContributionKeyword, renderingData.lightData.mainLightIndex, renderingData.lightData.additionalLightsCount, renderingData.lightData.visibleLights);
+			UpdateVolumetricFogMaterialParameters(volumetricFogMaterial, renderingData.lightData.mainLightIndex, renderingData.lightData.additionalLightsCount, renderingData.lightData.visibleLights);
 			
 			Blitter.BlitCameraTexture(cmd, volumetricFogRenderRTHandle, volumetricFogRenderRTHandle, volumetricFogMaterial, volumetricFogRenderPassIndex);
 
@@ -268,8 +260,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			passData.target = volumetricFogRenderTarget;
 			passData.material = volumetricFogMaterial;
 			passData.materialPassIndex = volumetricFogRenderPassIndex;
-			passData.mainLightKeyword = mainLightContributionKeyword;
-			passData.additionalLightsKeyword = additionalLightsContributionKeyword;
 			passData.downsampledCameraDepthTarget = downsampledCameraDepthTarget;
 			passData.lightData = lightData;
 
@@ -328,20 +318,25 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// Updates the volumetric fog material parameters.
 	/// </summary>
 	/// <param name="volumetricFogMaterial"></param>
-	/// <param name="mainLightKeyword"></param>
-	/// <param name="additionalLightsKeyword"></param>
 	/// <param name="mainLightIndex"></param>
 	/// <param name="additionalLightsCount"></param>
 	/// <param name="visibleLights"></param>
-	private static void UpdateVolumetricFogMaterialParameters(Material volumetricFogMaterial, in LocalKeyword mainLightKeyword, in LocalKeyword additionalLightsKeyword, int mainLightIndex, int additionalLightsCount, NativeArray<VisibleLight> visibleLights)
+	private static void UpdateVolumetricFogMaterialParameters(Material volumetricFogMaterial, int mainLightIndex, int additionalLightsCount, NativeArray<VisibleLight> visibleLights)
 	{
 		VolumetricFogVolumeComponent fogVolume = VolumeManager.instance.stack.GetComponent<VolumetricFogVolumeComponent>();
 
 		bool enableMainLightContribution = fogVolume.enableMainLightContribution.value && fogVolume.scattering.value > 0.0f && mainLightIndex > -1;
 		bool enableAdditionalLightsContribution = fogVolume.enableAdditionalLightsContribution.value && additionalLightsCount > 0;
 
-		volumetricFogMaterial.SetKeyword(mainLightKeyword, !enableMainLightContribution);
-		volumetricFogMaterial.SetKeyword(additionalLightsKeyword, !enableAdditionalLightsContribution);
+		if (enableMainLightContribution)
+			volumetricFogMaterial.DisableKeyword("_MAIN_LIGHT_CONTRIBUTION_DISABLED");
+		else
+			volumetricFogMaterial.EnableKeyword("_MAIN_LIGHT_CONTRIBUTION_DISABLED");
+
+		if (enableAdditionalLightsContribution)
+			volumetricFogMaterial.DisableKeyword("_ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED");
+		else
+			volumetricFogMaterial.EnableKeyword("_ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED");
 
 		UpdateLightsParameters(volumetricFogMaterial, fogVolume, enableMainLightContribution, enableAdditionalLightsContribution, mainLightIndex, visibleLights);
 
@@ -457,7 +452,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		if (stage == PassStage.VolumetricFogRender)
 		{
 			passData.material.SetTexture(DownsampledCameraDepthTextureId, passData.downsampledCameraDepthTarget);
-			UpdateVolumetricFogMaterialParameters(passData.material, passData.mainLightKeyword, passData.additionalLightsKeyword, passData.lightData.mainLightIndex, passData.lightData.additionalLightsCount, passData.lightData.visibleLights);
+			UpdateVolumetricFogMaterialParameters(passData.material, passData.lightData.mainLightIndex, passData.lightData.additionalLightsCount, passData.lightData.visibleLights);
 		}
 		else if (stage == PassStage.VolumetricFogUpsampleComposition)
 		{
