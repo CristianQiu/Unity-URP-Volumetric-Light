@@ -56,7 +56,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 	#region Private Attributes
 
-	private const string HalfResCameraDepthRTName = "_HalfResCameraDepth";
+	private const string DownsampledCameraDepthRTName = "_DownsampledCameraDepth";
 	private const string VolumetricFogRenderRTName = "_VolumetricFog";
 	private const string VolumetricFogBlurRTName = "_VolumetricFogBlur";
 	private const string VolumetricFogUpsampleCompositionRTName = "_VolumetricFogUpsampleComposition";
@@ -80,7 +80,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int TintId = Shader.PropertyToID("_Tint");
 	private static readonly int MaxStepsId = Shader.PropertyToID("_MaxSteps");
 
-	private static readonly int HalfResCameraDepthTextureId = Shader.PropertyToID("_HalfResCameraDepthTexture");
+	private static readonly int DownsampledCameraDepthTextureId = Shader.PropertyToID("_DownsampledCameraDepthTexture");
 	private static readonly int VolumetricFogTextureId = Shader.PropertyToID("_VolumetricFogTexture");
 
 	private int downsampleDepthPassIndex;
@@ -92,7 +92,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private Material downsampleDepthMaterial;
 	private Material volumetricFogMaterial;
 
-	private RTHandle halfResCameraDepthRTHandle;
+	private RTHandle downsampledCameraDepthRTHandle;
 	private RTHandle volumetricFogRenderRTHandle;
 	private RTHandle volumetricFogBlurRTHandle;
 	private RTHandle volumetricFogUpsampleCompositionRTHandle;
@@ -157,7 +157,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		cameraTargetDescriptor.width /= 2;
 		cameraTargetDescriptor.height /= 2;
 		cameraTargetDescriptor.graphicsFormat = GraphicsFormat.R32_SFloat;
-		RenderingUtils.ReAllocateIfNeeded(ref halfResCameraDepthRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: HalfResCameraDepthRTName);
+		RenderingUtils.ReAllocateIfNeeded(ref downsampledCameraDepthRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: DownsampledCameraDepthRTName);
 
 		cameraTargetDescriptor.colorFormat = RenderTextureFormat.ARGBHalf;
 		RenderingUtils.ReAllocateIfNeeded(ref volumetricFogRenderRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogRenderRTName);
@@ -183,8 +183,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 		using (new ProfilingScope(cmd, downsampleDepthProfilingSampler))
 		{
-			Blitter.BlitCameraTexture(cmd, halfResCameraDepthRTHandle, halfResCameraDepthRTHandle, downsampleDepthMaterial, downsampleDepthPassIndex);
-			volumetricFogMaterial.SetTexture(HalfResCameraDepthTextureId, halfResCameraDepthRTHandle);
+			Blitter.BlitCameraTexture(cmd, downsampledCameraDepthRTHandle, downsampledCameraDepthRTHandle, downsampleDepthMaterial, downsampleDepthPassIndex);
+			volumetricFogMaterial.SetTexture(DownsampledCameraDepthTextureId, downsampledCameraDepthRTHandle);
 		}
 
 		using (new ProfilingScope(cmd, profilingSampler))
@@ -368,9 +368,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// <param name="mainLightIndex"></param>
 	private static void UpdateLightsProperties(bool enableMainLightContribution, bool enableAdditionalLightsContribution, VolumetricFogVolumeComponent fogVolume, Material volumetricFogMaterial, NativeArray<VisibleLight> visibleLights, int mainLightIndex)
 	{
-		if (!enableMainLightContribution && !enableAdditionalLightsContribution)
-			return;
-
 		if (enableMainLightContribution)
 		{
 			int lastIndex = visibleLights.Length - 1;
@@ -406,9 +403,12 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			}
 		}
 
-		volumetricFogMaterial.SetFloatArray(AnisotropiesArrayId, Anisotropies);
-		volumetricFogMaterial.SetFloatArray(ScatteringsArrayId, Scatterings);
-		volumetricFogMaterial.SetFloatArray(RadiiSqArrayId, RadiiSq);
+		if (enableMainLightContribution || enableAdditionalLightsContribution)
+		{
+			volumetricFogMaterial.SetFloatArray(AnisotropiesArrayId, Anisotropies);
+			volumetricFogMaterial.SetFloatArray(ScatteringsArrayId, Scatterings);
+			volumetricFogMaterial.SetFloatArray(RadiiSqArrayId, RadiiSq);
+		}
 	}
 
 #if UNITY_6000_0_OR_NEWER
@@ -433,7 +433,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		cameraTargetDescriptor.width /= 2;
 		cameraTargetDescriptor.height /= 2;
 		cameraTargetDescriptor.graphicsFormat = GraphicsFormat.R32_SFloat;
-		halfResCameraDepthTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, HalfResCameraDepthRTName, false);
+		halfResCameraDepthTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, DownsampledCameraDepthRTName, false);
 
 		cameraTargetDescriptor.colorFormat = RenderTextureFormat.ARGBHalf;
 		volumetricFogRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogRenderRTName, false);
@@ -455,14 +455,14 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		PassStage stage = passData.stage;
 
 		if (stage == PassStage.VolumetricFogRender)
-			UpdateVolumetricFogMaterialProperties(passData.material, passData.lightData.visibleLights, passData.lightData.mainLightIndex, passData.lightData.additionalLightsCount, passData.orthographic);
+			UpdateVolumetricFogMaterialProperties(passData.material, passData.lightData.visibleLights, passData.lightData.mainLightIndex, passData.lightData.additionalLightsCount);
 		else if (stage == PassStage.UpsampleComposition)
 			passData.material.SetTexture(VolumetricFogTextureId, passData.volumetricFogTarget);
 
 		Blitter.BlitTexture(context.cmd, passData.source, Vector2.one, passData.material, passData.materialPassIndex);
 
 		if (stage == PassStage.DownsampleDepth)
-			passData.material.SetTexture(HalfResCameraDepthTextureId, passData.halfResCameraDepthTarget);
+			passData.material.SetTexture(DownsampledCameraDepthTextureId, passData.halfResCameraDepthTarget);
 	}
 
 	/// <summary>
@@ -490,7 +490,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// </summary>
 	public void Dispose()
 	{
-		halfResCameraDepthRTHandle?.Release();
+		downsampledCameraDepthRTHandle?.Release();
 		volumetricFogRenderRTHandle?.Release();
 		volumetricFogBlurRTHandle?.Release();
 		volumetricFogUpsampleCompositionRTHandle?.Release();

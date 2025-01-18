@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0] - 2025-01-13
+
+* Orthographic camera support.
+* Improve CPU performance when setting parameters for lights during the volumetric fog render pass.
+* Faster upsample when shader model 4.5+ is available.
+* Cleanups in VolumetricFogRenderPass.cs and VolumetricFog.hlsl.
+* Verified supported graphics APIs: ????
+
 ## [0.4.1] - 2025-01-13
 
 * Address issue with lights potentially picking wrong parameters to affect the volumetric fog depending on whether there is a main light enabled in the scene.

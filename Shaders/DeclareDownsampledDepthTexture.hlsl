@@ -3,13 +3,13 @@
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GlobalSamplers.hlsl"
 
-TEXTURE2D_X_FLOAT(_HalfResCameraDepthTexture);
-float4 _HalfResCameraDepthTexture_TexelSize;
+TEXTURE2D_X_FLOAT(_DownsampledCameraDepthTexture);
+float4 _DownsampledCameraDepthTexture_TexelSize;
 
-// Samples the half resolution camera depth texture.
+// Samples the downsampled camera depth texture.
 float SampleDownsampledSceneDepth(float2 uv)
 {
-    return SAMPLE_TEXTURE2D_X(_HalfResCameraDepthTexture, sampler_PointClamp, uv).r;
+    return SAMPLE_TEXTURE2D_X(_DownsampledCameraDepthTexture, sampler_PointClamp, uv).r;
 }
 
 #endif

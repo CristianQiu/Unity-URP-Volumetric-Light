@@ -86,7 +86,7 @@ Shader "Hidden/VolumetricFog"
             }
 
             // Gets the accumulated color from additional lights at one raymarch step.
-            float3 GetStepAdditionalLightsColor(float2 texcoord, float3 currPosWS, float3 rd, float density)
+            float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, float density)
             {
 #if _ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED
                 return float3(0.0, 0.0, 0.0);
@@ -94,7 +94,7 @@ Shader "Hidden/VolumetricFog"
 #if _FORWARD_PLUS
                 // Forward+ rendering path needs this data before the light loop
                 InputData inputData = (InputData)0;
-                inputData.normalizedScreenSpaceUV = texcoord;
+                inputData.normalizedScreenSpaceUV = uv;
                 inputData.positionWS = currPosWS;
 #endif
                 // initialize the accumulated color from additional lights
@@ -335,81 +335,20 @@ Shader "Hidden/VolumetricFog"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
-            #include "./DeclareDownsampledDepthTexture.hlsl"
-            #include "./ProjectionUtils.hlsl"
+            #include "./DepthAwareUpsample.hlsl"
+
+            #pragma target 4.5
 
             #pragma vertex Vert
             #pragma fragment Frag
-
-            TEXTURE2D_X(_VolumetricFogTexture);
-            SAMPLER(sampler_BlitTexture);
 
             float4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                // get the full resolution depth and convert it to linear eye depth
-                float fullResDepth = SampleSceneDepth(input.texcoord);
-                float linearFullResDepth = LinearEyeDepthConsiderProjection(fullResDepth);
-
-                // calculate the UVs to sample the downsampled depths
-                float2 halfResTexelSize = _HalfResCameraDepthTexture_TexelSize.xy;
-                float2 halfResTopLeftCornerUv = input.texcoord - (halfResTexelSize * 0.5);
-                float2 uvs[4] = 
-                {
-                    halfResTopLeftCornerUv + float2(0.0, halfResTexelSize.y),
-                    halfResTopLeftCornerUv + halfResTexelSize.xy,
-                    halfResTopLeftCornerUv + float2(halfResTexelSize.x, 0.0),
-                    halfResTopLeftCornerUv,
-                };
-
-                float4 downsampledDepths;
-
-                downsampledDepths.x = SampleDownsampledSceneDepth(uvs[0]);
-                downsampledDepths.y = SampleDownsampledSceneDepth(uvs[1]);
-                downsampledDepths.z = SampleDownsampledSceneDepth(uvs[2]);
-                downsampledDepths.w = SampleDownsampledSceneDepth(uvs[3]);
-
-                // initialize variables to validate the depths
-                int numValidDepths = 0;
-                float relativeDepthThreshold = linearFullResDepth * 0.1;
-
-                // initialize the minimum depth distance towards the full resolution depth
-                float minDepthDist = 1e12;
-                float2 nearestUv;
-
-                UNITY_UNROLL
-                for (int i = 0; i < 4; ++i)
-                {
-                    // sample the lower resolution depth and convert to linear eye depth
-                    float2 uv = uvs[i];
-                    float depth = SampleDownsampledSceneDepth(uv);
-                    float linearEyeDepth = LinearEyeDepthConsiderProjection(depth);
-
-                    // check the depth distance
-                    float depthDist = abs(linearFullResDepth - linearEyeDepth);
-
-                    // update the minimum when necessary
-                    UNITY_FLATTEN
-                    if (depthDist < minDepthDist)
-                    {
-                        minDepthDist = depthDist;
-                        nearestUv = uvs[i];
-                    }
-
-                    // count the number of valid depths according to the threshold, as we will act differently if all of them are valid or not
-                    numValidDepths += (depthDist < relativeDepthThreshold); 
-                }
-
-                // use bilinear sampling if depths are similar, and point sampling otherwise
-                float4 volumetricFogPoint = SAMPLE_TEXTURE2D_X(_VolumetricFogTexture, sampler_PointClamp, nearestUv);
-                float4 volumetricFogBilinear = SAMPLE_TEXTURE2D_X(_VolumetricFogTexture, sampler_LinearClamp, input.texcoord);
-                float4 volumetricFog = lerp(volumetricFogPoint, volumetricFogBilinear, numValidDepths == 4);
-
+                float4 volumetricFog = DepthAwareUpsample(input.texcoord);
                 float4 cameraColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_BlitTexture, input.texcoord);
 
-                // attenuate the camera color with the fog and add the fog on top
                 return float4(cameraColor.rgb * volumetricFog.a + volumetricFog.rgb, cameraColor.a);
             }
 
