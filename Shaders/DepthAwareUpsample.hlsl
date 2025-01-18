@@ -50,7 +50,7 @@ float4 DepthAwareUpsample(float2 uv)
         minLinearEyeDepthDist = updateNearest ? linearEyeDepthDist : minLinearEyeDepthDist;
         nearestUv = updateNearest ? uvs[i] : nearestUv;
         
-        numValidDepths += updateNearest;
+        numValidDepths += (linearEyeDepthDist < relativeDepthThreshold);
     }
 
     UNITY_BRANCH
