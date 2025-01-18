@@ -17,7 +17,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	#region Definitions
 
 	/// <summary>
-	/// Downsampling factor for the camera depth texture that the volumetric fog will use to render the fog.
+	/// Downsampling factor for the camera depth texture that the volumetric fog will use to render
+	/// the fog.
 	/// </summary>
 	private enum DownsampleFactor : byte
 	{
@@ -200,11 +201,11 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		{
 			volumetricFogMaterial.SetTexture(DownsampledCameraDepthTextureId, downsampledCameraDepthRTHandle);
 			UpdateVolumetricFogMaterialParameters(volumetricFogMaterial, renderingData.lightData.mainLightIndex, renderingData.lightData.additionalLightsCount, renderingData.lightData.visibleLights);
-			
+
 			Blitter.BlitCameraTexture(cmd, volumetricFogRenderRTHandle, volumetricFogRenderRTHandle, volumetricFogMaterial, volumetricFogRenderPassIndex);
 
 			int blurIterations = VolumeManager.instance.stack.GetComponent<VolumetricFogVolumeComponent>().blurIterations.value;
-			
+
 			for (int i = 0; i < blurIterations; ++i)
 			{
 				Blitter.BlitCameraTexture(cmd, volumetricFogRenderRTHandle, volumetricFogBlurRTHandle, volumetricFogMaterial, volumetricFogHorizontalBlurPassIndex);

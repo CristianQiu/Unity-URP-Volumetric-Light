@@ -7,9 +7,12 @@ Unity 2022.3, 2023.1, 2023.2 or Unity 6.
 * Render graph support for Unity 6.
 * Compatibility mode is also supported.
 * Support for the main light, spot lights and point lights.
-* Shadows and light cookies support.
+* Shadows and light cookies support for the lights described above.
 * Seamlessly integrated into URP volume system.
+* Perspective and orthographic projection support.
 * Single pass VR rendering support. This is verified by users, since I do not work on VR.
+* Forward, Deferred, and Forward+ rendering paths. See limitations section. 
+* Verified graphics APIs: DirectX11, DirectX12, OpenGLES3, OpenGLCore and Vulkan.
 
 # How to add volumetric fog
 
@@ -23,8 +26,7 @@ Unity 2022.3, 2023.1, 2023.2 or Unity 6.
 
 # Known limitations
 
-* Orthographic projection is not supported.
-* WebGL is not supported.
+* WebGL is not supported. See https://github.com/CristianQiu/Unity-URP-Volumetric-Light/issues/7.
 * Multipass VR rendering is not supported.
 * When using forward or deferred rendering path, performance can be heavily affected when adding multiple additional lights. Forward+ is highly recommended for best performance when support for additional lights is needed.
 * Transparent objects are not blended correctly with fog.
@@ -37,12 +39,13 @@ Unity 2022.3, 2023.1, 2023.2 or Unity 6.
 
 # TODO
 
-There are a few things that I would like to add at some point.
+There are a few things that I would like to add at some point, as I like coming back to this project from time to time in my spare time.
 Some of which are (in no particular order):
 
-* Orthographic projection support.
+* Deferred+ support for Unity 6.1 when it goes out of beta. I would expect the package to work without any dramatic changes.
 * WebGL / WebGPU support.
-* Further improvements on performance.
+* Further improvements on performance and quality: quarter resolution rendering, reprojection...
+* New features: density volumes, noise, self shadowing...
 * And of course... bug fixing! Do not hesitate to open issues for anything that you find unexpected or buggy.
 
 # Preview
