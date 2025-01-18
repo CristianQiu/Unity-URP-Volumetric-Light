@@ -46,8 +46,6 @@ Shader "Hidden/VolumetricFog"
             float _Scatterings[MAX_VISIBLE_LIGHTS + 1];
             float _RadiiSq[MAX_VISIBLE_LIGHTS];
 
-            // unity_OrthoParams.w is not working for me neither in 2022 or Unity 6.
-            int _IsOrthographic;
             int _FrameCount;
             uint _CustomAdditionalLightsCount;
             float _Distance;
@@ -183,7 +181,7 @@ Shader "Hidden/VolumetricFog"
                 float3 rdPhase;
 
                 UNITY_BRANCH
-                if (_IsOrthographic < 1)
+                if (unity_OrthoParams.w <= 0)
                 {
                     ro = GetCameraPositionWS();
                     posWS = ComputeWorldSpacePosition(input.texcoord, depth, UNITY_MATRIX_I_VP);
@@ -278,8 +276,6 @@ Shader "Hidden/VolumetricFog"
             #pragma vertex Vert
             #pragma fragment Frag
 
-            int _IsOrthographic;
-
 #if UNITY_VERSION < 202320
             float4 _BlitTexture_TexelSize;
 #endif
@@ -288,7 +284,7 @@ Shader "Hidden/VolumetricFog"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                return DepthAwareGaussianBlur(input.texcoord, float2(1.0, 0.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy, _IsOrthographic);
+                return DepthAwareGaussianBlur(input.texcoord, float2(1.0, 0.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy);
             }
 
             ENDHLSL
@@ -312,8 +308,6 @@ Shader "Hidden/VolumetricFog"
             #pragma vertex Vert
             #pragma fragment Frag
 
-            int _IsOrthographic;
-
 #if UNITY_VERSION < 202320
             float4 _BlitTexture_TexelSize;
 #endif
@@ -322,7 +316,7 @@ Shader "Hidden/VolumetricFog"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                return DepthAwareGaussianBlur(input.texcoord, float2(0.0, 1.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy, _IsOrthographic);
+                return DepthAwareGaussianBlur(input.texcoord, float2(0.0, 1.0), _BlitTexture, sampler_PointClamp, _BlitTexture_TexelSize.xy);
             }
 
             ENDHLSL
@@ -348,8 +342,6 @@ Shader "Hidden/VolumetricFog"
             #pragma vertex Vert
             #pragma fragment Frag
 
-            int _IsOrthographic;
-
             TEXTURE2D_X(_VolumetricFogTexture);
             SAMPLER(sampler_BlitTexture);
 
@@ -359,7 +351,7 @@ Shader "Hidden/VolumetricFog"
 
                 // get the full resolution depth and convert it to linear eye depth
                 float fullResDepth = SampleSceneDepth(input.texcoord);
-                float linearFullResDepth = LinearEyeDepthConsiderProjection(fullResDepth, _IsOrthographic);
+                float linearFullResDepth = LinearEyeDepthConsiderProjection(fullResDepth);
 
                 // calculate the UVs to sample the downsampled depths
                 float2 halfResTexelSize = _HalfResCameraDepthTexture_TexelSize.xy;
@@ -393,7 +385,7 @@ Shader "Hidden/VolumetricFog"
                     // sample the lower resolution depth and convert to linear eye depth
                     float2 uv = uvs[i];
                     float depth = SampleDownsampledSceneDepth(uv);
-                    float linearEyeDepth = LinearEyeDepthConsiderProjection(depth, _IsOrthographic);
+                    float linearEyeDepth = LinearEyeDepthConsiderProjection(depth);
 
                     // check the depth distance
                     float depthDist = abs(linearFullResDepth - linearEyeDepth);

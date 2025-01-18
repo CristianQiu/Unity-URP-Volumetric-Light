@@ -11,11 +11,11 @@ static const float KernelWeights[] = { 0.2026, 0.1790, 0.1240, 0.0672, 0.0285 };
 
 // Blurs the RGB channels of the given texture using depth aware gaussian blur, which uses the half resolution camera depth to apply weights to the blur.
 // The alpha channel is not blurred so the original value is returned.
-float4 DepthAwareGaussianBlur(float2 uv, float2 dir, TEXTURE2D_X(textureToBlur), SAMPLER(sampler_TextureToBlur), float2 textureToBlurTexelSizeXy, int isOrthographic)
+float4 DepthAwareGaussianBlur(float2 uv, float2 dir, TEXTURE2D_X(textureToBlur), SAMPLER(sampler_TextureToBlur), float2 textureToBlurTexelSizeXy)
 {
     float4 centerSample = SAMPLE_TEXTURE2D_X(textureToBlur, sampler_TextureToBlur, uv);
     float centerRawDepth = SampleDownsampledSceneDepth(uv);
-    float centerLinearEyeDepth = LinearEyeDepthConsiderProjection(centerRawDepth, isOrthographic);
+    float centerLinearEyeDepth = LinearEyeDepthConsiderProjection(centerRawDepth);
 
     float3 rgbResult = centerSample.rgb * KernelWeights[0];
     float weights = KernelWeights[0];
@@ -29,7 +29,7 @@ float4 DepthAwareGaussianBlur(float2 uv, float2 dir, TEXTURE2D_X(textureToBlur),
         float2 uvSample = uv + uvOffset;
 
         float rawDepth = SampleDownsampledSceneDepth(uvSample);
-        float linearEyeDepth = LinearEyeDepthConsiderProjection(rawDepth, isOrthographic);
+        float linearEyeDepth = LinearEyeDepthConsiderProjection(rawDepth);
         float depthDiff = abs(centerLinearEyeDepth - linearEyeDepth);
         float r2 = BLUR_DEPTH_FALLOFF * depthDiff;
         float g = exp(-r2 * r2);
@@ -47,7 +47,7 @@ float4 DepthAwareGaussianBlur(float2 uv, float2 dir, TEXTURE2D_X(textureToBlur),
         float2 uvSample = uv + uvOffset;
 
         float rawDepth = SampleDownsampledSceneDepth(uvSample);
-        float linearEyeDepth = LinearEyeDepthConsiderProjection(rawDepth, isOrthographic);
+        float linearEyeDepth = LinearEyeDepthConsiderProjection(rawDepth);
         float depthDiff = abs(centerLinearEyeDepth - linearEyeDepth);
         float r2 = BLUR_DEPTH_FALLOFF * depthDiff;
         float g = exp(-r2 * r2);

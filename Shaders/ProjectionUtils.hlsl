@@ -11,13 +11,13 @@ float LinearEyeDepthOrthographic(float rawDepth)
 #endif
 }
 
-// Returns the linear eye depth considering the given camera projection type.
-float LinearEyeDepthConsiderProjection(float rawDepth, int isOrthographic)
+// Returns the linear eye depth considering the camera projection type.
+float LinearEyeDepthConsiderProjection(float rawDepth)
 {
     float perspectiveDepth = LinearEyeDepth(rawDepth, _ZBufferParams);
     float orthographicDepth = LinearEyeDepthOrthographic(rawDepth);
 
-    return lerp(perspectiveDepth, orthographicDepth, isOrthographic);
+    return lerp(perspectiveDepth, orthographicDepth, unity_OrthoParams.w);
 }
 
 #endif

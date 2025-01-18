@@ -69,7 +69,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int ScatteringsArrayId = Shader.PropertyToID("_Scatterings");
 	private static readonly int RadiiSqArrayId = Shader.PropertyToID("_RadiiSq");
 
-	private static readonly int IsOrthographicId = Shader.PropertyToID("_IsOrthographic");
 	private static readonly int FrameCountId = Shader.PropertyToID("_FrameCount");
 	private static readonly int CustomAdditionalLightsCountId = Shader.PropertyToID("_CustomAdditionalLightsCount");
 	private static readonly int DistanceId = Shader.PropertyToID("_Distance");
@@ -190,7 +189,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 		using (new ProfilingScope(cmd, profilingSampler))
 		{
-			UpdateVolumetricFogMaterialProperties(volumetricFogMaterial, renderingData.lightData.visibleLights, renderingData.lightData.mainLightIndex, renderingData.lightData.additionalLightsCount, renderingData.cameraData.camera.orthographic);
+			UpdateVolumetricFogMaterialProperties(volumetricFogMaterial, renderingData.lightData.visibleLights, renderingData.lightData.mainLightIndex, renderingData.lightData.additionalLightsCount);
 			Blitter.BlitCameraTexture(cmd, volumetricFogRenderRTHandle, volumetricFogRenderRTHandle, volumetricFogMaterial, volumetricFogRenderPassIndex);
 
 			int blurIterations = VolumeManager.instance.stack.GetComponent<VolumetricFogVolumeComponent>().blurIterations.value;
@@ -334,28 +333,24 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			volumetricFogMaterial.EnableKeyword("_ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED");
 	}
 
-	private static void UpdateVolumetricFogMaterialProperties(Material volumetricFogMaterial, NativeArray<VisibleLight> visibleLights, int mainLightIndex, int additionalLightsCount, bool orthographic)
+	private static void UpdateVolumetricFogMaterialProperties(Material volumetricFogMaterial, NativeArray<VisibleLight> visibleLights, int mainLightIndex, int additionalLightsCount)
 	{
 		VolumetricFogVolumeComponent fogVolume = VolumeManager.instance.stack.GetComponent<VolumetricFogVolumeComponent>();
 
 		bool enableMainLightContribution = fogVolume.enableMainLightContribution.value && fogVolume.scattering.value > 0.0f && mainLightIndex > -1;
 		bool enableAdditionalLightsContribution = fogVolume.enableAdditionalLightsContribution.value && additionalLightsCount > 0;
-		
-		float groundValue = (fogVolume.enableGround.overrideState && fogVolume.enableGround.value) ? fogVolume.groundHeight.value : float.MinValue;
-		float absortion = 1.0f / fogVolume.attenuationDistance.value;
-		
 		EnableMainLightContribution(volumetricFogMaterial, enableMainLightContribution);
 		EnableAdditionalLightsContribution(volumetricFogMaterial, enableAdditionalLightsContribution);
-		
 		UpdateLightsProperties(enableMainLightContribution, enableAdditionalLightsContribution, fogVolume, volumetricFogMaterial, visibleLights, mainLightIndex);
 
-		volumetricFogMaterial.SetInteger(IsOrthographicId, orthographic ? 1 : 0);
+		float groundHeight = (fogVolume.enableGround.overrideState && fogVolume.enableGround.value) ? fogVolume.groundHeight.value : float.MinValue;
+		float absortion = 1.0f / fogVolume.attenuationDistance.value;
 		volumetricFogMaterial.SetInteger(FrameCountId, Time.renderedFrameCount % 64);
 		volumetricFogMaterial.SetInteger(CustomAdditionalLightsCountId, additionalLightsCount);
 		volumetricFogMaterial.SetFloat(DistanceId, fogVolume.distance.value);
 		volumetricFogMaterial.SetFloat(BaseHeightId, fogVolume.baseHeight.value);
 		volumetricFogMaterial.SetFloat(MaximumHeightId, fogVolume.maximumHeight.value);
-		volumetricFogMaterial.SetFloat(GroundHeightId, groundValue);
+		volumetricFogMaterial.SetFloat(GroundHeightId, groundHeight);
 		volumetricFogMaterial.SetFloat(DensityId, fogVolume.density.value);
 		volumetricFogMaterial.SetFloat(AbsortionId, absortion);
 		volumetricFogMaterial.SetColor(TintId, fogVolume.tint.value);
@@ -371,15 +366,16 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// <param name="volumetricFogMaterial"></param>
 	/// <param name="visibleLights"></param>
 	/// <param name="mainLightIndex"></param>
-	private static void UpdateLightsProperties(bool enableMainLightContribution, bool enableAdditionalLightsContribution ,VolumetricFogVolumeComponent fogVolume, Material volumetricFogMaterial, NativeArray<VisibleLight> visibleLights, int mainLightIndex)
+	private static void UpdateLightsProperties(bool enableMainLightContribution, bool enableAdditionalLightsContribution, VolumetricFogVolumeComponent fogVolume, Material volumetricFogMaterial, NativeArray<VisibleLight> visibleLights, int mainLightIndex)
 	{
 		if (!enableMainLightContribution && !enableAdditionalLightsContribution)
 			return;
 
 		if (enableMainLightContribution)
 		{
-			Anisotropies[visibleLights.Length] = fogVolume.anisotropy.value;
-			Scatterings[visibleLights.Length] = fogVolume.scattering.value;
+			int lastIndex = visibleLights.Length - 1;
+			Anisotropies[lastIndex] = fogVolume.anisotropy.value;
+			Scatterings[lastIndex] = fogVolume.scattering.value;
 		}
 
 		if (enableAdditionalLightsContribution)
