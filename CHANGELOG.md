@@ -2,12 +2,11 @@
 
 ## [0.5.0] - 2025-01-13
 
-* Orthographic camera support.
-* Improve CPU performance when setting parameters for lights during the volumetric fog render pass.
-* Upsample uses texture gather when shader model 4.5+ is available for a slight increase in performance.
+* Added orthographic camera support.
+* Decrease CPU work when setting parameters for lights during the volumetric fog render pass.
+* Upsample uses texture gather when shader model 4.5+ is available.
 * Cleanups in VolumetricFogRenderPass.cs and VolumetricFog.hlsl.
-
-* Verified supported graphics APIs: ????
+* Verified supported graphics APIs: DirectX11, DirectX12, OpenGLES3, OpenGLCore and Vulkan.
 
 ## [0.4.1] - 2025-01-13
 

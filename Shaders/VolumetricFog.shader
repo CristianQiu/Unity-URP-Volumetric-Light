@@ -174,9 +174,6 @@ Shader "Hidden/VolumetricFog"
 
                 // prepare the ray origin and direction
                 float depth = SampleDownsampledSceneDepth(input.texcoord);
-#if !UNITY_REVERSED_Z
-                depth = lerp(UNITY_NEAR_CLIP_VALUE, 1.0, depth);
-#endif
                 float3 ro;
                 float3 rd;
                 float3 posWS;
@@ -187,6 +184,9 @@ Shader "Hidden/VolumetricFog"
                 if (unity_OrthoParams.w <= 0)
                 {
                     ro = GetCameraPositionWS();
+#if !UNITY_REVERSED_Z
+                    depth = lerp(UNITY_NEAR_CLIP_VALUE, 1.0, depth);
+#endif
                     posWS = ComputeWorldSpacePosition(input.texcoord, depth, UNITY_MATRIX_I_VP);
                     float3 offset = posWS - ro;
                     offsetLength = length(offset);
@@ -198,7 +198,7 @@ Shader "Hidden/VolumetricFog"
                     depth = LinearEyeDepthOrthographic(depth);
                     posWS = ComputeOrthoWPos(input.texcoord, depth, ro, rd);
                     offsetLength = depth;
-                    rdPhase = normalize(posWS - GetCameraPositionWS());
+                    rdPhase = rd;//normalize(posWS - GetCameraPositionWS()); // fake fase?
                 }
 
                 // calculate the step length and jitter
@@ -341,6 +341,51 @@ Shader "Hidden/VolumetricFog"
             #include "./DepthAwareUpsample.hlsl"
 
             #pragma target 4.5
+
+            #pragma vertex Vert
+            #pragma fragment Frag
+
+            float4 Frag(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
+                float4 volumetricFog = DepthAwareUpsample(input.texcoord);
+                float4 cameraColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_BlitTexture, input.texcoord);
+
+                return float4(cameraColor.rgb * volumetricFog.a + volumetricFog.rgb, cameraColor.a);
+            }
+
+            ENDHLSL
+        }
+    }
+
+    SubShader
+    {
+        Tags
+        { 
+            "RenderPipeline" = "UniversalPipeline"
+        }
+
+        UsePass "Hidden/VolumetricFog/VOLUMETRICFOGRENDER"
+
+        UsePass "Hidden/VolumetricFog/VOLUMETRICFOGHORIZONTALBLUR"
+            
+        UsePass "Hidden/VolumetricFog/VOLUMETRICFOGVERTICALBLUR"
+
+        Pass
+        {
+            Name "VolumetricFogUpsampleComposition"
+            
+            ZTest Always
+            ZWrite Off
+            Cull Off
+            Blend Off
+
+            HLSLPROGRAM
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "./DepthAwareUpsample.hlsl"
 
             #pragma vertex Vert
             #pragma fragment Frag
