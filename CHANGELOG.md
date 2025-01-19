@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.5.0] - 2025-01-18
+## [0.5.0] - 2025-01-19
 
 * Added orthographic camera support.
 * Decrease CPU work when setting parameters for lights during the volumetric fog render pass.
