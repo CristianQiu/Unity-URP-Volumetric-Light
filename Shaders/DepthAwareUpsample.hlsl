@@ -40,7 +40,7 @@ float4 DepthAwareUpsample(float2 uv)
     
     float2 nearestUv = uv[0];
     float relativeDepthThreshold = fullResLinearEyeDepth * 0.1;
-    int numValidDepths = linearEyeDepthDist < relativeDepthThreshold;
+    int numValidDepths = minLinearEyeDepthDist < relativeDepthThreshold;
     
     UNITY_UNROLL
     for (int i = 1; i < 4; ++i)
