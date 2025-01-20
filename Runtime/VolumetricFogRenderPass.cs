@@ -195,11 +195,13 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		CommandBuffer cmd = CommandBufferPool.Get();
 
 		using (new ProfilingScope(cmd, downsampleDepthProfilingSampler))
+		{
 			Blitter.BlitCameraTexture(cmd, downsampledCameraDepthRTHandle, downsampledCameraDepthRTHandle, downsampleDepthMaterial, downsampleDepthPassIndex);
+			volumetricFogMaterial.SetTexture(DownsampledCameraDepthTextureId, downsampledCameraDepthRTHandle);
+		}
 
 		using (new ProfilingScope(cmd, profilingSampler))
 		{
-			volumetricFogMaterial.SetTexture(DownsampledCameraDepthTextureId, downsampledCameraDepthRTHandle);
 			UpdateVolumetricFogMaterialParameters(volumetricFogMaterial, renderingData.lightData.mainLightIndex, renderingData.lightData.additionalLightsCount, renderingData.lightData.visibleLights);
 
 			Blitter.BlitCameraTexture(cmd, volumetricFogRenderRTHandle, volumetricFogRenderRTHandle, volumetricFogMaterial, volumetricFogRenderPassIndex);
