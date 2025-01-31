@@ -139,6 +139,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
     float3 rd;
     float3 posWS;
     
+    float iniOffset;
     float offsetLength;
     float3 rdPhase;
 
@@ -163,7 +164,9 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         float3 camFwd = normalize(-UNITY_MATRIX_V[2].xyz);
         float cos = dot(camFwd, rd);
         float fragElongation = 1.0 / max(0.0001, cos);
-        ro += (rd * (fragElongation * _ProjectionParams.y));
+        iniOffset = fragElongation * _ProjectionParams.y;
+        ro += (rd * iniOffset);
+
     }
     else
     {
@@ -173,7 +176,8 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         
         // Fake the ray direction that will be used to calculate the phase, so we can still use anisotropy in orthographic mode.
         rdPhase = normalize(posWS - GetCameraPositionWS());
-        ro += rd * _ProjectionParams.y;
+        iniOffset = _ProjectionParams.y;
+        ro += rd * iniOffset;
     }
 
     float stepLength = _Distance / (float) _MaxSteps;
@@ -197,7 +201,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
 
         // perform depth test to break out early
         UNITY_BRANCH
-        if (dist >= offsetLength)
+        if ((dist + iniOffset) >= offsetLength)
             break;
 
         float3 currPosWS = ro + rd * dist;
