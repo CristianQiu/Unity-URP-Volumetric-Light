@@ -139,7 +139,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
     float3 rd;
     float3 posWS;
     
-    float iniOffset;
+    float iniOffsetToNearPlane;
     float offsetLength;
     float3 rdPhase;
 
@@ -156,17 +156,11 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         rd = offset / offsetLength;
         rdPhase = rd;
         
-        // We are making the space between the camera position and the near plane "non existant", as if fog did not exist there.
-        // However, it removes a lot of noise when in closed environments with an attenuation that makes the scene darker
-        // and certain combinations of field of view, raymarching resolution and camera near plane.
-        // In those edge cases, it looks so much better, specially when near plane is higher than the minimum (0.01) allowed.
         // In perspective, rd should vary in length depending on which fragment we are at.
         float3 camFwd = normalize(-UNITY_MATRIX_V[2].xyz);
         float cos = dot(camFwd, rd);
-        float fragElongation = 1.0 / max(0.0001, cos);
-        iniOffset = fragElongation * _ProjectionParams.y;
-        ro += (rd * iniOffset);
-
+        float fragElongation = 1.0 / max(0.00001, cos);
+        iniOffsetToNearPlane = fragElongation * _ProjectionParams.y;
     }
     else
     {
@@ -176,8 +170,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         
         // Fake the ray direction that will be used to calculate the phase, so we can still use anisotropy in orthographic mode.
         rdPhase = normalize(posWS - GetCameraPositionWS());
-        iniOffset = _ProjectionParams.y;
-        ro += rd * iniOffset;
+        iniOffsetToNearPlane = _ProjectionParams.y;
     }
 
     float stepLength = _Distance / (float) _MaxSteps;
@@ -201,9 +194,18 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
 
         // perform depth test to break out early
         UNITY_BRANCH
-        if ((dist + iniOffset) >= offsetLength)
+        if (dist >= offsetLength)
             break;
 
+        // We are making the space between the camera position and the near plane "non existant", as if fog did not exist there.
+        // However, it removes a lot of noise when in closed environments with an attenuation that makes the scene darker
+        // and certain combinations of field of view, raymarching resolution and camera near plane.
+        // In those edge cases, it looks so much better, specially when near plane is higher than the minimum (0.01) allowed.
+        // TODO: Implement raymarching from the position at the near plane up to min(depth, maxDist).
+        UNITY_BRANCH
+        if (dist < iniOffsetToNearPlane)
+            continue;
+            
         float3 currPosWS = ro + rd * dist;
         float density = GetFogDensity(currPosWS.y);
                     
