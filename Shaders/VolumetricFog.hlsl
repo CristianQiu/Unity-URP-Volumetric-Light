@@ -32,17 +32,17 @@ float3 ComputeOrthographicParams(float2 uv, float depth, out float3 ro, out floa
 {
     float4x4 viewMatrix = UNITY_MATRIX_V;
 
-    float3 camRightWs = normalize(viewMatrix[0].xyz);
-    float3 camUpWs = normalize(viewMatrix[1].xyz);
-    float3 camFwdWs = normalize(-viewMatrix[2].xyz);
+    float3 camRight = normalize(viewMatrix[0].xyz);
+    float3 camUp = normalize(viewMatrix[1].xyz);
+    float3 camFwd = normalize(-viewMatrix[2].xyz);
 
     float2 ndc = uv * 2.0 - 1.0;
     float3 posWs = GetCameraPositionWS() +
-                (camRightWs * (ndc.x * unity_OrthoParams.x)) +
-                (camUpWs * (ndc.y * unity_OrthoParams.y)) +
-                (camFwdWs * depth);
+                (camRight * (ndc.x * unity_OrthoParams.x)) +
+                (camUp * (ndc.y * unity_OrthoParams.y)) +
+                (camFwd * depth);
 
-    rd = camFwdWs;
+    rd = camFwd;
     ro = posWs - rd * depth;
 
     return posWs;
@@ -159,8 +159,11 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         // However, it removes a lot of noise when in closed environments with an attenuation that makes the scene darker
         // and certain combinations of field of view, raymarching resolution and camera near plane.
         // In those edge cases, it looks so much better, specially when near plane is higher than the minimum (0.01) allowed.
-        // TODO: In perspective, rd should vary in length depending on which fragment we are at.
-        ro += rd * _ProjectionParams.y;
+        // In perspective, rd should vary in length depending on which fragment we are at.
+        float3 camFwd = normalize(-UNITY_MATRIX_V[2].xyz);
+        float cos = dot(camFwd, rd);
+        float fragElongation = 1.0 / max(0.0001, cos);
+        ro += (rd * (fragElongation * _ProjectionParams.y));
     }
     else
     {
