@@ -34,12 +34,12 @@ float4 DepthAwareUpsample(float2 uv)
 
     float fullResDepth = SampleSceneDepth(uv);
     float fullResLinearEyeDepth = LinearEyeDepthConsiderProjection(fullResDepth);
+    float relativeDepthThreshold = fullResLinearEyeDepth * 0.1;
     
     float linearEyeDepth = LinearEyeDepthConsiderProjection(downsampledDepths[0]);
     float minLinearEyeDepthDist = abs(fullResLinearEyeDepth - linearEyeDepth);
     
     float2 nearestUv = uv[0];
-    float relativeDepthThreshold = fullResLinearEyeDepth * 0.1;
     int numValidDepths = minLinearEyeDepthDist < relativeDepthThreshold;
     
     UNITY_UNROLL
