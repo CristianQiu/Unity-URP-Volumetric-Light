@@ -156,7 +156,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         rd = offset / offsetLength;
         rdPhase = rd;
         
-        // In perspective, rd should vary in length depending on which fragment we are at.
+        // In perspective, ray direction should vary in length depending on which fragment we are at.
         float3 camFwd = normalize(-UNITY_MATRIX_V[2].xyz);
         float cos = dot(camFwd, rd);
         float fragElongation = 1.0 / max(0.00001, cos);
