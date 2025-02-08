@@ -5,11 +5,8 @@
 #include "./DeclareDownsampledDepthTexture.hlsl"
 #include "./ProjectionUtils.hlsl"
 
-TEXTURE2D_X(_VolumetricFogTexture);
-SAMPLER(sampler_BlitTexture);
-
-// Upsamples the volumetric fog using both the downsampled and full resolution depth information.
-float4 DepthAwareUpsample(float2 uv)
+// Upsamples the given texture using both the downsampled and full resolution depth information.
+float4 DepthAwareUpsample(float2 uv, TEXTURE2D_X(textureToUpsample))
 {
     float2 downsampledTexelSize = _DownsampledCameraDepthTexture_TexelSize.xy;
     float2 downsampledTopLeftCornerUv = uv - (downsampledTexelSize * 0.5);
@@ -58,9 +55,9 @@ float4 DepthAwareUpsample(float2 uv)
 
     UNITY_BRANCH
     if (numValidDepths == 4)
-        return SAMPLE_TEXTURE2D_X(_VolumetricFogTexture, sampler_LinearClamp, uv);
+        return SAMPLE_TEXTURE2D_X(textureToUpsample, sampler_LinearClamp, uv);
     else
-        return SAMPLE_TEXTURE2D_X(_VolumetricFogTexture, sampler_PointClamp, nearestUv);
+        return SAMPLE_TEXTURE2D_X(textureToUpsample, sampler_PointClamp, nearestUv);
 }
 
 #endif

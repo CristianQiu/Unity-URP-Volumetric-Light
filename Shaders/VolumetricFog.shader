@@ -127,11 +127,14 @@ Shader "Hidden/VolumetricFog"
             #pragma vertex Vert
             #pragma fragment Frag
 
+            TEXTURE2D_X(_VolumetricFogTexture);
+            SAMPLER(sampler_BlitTexture);
+
             float4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                float4 volumetricFog = DepthAwareUpsample(input.texcoord);
+                float4 volumetricFog = DepthAwareUpsample(input.texcoord, _VolumetricFogTexture);
                 float4 cameraColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_BlitTexture, input.texcoord);
 
                 return float4(cameraColor.rgb * volumetricFog.a + volumetricFog.rgb, cameraColor.a);
@@ -172,11 +175,14 @@ Shader "Hidden/VolumetricFog"
             #pragma vertex Vert
             #pragma fragment Frag
 
+            TEXTURE2D_X(_VolumetricFogTexture);
+            SAMPLER(sampler_BlitTexture);
+
             float4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                float4 volumetricFog = DepthAwareUpsample(input.texcoord);
+                float4 volumetricFog = DepthAwareUpsample(input.texcoord, _VolumetricFogTexture);
                 float4 cameraColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_BlitTexture, input.texcoord);
 
                 return float4(cameraColor.rgb * volumetricFog.a + volumetricFog.rgb, cameraColor.a);
