@@ -36,13 +36,13 @@ float4 DepthAwareUpsample(float2 uv, TEXTURE2D_X(textureToUpsample))
     float linearEyeDepth = LinearEyeDepthConsiderProjection(downsampledDepths[0]);
     float minLinearEyeDepthDist = abs(fullResLinearEyeDepth - linearEyeDepth);
     
-    float2 nearestUv = uv[0];
+    float2 nearestUv = uvs[0];
     int numValidDepths = minLinearEyeDepthDist < relativeDepthThreshold;
     
     UNITY_UNROLL
     for (int i = 1; i < 4; ++i)
     {
-        float linearEyeDepth = LinearEyeDepthConsiderProjection(downsampledDepths[i]);
+        linearEyeDepth = LinearEyeDepthConsiderProjection(downsampledDepths[i]);
         float linearEyeDepthDist = abs(fullResLinearEyeDepth - linearEyeDepth);
 
         bool updateNearest = linearEyeDepthDist < minLinearEyeDepthDist;
