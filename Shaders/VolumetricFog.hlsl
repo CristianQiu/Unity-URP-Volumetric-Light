@@ -27,23 +27,19 @@ float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
 float _Scatterings[MAX_VISIBLE_LIGHTS + 1];
 float _RadiiSq[MAX_VISIBLE_LIGHTS];
 
-// Computes the ray origin, direction, and reconstructs the world position for orthographic projection.
+// Computes the ray origin, direction, and returns the reconstructed world position for orthographic projection.
 float3 ComputeOrthographicParams(float2 uv, float depth, out float3 ro, out float3 rd)
 {
     float4x4 viewMatrix = UNITY_MATRIX_V;
-
-    float3 camRight = normalize(viewMatrix[0].xyz);
-    float3 camUp = normalize(viewMatrix[1].xyz);
-    float3 camFwd = normalize(-viewMatrix[2].xyz);
-
     float2 ndc = uv * 2.0 - 1.0;
-    float3 posWs = GetCameraPositionWS() +
-                (camRight * (ndc.x * unity_OrthoParams.x)) +
-                (camUp * (ndc.y * unity_OrthoParams.y)) +
-                (camFwd * depth);
-
-    rd = camFwd;
-    ro = posWs - rd * depth;
+    
+    rd = normalize(-viewMatrix[2].xyz);
+    float3 rightOffset = normalize(viewMatrix[0].xyz) * (ndc.x * unity_OrthoParams.x);
+    float3 upOffset = normalize(viewMatrix[1].xyz) * (ndc.y * unity_OrthoParams.y);
+    float3 fwdOffset = rd * depth;
+    
+    float3 posWs = GetCameraPositionWS() + fwdOffset + rightOffset + upOffset;
+    ro = posWs - fwdOffset;
 
     return posWs;
 }
@@ -89,22 +85,15 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, floa
                 
     // Loop differently through lights in Forward+ while considering Forward and Deferred too.
     LIGHT_LOOP_BEGIN(_CustomAdditionalLightsCount)
-        float additionalLightScattering = _Scatterings[lightIndex];
-
         UNITY_BRANCH
-        if (additionalLightScattering <= 0.0)
+        if (_Scatterings[lightIndex] <= 0.0)
             continue;
-
-        float additionalLightAnisotropy = _Anisotropies[lightIndex];
-        float additionalLightRadiusSq = _RadiiSq[lightIndex];
 
         Light additionalLight = GetAdditionalPerObjectLight(lightIndex, currPosWS);
         additionalLight.shadowAttenuation = VolumetricAdditionalLightRealtimeShadow(lightIndex, currPosWS, additionalLight.direction);
 #if _LIGHT_COOKIES
         additionalLight.color *= SampleAdditionalLightCookie(lightIndex, currPosWS);
 #endif
-        float phaseAdditionalLight = CornetteShanksPhaseFunction(additionalLightAnisotropy, dot(rd, additionalLight.direction));
-
         // See universal\ShaderLibrary\RealtimeLights.hlsl - GetAdditionalPerObjectLight.
 #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
         float4 additionalLightPos = _AdditionalLightsBuffer[lightIndex].position;
@@ -115,15 +104,13 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, floa
         // Gradually reduce additional lights scattering to zero at their origin to try to avoid flicker-aliasing.
         float3 distToPos = additionalLightPos.xyz - currPosWS;
         float distToPosMagnitudeSq = dot(distToPos, distToPos);
-        float newScattering = smoothstep(0.0, additionalLightRadiusSq, distToPosMagnitudeSq) * additionalLightScattering;
-
-        // This looks slightly better, it hides the subtle seam that is created due to the rate change.
-        newScattering = newScattering * newScattering;
-                    
+        float newScattering = smoothstep(0.0, _RadiiSq[lightIndex], distToPosMagnitudeSq) * _Scatterings[lightIndex];
+        
         // If directional lights are also considered as additional lights when more than 1 is used, ignore the previous code when it is a directional light.
         // They store direction in additionalLightPos.xyz and have .w set to 0, while point and spotlights have it set to 1.
         // newScattering = lerp(1.0, newScattering, additionalLightPos.w);
-
+    
+        float phaseAdditionalLight = CornetteShanksPhaseFunction(_Anisotropies[lightIndex], dot(rd, additionalLight.direction));
         additionalLightsColor += (additionalLight.color * (additionalLight.shadowAttenuation * additionalLight.distanceAttenuation * phaseAdditionalLight * density * newScattering));
     LIGHT_LOOP_END
 
@@ -159,7 +146,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         // In perspective, ray direction should vary in length depending on which fragment we are at.
         float3 camFwd = normalize(-UNITY_MATRIX_V[2].xyz);
         float cos = dot(camFwd, rd);
-        float fragElongation = 1.0 / max(0.00001, cos);
+        float fragElongation = 1.0 / cos;
         iniOffsetToNearPlane = fragElongation * _ProjectionParams.y;
     }
     else
