@@ -110,8 +110,8 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, floa
         // They store direction in additionalLightPos.xyz and have .w set to 0, while point and spotlights have it set to 1.
         // newScattering = lerp(1.0, newScattering, additionalLightPos.w);
     
-        float phaseAdditionalLight = CornetteShanksPhaseFunction(_Anisotropies[lightIndex], dot(rd, additionalLight.direction));
-        additionalLightsColor += (additionalLight.color * (additionalLight.shadowAttenuation * additionalLight.distanceAttenuation * phaseAdditionalLight * density * newScattering));
+        float phase = CornetteShanksPhaseFunction(_Anisotropies[lightIndex], dot(rd, additionalLight.direction));
+        additionalLightsColor += (additionalLight.color * (additionalLight.shadowAttenuation * additionalLight.distanceAttenuation * phase * density * newScattering));
     LIGHT_LOOP_END
 
     return additionalLightsColor;
@@ -160,7 +160,9 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         iniOffsetToNearPlane = _ProjectionParams.y;
     }
 
-    float stepLength = _Distance / (float) _MaxSteps;
+    offsetLength -= iniOffsetToNearPlane;
+    float3 roNearPlane = ro + rd * iniOffsetToNearPlane;
+    float stepLength = (_Distance - iniOffsetToNearPlane) / (float)_MaxSteps;
     float jitter = stepLength * InterleavedGradientNoise(positionCS, _FrameCount);
 
 #if _MAIN_LIGHT_CONTRIBUTION_DISABLED
@@ -176,10 +178,8 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
     UNITY_LOOP
     for (int i = 0; i < _MaxSteps; ++i)
     {
-        // calculate the distance we are at
         float dist = jitter + i * stepLength;
 
-        // perform depth test to break out early
         UNITY_BRANCH
         if (dist >= offsetLength)
             break;
@@ -188,15 +188,9 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         // However, it removes a lot of noise when in closed environments with an attenuation that makes the scene darker
         // and certain combinations of field of view, raymarching resolution and camera near plane.
         // In those edge cases, it looks so much better, specially when near plane is higher than the minimum (0.01) allowed.
-        // TODO: Implement raymarching from the position at the near plane up to min(depth, maxDist).
-        UNITY_BRANCH
-        if (dist < iniOffsetToNearPlane)
-            continue;
-            
-        float3 currPosWS = ro + rd * dist;
+        float3 currPosWS = roNearPlane + rd * dist;
         float density = GetFogDensity(currPosWS.y);
                     
-        // keep marching when there is not enough density
         UNITY_BRANCH
         if (density <= 0.0)
             continue;
@@ -204,11 +198,10 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         float stepAttenuation = exp(minusStepLengthTimesAbsortion * density);
         transmittance *= stepAttenuation;
 
-        // calculate the colors at this step and accumulate them
         float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight, density);
         float3 additionalLightsColor = GetStepAdditionalLightsColor(uv, currPosWS, rd, density);
 
-        // TODO: Add ambient?
+        // TODO: Add ambient.
         float3 stepColor = mainLightColor + additionalLightsColor;
         volumetricFogColor += (stepColor * (transmittance * stepLength));
     }
