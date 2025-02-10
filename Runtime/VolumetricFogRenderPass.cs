@@ -170,16 +170,16 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		cameraTargetDescriptor.width /= (int)DownsampleFactor.Half;
 		cameraTargetDescriptor.height /= (int)DownsampleFactor.Half;
 		cameraTargetDescriptor.graphicsFormat = GraphicsFormat.R32_SFloat;
-		RenderingUtils.ReAllocateIfNeeded(ref downsampledCameraDepthRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: DownsampledCameraDepthRTName);
+		ReAllocateIfNeeded(ref downsampledCameraDepthRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: DownsampledCameraDepthRTName);
 
 		cameraTargetDescriptor.colorFormat = RenderTextureFormat.ARGBHalf;
-		RenderingUtils.ReAllocateIfNeeded(ref volumetricFogRenderRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogRenderRTName);
-		RenderingUtils.ReAllocateIfNeeded(ref volumetricFogBlurRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogBlurRTName);
+		ReAllocateIfNeeded(ref volumetricFogRenderRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogRenderRTName);
+		ReAllocateIfNeeded(ref volumetricFogBlurRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogBlurRTName);
 
 		cameraTargetDescriptor.width = originalResolution.x;
 		cameraTargetDescriptor.height = originalResolution.y;
 		cameraTargetDescriptor.colorFormat = originalColorFormat;
-		RenderingUtils.ReAllocateIfNeeded(ref volumetricFogUpsampleCompositionRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogUpsampleCompositionRTName);
+		ReAllocateIfNeeded(ref volumetricFogUpsampleCompositionRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogUpsampleCompositionRTName);
 	}
 
 	/// <summary>
@@ -483,6 +483,22 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	}
 
 #endif
+
+	/// <summary>
+	/// Re-allocate fixed-size RTHandle if it is not allocated or doesn't match the descriptor.
+	/// </summary>
+	/// <param name="handle"></param>
+	/// <param name="descriptor"></param>
+	/// <param name="wrapMode"></param>
+	/// <param name="name"></param>
+	private void ReAllocateIfNeeded(ref RTHandle handle, in RenderTextureDescriptor descriptor, TextureWrapMode wrapMode, string name)
+	{
+#if UNITY_6000_0_OR_NEWER
+		RenderingUtils.ReAllocateHandleIfNeeded(ref handle, descriptor, wrapMode: wrapMode, name: name);
+#else
+		RenderingUtils.ReAllocateIfNeeded(ref handle, descriptor, wrapMode: wrapMode, name: name);
+#endif
+	}
 
 	/// <summary>
 	/// Disposes the resources used by this pass.
