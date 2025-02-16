@@ -2,6 +2,7 @@
 
 ## [0.5.1] - 2025-02-16
 
+* Solved error in the scattering falloff that made additional lights scattering to be stronger than it should. You may have to retweak your additional lights scattering. [Sorry :(]
 * Reduced noise at certain, extreme combinations of near plane, camera field of view, fog density and light scattering.
 * Exposed render pass event field in the volume settings. Overriding can still happen per volume.  
 * Replaced obsolete method by its newest version in non RG path in Unity 6.

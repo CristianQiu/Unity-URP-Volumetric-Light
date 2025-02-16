@@ -104,8 +104,10 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, floa
         // Gradually reduce additional lights scattering to zero at their origin to try to avoid flicker-aliasing.
         float3 distToPos = additionalLightPos.xyz - currPosWS;
         float distToPosMagnitudeSq = dot(distToPos, distToPos);
-        float newScattering = smoothstep(0.0, _RadiiSq[lightIndex], distToPosMagnitudeSq) * _Scatterings[lightIndex];
-        
+        float newScattering = smoothstep(0.0, _RadiiSq[lightIndex], distToPosMagnitudeSq) ;
+        newScattering *= newScattering;
+        newScattering *= _Scatterings[lightIndex];
+
         // If directional lights are also considered as additional lights when more than 1 is used, ignore the previous code when it is a directional light.
         // They store direction in additionalLightPos.xyz and have .w set to 0, while point and spotlights have it set to 1.
         // newScattering = lerp(1.0, newScattering, additionalLightPos.w);
