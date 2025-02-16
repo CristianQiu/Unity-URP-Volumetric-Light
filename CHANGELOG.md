@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1] - 2025-02-16
+
+* Reduced noise at certain, extreme combinations of near plane, camera field of view, fog density and light scattering.
+* Exposed render pass event field in the volume settings. Overriding can still happen per volume.  
+* Replaced obsolete method by its newest version in non RG path in Unity 6.
+* Other minor improvements/cleanups.
+
 ## [0.5.0] - 2025-01-19
 
 * Added orthographic camera support.

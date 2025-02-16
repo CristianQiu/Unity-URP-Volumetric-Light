@@ -8,6 +8,7 @@ Unity 2022.3, 2023.1, 2023.2 or Unity 6.
 * Compatibility mode is also supported.
 * Support for the main light, spot lights and point lights.
 * Shadows and light cookies support for the lights described above.
+* Realtime and mixed lights support.
 * Perspective and orthographic projection support.
 * Single pass VR rendering support. This is verified by users, since I do not work on VR.
 * Seamlessly integrated into URP volume system.
@@ -39,6 +40,7 @@ The recommended way to install the package is through the package manager in Uni
 * Multipass VR rendering is not supported.
 * WebGL is not supported. See https://github.com/CristianQiu/Unity-URP-Volumetric-Light/issues/7.
 * Transparent objects are not blended correctly with fog.
+* Fully baked lights are not supported.
 * Fog is only rendered up to a certain distance from the camera.
 * It may be possible to notice more noise in some light regions at certain view angles.
 * When using forward or deferred rendering path, performance can be heavily affected when adding multiple additional lights. Forward+ is highly recommended for best performance when support for additional lights is needed.

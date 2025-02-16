@@ -116,13 +116,14 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// </summary>
 	/// <param name="downsampleDepthMaterial"></param>
 	/// <param name="volumetricFogMaterial"></param>
-	public VolumetricFogRenderPass(Material downsampleDepthMaterial, Material volumetricFogMaterial) : base()
+	/// <param name="passEvent"></param>
+	public VolumetricFogRenderPass(Material downsampleDepthMaterial, Material volumetricFogMaterial, RenderPassEvent passEvent) : base()
 	{
 		// Use BeforeRenderingPostprocessing instead of AfterRenderingTransparents. It works better
 		// with motion blur. BeforeRenderingTransparents is also an option depending on the needs.
 		profilingSampler = new ProfilingSampler("Volumetric Fog");
 		downsampleDepthProfilingSampler = new ProfilingSampler("Downsample Depth");
-		renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
+		renderPassEvent = passEvent;
 #if UNITY_6000_0_OR_NEWER
 		requiresIntermediateTexture = false;
 #endif

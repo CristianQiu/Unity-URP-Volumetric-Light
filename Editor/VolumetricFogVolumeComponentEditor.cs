@@ -29,6 +29,8 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	private SerializedDataParameter maxSteps;
 	private SerializedDataParameter blurIterations;
 	private SerializedDataParameter enabled;
+	
+	private SerializedDataParameter renderPassEvent;
 
 	#endregion
 
@@ -61,6 +63,8 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		maxSteps = Unpack(pf.Find(x => x.maxSteps));
 		blurIterations = Unpack(pf.Find(x => x.blurIterations));
 		enabled = Unpack(pf.Find(x => x.enabled));
+		
+		renderPassEvent = Unpack(pf.Find(x => x.renderPassEvent));
 	}
 
 	/// <summary>
@@ -104,6 +108,8 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		PropertyField(maxSteps);
 		PropertyField(blurIterations);
 		PropertyField(enabled);
+		
+		PropertyField(renderPassEvent);
 	}
 
 	#endregion

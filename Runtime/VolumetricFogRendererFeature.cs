@@ -32,7 +32,7 @@ public sealed class VolumetricFogRendererFeature : ScriptableRendererFeature
 	{
 		ValidateResourcesForVolumetricFogRenderPass(true);
 
-		volumetricFogRenderPass = new VolumetricFogRenderPass(downsampleDepthMaterial, volumetricFogMaterial);
+		volumetricFogRenderPass = new VolumetricFogRenderPass(downsampleDepthMaterial, volumetricFogMaterial, GetRenderPassEvent());
 	}
 
 	/// <summary>
@@ -44,9 +44,10 @@ public sealed class VolumetricFogRendererFeature : ScriptableRendererFeature
 	{
 		bool isPostProcessEnabled = renderingData.postProcessingEnabled && renderingData.cameraData.postProcessEnabled;
 		bool shouldAddVolumetricFogRenderPass = isPostProcessEnabled && ShouldAddVolumetricFogRenderPass(renderingData.cameraData.cameraType);
-
+		
 		if (shouldAddVolumetricFogRenderPass)
 		{
+			volumetricFogRenderPass.renderPassEvent = GetRenderPassEvent();
 			volumetricFogRenderPass.ConfigureInput(ScriptableRenderPassInput.Depth);
 			renderer.EnqueuePass(volumetricFogRenderPass);
 		}
@@ -92,7 +93,7 @@ public sealed class VolumetricFogRendererFeature : ScriptableRendererFeature
 
 		bool okDepth = downsampleDepthShader != null && downsampleDepthMaterial != null;
 		bool okVolumetric = volumetricFogShader != null && volumetricFogMaterial != null;
-
+		
 		return okDepth && okVolumetric;
 	}
 
@@ -110,6 +111,18 @@ public sealed class VolumetricFogRendererFeature : ScriptableRendererFeature
 		bool areResourcesOk = ValidateResourcesForVolumetricFogRenderPass(false);
 
 		return isActive && isVolumeOk && isCameraOk && areResourcesOk;
+	}
+
+	/// <summary>
+	/// Returns the render pass event for the volumetric fog.
+	/// </summary>
+	/// <returns></returns>
+	private RenderPassEvent GetRenderPassEvent()
+	{
+		VolumetricFogVolumeComponent fogVolume = VolumeManager.instance.stack.GetComponent<VolumetricFogVolumeComponent>();
+		int renderPassEventInt = (int)fogVolume.renderPassEvent.value;
+		
+		return (RenderPassEvent)renderPassEventInt;
 	}
 
 	#endregion
