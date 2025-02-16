@@ -283,8 +283,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			passData.materialPassIndex = volumetricFogHorizontalBlurPassIndex;
 			passData.materialAdditionalPassIndex = volumetricFogVerticalBlurPassIndex;
 
-			// Access flags are theoretically incorrect for one separable blur pass, but it is not
-			// going to make any difference.
 			builder.UseTexture(volumetricFogRenderTarget, AccessFlags.ReadWrite);
 			builder.UseTexture(volumetricFogBlurRenderTarget, AccessFlags.ReadWrite);
 			builder.SetRenderFunc((PassData data, UnsafeGraphContext context) => ExecuteUnsafeBlurPass(data, context));
