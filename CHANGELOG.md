@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.5.2] - 2025-02-23
+
+* Removed empty version dependency as it was throwing errors. User should make sure that they have URP package installed before installing the volumetric light package to avoid console errors.
+
 ## [0.5.1] - 2025-02-16
 
 * Solved error in the scattering falloff that made additional lights scattering to be stronger than it should. You may have to retweak your additional lights scattering. [Sorry :(]
