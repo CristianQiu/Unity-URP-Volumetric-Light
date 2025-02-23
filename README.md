@@ -1,6 +1,6 @@
 # Requirements
 
-Unity 2022.3, 2023.1, 2023.2 or Unity 6.
+Unity 2022.3, 2023.1, 2023.2 or Unity 6 along with their corresponding URP version.
 
 # Features
 
@@ -18,6 +18,9 @@ Unity 2022.3, 2023.1, 2023.2 or Unity 6.
 # Installation
 
 The recommended way to install the package is through the package manager in Unity (UPM).
+Before installing, make sure that URP is installed and correctly set up in your project.
+Then you can proceed to install this package:
+
 1. Inside Unity, go to "Window"-> "Package Manager".
 2. Once the window is opened, go to the "+" symbol at the top left corner, and select "Install package from git URL". See the image below.
 
