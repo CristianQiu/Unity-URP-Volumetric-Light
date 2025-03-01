@@ -1,9 +1,11 @@
+using UnityEngine.Rendering.Universal;
+
 /// <summary>
 /// Render pass events for the volumetric fog. Matches the ones in the Universal Render Pipeline.
 /// </summary>
 public enum VolumetricFogRenderPassEvent
 {
-	BeforeRenderingTransparents = 450,
-	AfterRenderingTransparents = 500,
-	BeforeRenderingPostProcessing = 550
+	BeforeRenderingTransparents = RenderPassEvent.BeforeRenderingTransparents,
+	AfterRenderingTransparents = RenderPassEvent.AfterRenderingTransparents,
+	BeforeRenderingPostProcessing = RenderPassEvent.BeforeRenderingPostProcessing
 }
