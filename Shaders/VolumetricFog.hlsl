@@ -21,6 +21,7 @@ float _GroundHeight;
 float _Density;
 float _Absortion;
 float3 _Tint;
+TEXTURE3D(_NoiseTexture);
 int _MaxSteps;
 
 float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
@@ -45,13 +46,19 @@ float3 ComputeOrthographicParams(float2 uv, float depth, out float3 ro, out floa
 }
 
 // Gets the fog density at the given world height.
-float GetFogDensity(float posWSy)
+float GetFogDensity(float3 posWS)
 {
-    float t = saturate((posWSy - _BaseHeight) / (_MaximumHeight - _BaseHeight));
+    float t = saturate((posWS.y - _BaseHeight) / (_MaximumHeight - _BaseHeight));
     t = 1.0 - t;
-    t = lerp(t, 0.0, posWSy < _GroundHeight);
+    t = lerp(t, 0.0, posWS.y < _GroundHeight);
 
-    return _Density * t;
+    float3 uvw = posWS;
+    uvw *= 0.25;
+    float4 noise4 = SAMPLE_TEXTURE3D(_NoiseTexture, sampler_LinearRepeat, uvw).rgba;
+    float noise = noise4.r * 0.5 + noise4.g * 0.25 + noise4.b * 0.125 + noise4.a * 0.125;
+    float d = _Density - noise * 2;
+
+    return d * t;
 }
 
 // Gets the main light color at one raymarch step.
@@ -191,7 +198,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         // and certain combinations of field of view, raymarching resolution and camera near plane.
         // In those edge cases, it looks so much better, specially when near plane is higher than the minimum (0.01) allowed.
         float3 currPosWS = roNearPlane + rd * dist;
-        float density = GetFogDensity(currPosWS.y);
+        float density = GetFogDensity(currPosWS);
                     
         UNITY_BRANCH
         if (density <= 0.0)

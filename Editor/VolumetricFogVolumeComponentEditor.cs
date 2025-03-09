@@ -25,6 +25,8 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	private SerializedDataParameter tint;
 
 	private SerializedDataParameter enableAdditionalLightsContribution;
+	
+	private SerializedDataParameter noiseTexture;
 
 	private SerializedDataParameter maxSteps;
 	private SerializedDataParameter blurIterations;
@@ -59,6 +61,8 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		tint = Unpack(pf.Find(x => x.tint));
 
 		enableAdditionalLightsContribution = Unpack(pf.Find(x => x.enableAdditionalLightsContribution));
+
+		noiseTexture = Unpack(pf.Find(x => x.noiseTexture));
 
 		maxSteps = Unpack(pf.Find(x => x.maxSteps));
 		blurIterations = Unpack(pf.Find(x => x.blurIterations));
@@ -104,6 +108,8 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		}
 
 		PropertyField(enableAdditionalLightsContribution);
+
+		PropertyField(noiseTexture);
 
 		PropertyField(maxSteps);
 		PropertyField(blurIterations);

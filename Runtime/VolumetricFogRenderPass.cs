@@ -81,6 +81,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int DensityId = Shader.PropertyToID("_Density");
 	private static readonly int AbsortionId = Shader.PropertyToID("_Absortion");
 	private static readonly int TintId = Shader.PropertyToID("_Tint");
+	private static readonly int NoiseTextureId = Shader.PropertyToID("_NoiseTexture");
 	private static readonly int MaxStepsId = Shader.PropertyToID("_MaxSteps");
 
 	private static readonly int AnisotropiesArrayId = Shader.PropertyToID("_Anisotropies");
@@ -350,6 +351,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		volumetricFogMaterial.SetFloat(DensityId, fogVolume.density.value);
 		volumetricFogMaterial.SetFloat(AbsortionId, 1.0f / fogVolume.attenuationDistance.value);
 		volumetricFogMaterial.SetColor(TintId, fogVolume.tint.value);
+		volumetricFogMaterial.SetTexture(NoiseTextureId, fogVolume.noiseTexture.value);
 		volumetricFogMaterial.SetInteger(MaxStepsId, fogVolume.maxSteps.value);
 	}
 
