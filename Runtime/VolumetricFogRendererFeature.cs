@@ -32,7 +32,7 @@ public sealed class VolumetricFogRendererFeature : ScriptableRendererFeature
 	{
 		ValidateResourcesForVolumetricFogRenderPass(true);
 
-		volumetricFogRenderPass = new VolumetricFogRenderPass(downsampleDepthMaterial, volumetricFogMaterial, GetRenderPassEvent());
+		volumetricFogRenderPass = new VolumetricFogRenderPass(downsampleDepthMaterial, volumetricFogMaterial, RenderPassEvent.BeforeRenderingPostProcessing);
 	}
 
 	/// <summary>
