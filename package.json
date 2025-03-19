@@ -1,6 +1,6 @@
 {
   "name": "com.cqf.urpvolumetricfog",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "displayName": "URP Volumetric Fog",
   "description": "Volumetric fog integrated into URP's volume system. Supports additional lights, shadows and cookies. Render graph support is available for Unity 6",
   "unity": "2022.3",
