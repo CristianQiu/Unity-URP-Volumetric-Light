@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.3] - 2025-03-19
+
+* Fix for situational null reference in Create() from the volumetric fog renderer feature.
+* Replaced custom render pass event enum values to read the ones from URP's enum.
+
 ## [0.5.2] - 2025-02-23
 
 * Removed empty version dependency as it was throwing errors. User should make sure that they have URP package installed before installing the volumetric light package to avoid console errors.
