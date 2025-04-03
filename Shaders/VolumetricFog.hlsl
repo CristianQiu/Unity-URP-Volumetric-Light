@@ -53,10 +53,18 @@ float GetFogDensity(float3 posWS)
     t = lerp(t, 0.0, posWS.y < _GroundHeight);
 
     float3 uvw = posWS;
-    uvw *= 0.25;
+    uvw *= (0.25 + (_Time.y * 0.008));
+    
+    float3 uvw2 = posWS;
+    uvw2 *= (0.25 - (_Time.y * 0.009));
+    
     float4 noise4 = SAMPLE_TEXTURE3D(_NoiseTexture, sampler_LinearRepeat, uvw).rgba;
     float noise = noise4.r * 0.5 + noise4.g * 0.25 + noise4.b * 0.125 + noise4.a * 0.125;
-    float d = _Density - noise * 2;
+    
+    float4 noise42 = SAMPLE_TEXTURE3D(_NoiseTexture, sampler_LinearRepeat, uvw2).rgba;
+    float noise2 = noise42.r * 0.5 + noise42.g * 0.25 + noise42.b * 0.125 + noise42.a * 0.125;
+    
+    float d = _Density - (noise + noise2);
 
     return d * t;
 }
