@@ -41,8 +41,8 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Header("Main Light")]
 	[Tooltip("Disabling this will avoid computing the main light contribution to fog, which in most cases will lead to better performance.")]
 	public BoolParameter enableMainLightContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
-	[Tooltip("Higher values will make the fog affected by the main light to appear brighter when directly looking to the main light. The higher the value the less the brightness will spread when looking away from the light.")]
-	public ClampedFloatParameter anisotropy = new ClampedFloatParameter(0.4f, 0.0f, 0.99f);
+	[Tooltip("Higher positive values will make the fog affected by the main light to appear brighter when directly looking to the main light. The higher the value the less the brightness will spread when looking away from the light. Negative values will boost the light contribution to the fog when the light is behind the camera.")]
+	public ClampedFloatParameter anisotropy = new ClampedFloatParameter(0.4f, -1.0f, 1.0f);
 	[Tooltip("Higher values will make fog affected by the main light to appear brighter.")]
 	public ClampedFloatParameter scattering = new ClampedFloatParameter(0.15f, 0.0f, 1.0f);
 	[Tooltip("A multiplier color to tint the main light fog.")]
@@ -61,7 +61,8 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	public BoolParameter enabled = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 
 	[Header("Render Pass Event")]
-	public VolumetricFogRenderPassEventParameter renderPassEvent = new VolumetricFogRenderPassEventParameter(VolumetricFogRenderPassEvent.BeforeRenderingPostProcessing);
+	[Tooltip("The URP render pass event to render the volumetric fog.")]
+	public VolumetricFogRenderPassEventParameter renderPassEvent = new VolumetricFogRenderPassEventParameter(VolumetricFogRenderPass.DefaultVolumetricFogRenderPassEvent);
 
 	#endregion
 
