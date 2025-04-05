@@ -62,6 +62,13 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 	#endregion
 
+	#region Public Attributes
+
+	public const RenderPassEvent DefaultRenderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
+	public const VolumetricFogRenderPassEvent DefaultVolumetricFogRenderPassEvent = (VolumetricFogRenderPassEvent)DefaultRenderPassEvent;
+
+	#endregion
+
 	#region Private Attributes
 
 	private const string DownsampledCameraDepthRTName = "_DownsampledCameraDepth";
@@ -120,8 +127,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// <param name="passEvent"></param>
 	public VolumetricFogRenderPass(Material downsampleDepthMaterial, Material volumetricFogMaterial, RenderPassEvent passEvent) : base()
 	{
-		// Use BeforeRenderingPostprocessing instead of AfterRenderingTransparents. It works better
-		// with motion blur. BeforeRenderingTransparents is also an option depending on the needs.
 		profilingSampler = new ProfilingSampler("Volumetric Fog");
 		downsampleDepthProfilingSampler = new ProfilingSampler("Downsample Depth");
 		renderPassEvent = passEvent;
@@ -368,7 +373,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	{
 		if (enableMainLightContribution)
 		{
-			Anisotropies[visibleLights.Length - 1] = fogVolume.anisotropy.value;
+			Anisotropies[visibleLights.Length - 1] = Mathf.Clamp(fogVolume.anisotropy.value, -0.99f, 0.99f);
 			Scatterings[visibleLights.Length - 1] = fogVolume.scattering.value;
 		}
 
@@ -389,7 +394,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 				{
 					if (volumetricLight.gameObject.activeInHierarchy && volumetricLight.enabled)
 					{
-						anisotropy = volumetricLight.Anisotropy;
+						anisotropy = Mathf.Clamp(volumetricLight.Anisotropy, -0.99f, 0.99f);
 						scattering = volumetricLight.Scattering;
 						radius = volumetricLight.Radius;
 					}

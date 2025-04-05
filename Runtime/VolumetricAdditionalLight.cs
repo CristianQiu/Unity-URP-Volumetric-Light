@@ -11,8 +11,8 @@ public sealed class VolumetricAdditionalLight : MonoBehaviour
 {
 	#region Private Attributes
 
-	[Tooltip("Higher values will make the fog affected by this light to appear brighter when directly looking to the light source. The higher the value the less the brightness will spread when looking away from the light.")]
-	[Range(0.0f, 0.99f)]
+	[Tooltip("Higher positive values will make the fog affected by this light to appear brighter when directly looking to the light source. The higher the value the less the brightness will spread when looking away from the light. Negative values will boost the light contribution to the fog when the light is behind the camera.")]
+	[Range(-1.0f, 1.0f)]
 	[SerializeField] private float anisotropy = 0.25f;
 	[Tooltip("Higher values will make fog affected by this light to appear brighter.")]
 	[Range(0.0f, 16.0f)]
@@ -28,7 +28,7 @@ public sealed class VolumetricAdditionalLight : MonoBehaviour
 	public float Anisotropy
 	{
 		get { return anisotropy; }
-		set { anisotropy = Mathf.Clamp(value, 0.0f, 0.99f); }
+		set { anisotropy = Mathf.Clamp(value, -1.0f, 1.0f); }
 	}
 
 	public float Scattering
