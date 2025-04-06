@@ -26,7 +26,15 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
 	private SerializedDataParameter enableAdditionalLightsContribution;
 	
+	private SerializedDataParameter enableNoise;
 	private SerializedDataParameter noiseTexture;
+	private SerializedDataParameter noiseStrength;
+	private SerializedDataParameter noiseSize;
+	private SerializedDataParameter noiseSpeeds;
+	private SerializedDataParameter distortionTexture;
+	private SerializedDataParameter distortionStrength;
+	private SerializedDataParameter distortionSize;
+	private SerializedDataParameter distortionSpeeds;
 
 	private SerializedDataParameter maxSteps;
 	private SerializedDataParameter blurIterations;
@@ -62,7 +70,15 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
 		enableAdditionalLightsContribution = Unpack(pf.Find(x => x.enableAdditionalLightsContribution));
 
+		enableNoise = Unpack(pf.Find(x => x.enableNoise));
 		noiseTexture = Unpack(pf.Find(x => x.noiseTexture));
+		noiseStrength = Unpack(pf.Find(x => x.noiseStrength));
+		noiseSize = Unpack(pf.Find(x => x.noiseSize));
+		noiseSpeeds = Unpack(pf.Find(x => x.noiseSpeeds));
+		distortionTexture = Unpack(pf.Find(x => x.distortionTexture));
+		distortionStrength = Unpack(pf.Find(x => x.distortionStrength));
+		distortionSize = Unpack(pf.Find(x => x.distortionSize));
+		distortionSpeeds = Unpack(pf.Find(x => x.distortionSpeeds));
 
 		maxSteps = Unpack(pf.Find(x => x.maxSteps));
 		blurIterations = Unpack(pf.Find(x => x.blurIterations));
@@ -87,6 +103,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		bool enabledGround = enableGround.overrideState.boolValue && enableGround.value.boolValue;
 		bool enabledMainLightContribution = enableMainLightContribution.overrideState.boolValue && enableMainLightContribution.value.boolValue;
 		bool enabledAdditionalLightsContribution = enableAdditionalLightsContribution.overrideState.boolValue && enableAdditionalLightsContribution.value.boolValue;
+		bool enabledNoise = enableNoise.overrideState.boolValue && enableNoise.value.boolValue;
 
 		PropertyField(distance);
 		PropertyField(baseHeight);
@@ -109,7 +126,18 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
 		PropertyField(enableAdditionalLightsContribution);
 
-		PropertyField(noiseTexture);
+		PropertyField(enableNoise);
+		if (enabledNoise)
+		{
+			PropertyField(noiseTexture);
+			PropertyField(noiseStrength);
+			PropertyField(noiseSize);
+			PropertyField(noiseSpeeds);
+			PropertyField(distortionTexture);
+			PropertyField(distortionStrength);
+			PropertyField(distortionSize);
+			PropertyField(distortionSpeeds);
+		}
 
 		PropertyField(maxSteps);
 		PropertyField(blurIterations);

@@ -89,6 +89,13 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int AbsortionId = Shader.PropertyToID("_Absortion");
 	private static readonly int TintId = Shader.PropertyToID("_Tint");
 	private static readonly int NoiseTextureId = Shader.PropertyToID("_NoiseTexture");
+	private static readonly int NoiseStrengthId = Shader.PropertyToID("_NoiseStrength");
+	private static readonly int NoiseSizeId = Shader.PropertyToID("_NoiseSize");
+	private static readonly int NoiseSpeedsId = Shader.PropertyToID("_NoiseSpeeds");
+	private static readonly int DistortionTextureId = Shader.PropertyToID("_DistortionTexture");
+	private static readonly int DistortionStrengthId = Shader.PropertyToID("_DistortionStrength");
+	private static readonly int DistortionSizeId = Shader.PropertyToID("_DistortionSize");
+	private static readonly int DistortionSpeedsId = Shader.PropertyToID("_DistortionSpeeds");
 	private static readonly int MaxStepsId = Shader.PropertyToID("_MaxSteps");
 
 	private static readonly int AnisotropiesArrayId = Shader.PropertyToID("_Anisotropies");
@@ -334,6 +341,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 		bool enableMainLightContribution = fogVolume.enableMainLightContribution.value && fogVolume.scattering.value > 0.0f && mainLightIndex > -1;
 		bool enableAdditionalLightsContribution = fogVolume.enableAdditionalLightsContribution.value && additionalLightsCount > 0;
+		bool enableNoise = fogVolume.enableNoise.value && fogVolume.noiseTexture.value != null && fogVolume.noiseStrength.value > 0.0f && fogVolume.noiseSize.value > 0.0f;
 
 		if (enableMainLightContribution)
 			volumetricFogMaterial.DisableKeyword("_MAIN_LIGHT_CONTRIBUTION_DISABLED");
@@ -344,6 +352,11 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			volumetricFogMaterial.DisableKeyword("_ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED");
 		else
 			volumetricFogMaterial.EnableKeyword("_ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED");
+
+		if (enableNoise)
+			volumetricFogMaterial.EnableKeyword("_NOISE");
+		else
+			volumetricFogMaterial.DisableKeyword("_NOISE");
 
 		UpdateLightsParameters(volumetricFogMaterial, fogVolume, enableMainLightContribution, enableAdditionalLightsContribution, mainLightIndex, visibleLights);
 
@@ -357,6 +370,13 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		volumetricFogMaterial.SetFloat(AbsortionId, 1.0f / fogVolume.attenuationDistance.value);
 		volumetricFogMaterial.SetColor(TintId, fogVolume.tint.value);
 		volumetricFogMaterial.SetTexture(NoiseTextureId, fogVolume.noiseTexture.value);
+		volumetricFogMaterial.SetFloat(NoiseStrengthId, fogVolume.noiseStrength.value);
+		volumetricFogMaterial.SetFloat(NoiseSizeId, fogVolume.noiseSize.value);
+		volumetricFogMaterial.SetVector(NoiseSpeedsId, fogVolume.noiseSpeeds.value);
+		volumetricFogMaterial.SetTexture(DistortionTextureId, fogVolume.distortionTexture.value);
+		volumetricFogMaterial.SetFloat(DistortionStrengthId, fogVolume.distortionStrength.value);
+		volumetricFogMaterial.SetFloat(DistortionSizeId, fogVolume.distortionSize.value);
+		volumetricFogMaterial.SetVector(DistortionSpeedsId, fogVolume.distortionSpeeds.value);
 		volumetricFogMaterial.SetInteger(MaxStepsId, fogVolume.maxSteps.value);
 	}
 

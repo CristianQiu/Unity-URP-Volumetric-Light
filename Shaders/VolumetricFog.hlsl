@@ -22,6 +22,13 @@ float _Density;
 float _Absortion;
 float3 _Tint;
 TEXTURE3D(_NoiseTexture);
+float _NoiseStrength;
+float _NoiseSize;
+float3 _NoiseSpeeds;
+TEXTURE3D(_DistortionTexture);
+float _DistortionStrength;
+float _DistortionSize;
+float3 _DistortionSpeeds;
 int _MaxSteps;
 
 float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
@@ -45,6 +52,51 @@ float3 ComputeOrthographicParams(float2 uv, float depth, out float3 ro, out floa
     return posWs;
 }
 
+//float Curl(float3 pos)
+//{
+//    float3 c = SAMPLE_TEXTURE3D_LOD(_VFogCurlTexture, sampler_LinearRepeat, (pos + _Time.y * _VFogCurlSpeed) / _VFogCurlSize, 0);
+//    c = c * 0.5 - 1;
+//    return c * _VFogCurlStrength;
+//}
+
+//float GetNoise(float3 pos)
+//{
+//    pos += Curl(pos);
+//    float4 noiseTex = SAMPLE_TEXTURE3D_LOD(_VFogNoiseTexture, sampler_LinearRepeat, (pos + _Time.y * _VFogNoiseSpeed) / _VFogNoiseSize, 0);
+//    float noise = saturate(dot(noiseTex, _VFogNoiseWeights));
+//    noise = remap(0, 1, _VFogMinMaxNoise.x, _VFogMinMaxNoise.y, noise);
+//    return smoothstep(0, 1, noise);
+//}
+
+float Noise(float3 posWS)
+{
+    float3 uvw = (posWS + _Time.y * _NoiseSpeeds) / _NoiseSize;
+    float4 noiseSample = SAMPLE_TEXTURE3D(_NoiseTexture, sampler_LinearRepeat, uvw);
+    
+    float noise = saturate(dot(noiseSample, _NoiseStrength.xxxx));
+    
+    return noise;
+}
+
+float Noise2(float3 posWS)
+{
+    float3 uvw = (posWS - _Time.y * _NoiseSpeeds) / _NoiseSize;
+    float4 noiseSample = SAMPLE_TEXTURE3D(_NoiseTexture, sampler_LinearRepeat, uvw);
+    
+    float noise = saturate(dot(noiseSample, _NoiseStrength.xxxx));
+    
+    return noise;
+}
+
+float DistortionNoise(float3 posWS)
+{
+    float3 uvw = (posWS + _Time.y * _DistortionSpeeds) / _DistortionSize;
+    float3 distortionNoiseSample = SAMPLE_TEXTURE3D(_DistortionTexture, sampler_LinearRepeat, uvw).rgb;
+    
+    distortionNoiseSample = distortionNoiseSample * 0.5 - 1.0;
+    return distortionNoiseSample * _DistortionStrength;
+}
+
 // Gets the fog density at the given world height.
 float GetFogDensity(float3 posWS)
 {
@@ -52,20 +104,30 @@ float GetFogDensity(float3 posWS)
     t = 1.0 - t;
     t = lerp(t, 0.0, posWS.y < _GroundHeight);
 
-    float3 uvw = posWS;
-    uvw *= (0.25 + (_Time.y * 0.008));
+    float d = _Density;
     
-    float3 uvw2 = posWS;
-    uvw2 *= (0.25 - (_Time.y * 0.009));
+#if _NOISE
+    float distortionNoise = DistortionNoise(posWS);
+    float noise = Noise(posWS + distortionNoise);
+    //float noise2 = Noise2(posWS);
+    //noise = noise * noise2;
     
-    float4 noise4 = SAMPLE_TEXTURE3D(_NoiseTexture, sampler_LinearRepeat, uvw).rgba;
-    float noise = noise4.r * 0.5 + noise4.g * 0.25 + noise4.b * 0.125 + noise4.a * 0.125;
+    d = _Density * noise;
+    //float3 uvw = posWS;
+    //uvw *= (0.25 + (_Time.y * 0.008));
     
-    float4 noise42 = SAMPLE_TEXTURE3D(_NoiseTexture, sampler_LinearRepeat, uvw2).rgba;
-    float noise2 = noise42.r * 0.5 + noise42.g * 0.25 + noise42.b * 0.125 + noise42.a * 0.125;
+    //float3 uvw2 = posWS;
+    //uvw2 *= (0.25 - (_Time.y * 0.009));
     
-    float d = _Density - (noise + noise2);
-
+    //float4 noise4 = SAMPLE_TEXTURE3D(_NoiseTexture, sampler_LinearRepeat, uvw).rgba;
+    //float noise = noise4.r * 0.5 + noise4.g * 0.25 + noise4.b * 0.125 + noise4.a * 0.125;
+    
+    //float4 noise42 = SAMPLE_TEXTURE3D(_NoiseTexture, sampler_LinearRepeat, uvw2).rgba;
+    //float noise2 = noise42.r * 0.5 + noise42.g * 0.25 + noise42.b * 0.125 + noise42.a * 0.125;
+    
+    //d = _Density - (noise + noise2);
+#endif
+    
     return d * t;
 }
 
@@ -119,7 +181,7 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, floa
         // Gradually reduce additional lights scattering to zero at their origin to try to avoid flicker-aliasing.
         float3 distToPos = additionalLightPos.xyz - currPosWS;
         float distToPosMagnitudeSq = dot(distToPos, distToPos);
-        float newScattering = smoothstep(0.0, _RadiiSq[lightIndex], distToPosMagnitudeSq) ;
+        float newScattering = smoothstep(0.0, _RadiiSq[lightIndex], distToPosMagnitudeSq);
         newScattering *= newScattering;
         newScattering *= _Scatterings[lightIndex];
 
