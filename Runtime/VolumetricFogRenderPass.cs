@@ -371,7 +371,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	{
 		if (enableMainLightContribution)
 		{
-			Anisotropies[visibleLights.Length - 1] = Mathf.Clamp(fogVolume.anisotropy.value, -0.99f, 0.99f);
+			Anisotropies[visibleLights.Length - 1] = fogVolume.anisotropy.value;
 			Scatterings[visibleLights.Length - 1] = fogVolume.scattering.value;
 		}
 
@@ -392,7 +392,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 				{
 					if (volumetricLight.gameObject.activeInHierarchy && volumetricLight.enabled)
 					{
-						anisotropy = Mathf.Clamp(volumetricLight.Anisotropy, -0.99f, 0.99f);
+						anisotropy = volumetricLight.Anisotropy;
 						scattering = volumetricLight.Scattering;
 						radius = volumetricLight.Radius;
 					}
