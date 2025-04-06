@@ -32,7 +32,7 @@ public sealed class VolumetricFogRendererFeature : ScriptableRendererFeature
 	{
 		ValidateResourcesForVolumetricFogRenderPass(true);
 
-		volumetricFogRenderPass = new VolumetricFogRenderPass(downsampleDepthMaterial, volumetricFogMaterial, GetRenderPassEvent());
+		volumetricFogRenderPass = new VolumetricFogRenderPass(downsampleDepthMaterial, volumetricFogMaterial, VolumetricFogRenderPass.DefaultRenderPassEvent);
 	}
 
 	/// <summary>
@@ -119,13 +119,9 @@ public sealed class VolumetricFogRendererFeature : ScriptableRendererFeature
 	/// <returns></returns>
 	private RenderPassEvent GetRenderPassEvent()
 	{
-		RenderPassEvent renderPassEvent = VolumetricFogRenderPass.DefaultRenderPassEvent;
-
-		VolumetricFogVolumeComponent fogVolume = VolumeManager.instance?.stack?.GetComponent<VolumetricFogVolumeComponent>();
-		if (fogVolume != null)
-			renderPassEvent = (RenderPassEvent)fogVolume.renderPassEvent.value;
+		VolumetricFogVolumeComponent fogVolume = VolumeManager.instance.stack.GetComponent<VolumetricFogVolumeComponent>();
 		
-		return renderPassEvent;
+		return (RenderPassEvent)fogVolume.renderPassEvent.value;
 	}
 
 	#endregion
