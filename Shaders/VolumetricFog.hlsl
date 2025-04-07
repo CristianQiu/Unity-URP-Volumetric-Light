@@ -124,7 +124,7 @@ float GetMainLightPhase(float3 rd)
 float Noise(float3 posWS)
 {
     float3 uvw = (posWS + _Time.y * _NoiseSpeeds) / _NoiseSize;
-    float4 noiseSample = SAMPLE_TEXTURE3D(_NoiseTexture, sampler_LinearRepeat, uvw);
+    float4 noiseSample = SAMPLE_TEXTURE3D_LOD(_NoiseTexture, sampler_LinearRepeat, uvw, 0);
     
     float noise = saturate(dot(noiseSample, _NoiseStrength.xxxx));
     
@@ -134,7 +134,7 @@ float Noise(float3 posWS)
 float Noise2(float3 posWS)
 {
     float3 uvw = (posWS - _Time.y * _NoiseSpeeds) / _NoiseSize;
-    float4 noiseSample = SAMPLE_TEXTURE3D(_NoiseTexture, sampler_LinearRepeat, uvw);
+    float4 noiseSample = SAMPLE_TEXTURE3D_LOD(_NoiseTexture, sampler_LinearRepeat, uvw, 0);
     
     float noise = saturate(dot(noiseSample, _NoiseStrength.xxxx));
     
@@ -144,7 +144,7 @@ float Noise2(float3 posWS)
 float DistortionNoise(float3 posWS)
 {
     float3 uvw = (posWS + _Time.y * _DistortionSpeeds) / _DistortionSize;
-    float3 distortionNoiseSample = SAMPLE_TEXTURE3D(_DistortionTexture, sampler_LinearRepeat, uvw).rgb;
+    float3 distortionNoiseSample = SAMPLE_TEXTURE3D_LOD(_DistortionTexture, sampler_LinearRepeat, uvw, 0).rgb;
     
     distortionNoiseSample = distortionNoiseSample * 0.5 - 1.0;
     return distortionNoiseSample * _DistortionStrength;
@@ -161,11 +161,15 @@ float GetFogDensity(float3 posWS)
     
 #if _NOISE
     float distortionNoise = DistortionNoise(posWS);
-    float noise = Noise(posWS + distortionNoise);
+    
+    
+       float noise = Noise(posWS + distortionNoise);
+    
     //float noise2 = Noise2(posWS);
     //noise = noise * noise2;
     
     d = _Density * noise;
+    
     //float3 uvw = posWS;
     //uvw *= (0.25 + (_Time.y * 0.008));
     
@@ -185,13 +189,13 @@ float GetFogDensity(float3 posWS)
 }
 
 // Gets the GI evaluation from the adaptive probe volume at one raymarch step.
-float3 GetStepAdaptiveProbeVolumeEvaluation(float2 uv, float3 posWS, float density)
+float3 GetStepAdaptiveProbeVolumeEvaluation(float2 pixCoord, float3 posWS, float density)
 {
     float3 apvDiffuseGI = float3(0.0, 0.0, 0.0);
     
 #if UNITY_VERSION >= 202310 && _APV_CONTRIBUTION_ENABLED
     #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
-        EvaluateAdaptiveProbeVolume(posWS, uv * _ScreenSize.xy, apvDiffuseGI);
+        EvaluateAdaptiveProbeVolume(posWS, pixCoord, apvDiffuseGI);
         apvDiffuseGI = apvDiffuseGI * _APVContributionWeight * density;
     #endif
 #endif
@@ -265,7 +269,7 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, floa
 }
 
 // Calculates the volumetric fog. Returns the color in the RGB channels and transmittance in alpha.
-float4 VolumetricFog(float2 uv, float2 positionCS)
+float4 VolumetricFog(float2 uv)
 {
     float3 ro;
     float3 rd;
@@ -278,7 +282,9 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
     offsetLength -= iniOffsetToNearPlane;
     float3 roNearPlane = ro + rd * iniOffsetToNearPlane;
     float stepLength = (_Distance - iniOffsetToNearPlane) / (float)_MaxSteps;
-    float jitter = stepLength * InterleavedGradientNoise(positionCS, _FrameCount);
+    
+    float2 pixCoord = uv * _ScreenSize.xy;
+    float jitter = stepLength * InterleavedGradientNoise(pixCoord, _FrameCount);
 
     float phaseMainLight = GetMainLightPhase(rdPhase);
     float minusStepLengthTimesAbsortion = -stepLength * _Absortion;
@@ -309,7 +315,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         float stepAttenuation = exp(minusStepLengthTimesAbsortion * density);
         transmittance *= stepAttenuation;
 
-        float3 apvColor = GetStepAdaptiveProbeVolumeEvaluation(uv, currPosWS, density);
+        float3 apvColor = GetStepAdaptiveProbeVolumeEvaluation(pixCoord, currPosWS, density);
         float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight, density);
         float3 additionalLightsColor = GetStepAdditionalLightsColor(uv, currPosWS, rd, density);
         
