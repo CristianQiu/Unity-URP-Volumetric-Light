@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.5.4] - 2025-04-07
+
+* Added initial APV support for Unity 2023.1+. It can be toggled from the volume. 
+
 ## [0.5.3] - 2025-03-19
 
 * Fix for situational null reference in Create() from the volumetric fog renderer feature.

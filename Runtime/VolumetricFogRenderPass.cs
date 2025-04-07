@@ -87,6 +87,9 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int GroundHeightId = Shader.PropertyToID("_GroundHeight");
 	private static readonly int DensityId = Shader.PropertyToID("_Density");
 	private static readonly int AbsortionId = Shader.PropertyToID("_Absortion");
+#if UNITY_2023_1_OR_NEWER
+	private static readonly int APVContributionWeigthId = Shader.PropertyToID("_APVContributionWeight");
+#endif
 	private static readonly int TintId = Shader.PropertyToID("_Tint");
 	private static readonly int NoiseTextureId = Shader.PropertyToID("_NoiseTexture");
 	private static readonly int NoiseStrengthId = Shader.PropertyToID("_NoiseStrength");
@@ -343,6 +346,14 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		bool enableAdditionalLightsContribution = fogVolume.enableAdditionalLightsContribution.value && additionalLightsCount > 0;
 		bool enableNoise = fogVolume.enableNoise.value && fogVolume.noiseTexture.value != null && fogVolume.noiseStrength.value > 0.0f && fogVolume.noiseSize.value > 0.0f;
 
+#if UNITY_2023_1_OR_NEWER
+		bool enableAPVContribution = fogVolume.enableAPVContribution.value && fogVolume.APVContributionWeight.value > 0.0f;
+		if (enableAPVContribution)
+			volumetricFogMaterial.EnableKeyword("_APV_CONTRIBUTION_ENABLED");
+		else
+			volumetricFogMaterial.DisableKeyword("_APV_CONTRIBUTION_ENABLED");
+#endif
+
 		if (enableMainLightContribution)
 			volumetricFogMaterial.DisableKeyword("_MAIN_LIGHT_CONTRIBUTION_DISABLED");
 		else
@@ -368,6 +379,9 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		volumetricFogMaterial.SetFloat(GroundHeightId, (fogVolume.enableGround.overrideState && fogVolume.enableGround.value) ? fogVolume.groundHeight.value : float.MinValue);
 		volumetricFogMaterial.SetFloat(DensityId, fogVolume.density.value);
 		volumetricFogMaterial.SetFloat(AbsortionId, 1.0f / fogVolume.attenuationDistance.value);
+#if UNITY_2023_1_OR_NEWER
+		volumetricFogMaterial.SetFloat(APVContributionWeigthId, fogVolume.APVContributionWeight.value);
+#endif
 		volumetricFogMaterial.SetColor(TintId, fogVolume.tint.value);
 		volumetricFogMaterial.SetTexture(NoiseTextureId, fogVolume.noiseTexture.value);
 		volumetricFogMaterial.SetFloat(NoiseStrengthId, fogVolume.noiseStrength.value);

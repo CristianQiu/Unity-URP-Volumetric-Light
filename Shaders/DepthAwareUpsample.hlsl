@@ -46,7 +46,6 @@ float4 DepthAwareUpsample(float2 uv, TEXTURE2D_X(textureToUpsample))
         float linearEyeDepthDist = abs(fullResLinearEyeDepth - linearEyeDepth);
 
         bool updateNearest = linearEyeDepthDist < minLinearEyeDepthDist;
-        
         minLinearEyeDepthDist = updateNearest ? linearEyeDepthDist : minLinearEyeDepthDist;
         nearestUv = updateNearest ? uvs[i] : nearestUv;
         
