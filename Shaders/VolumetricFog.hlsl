@@ -8,6 +8,11 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Random.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/VolumeRendering.hlsl"
+#if UNITY_VERSION >= 202310 && _APV_CONTRIBUTION_ENABLED
+    #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
+        #include "Packages/com.unity.render-pipelines.core/Runtime/Lighting/ProbeVolume/ProbeVolume.hlsl"
+    #endif
+#endif
 #include "./DeclareDownsampledDepthTexture.hlsl"
 #include "./VolumetricShadows.hlsl"
 #include "./ProjectionUtils.hlsl"
@@ -20,6 +25,7 @@ float _MaximumHeight;
 float _GroundHeight;
 float _Density;
 float _Absortion;
+float _APVContributionWeight;
 float3 _Tint;
 int _MaxSteps;
 
@@ -44,6 +50,53 @@ float3 ComputeOrthographicParams(float2 uv, float depth, out float3 ro, out floa
     return posWs;
 }
 
+// Calculates the initial raymarching parameters.
+void CalculateRaymarchingParams(float2 uv, out float3 ro, out float3 rd, out float iniOffsetToNearPlane, out float offsetLength, out float3 rdPhase)
+{
+    float depth = SampleDownsampledSceneDepth(uv);
+    float3 posWS;
+    
+    UNITY_BRANCH
+    if (unity_OrthoParams.w <= 0)
+    {
+        ro = GetCameraPositionWS();
+#if !UNITY_REVERSED_Z
+        depth = lerp(UNITY_NEAR_CLIP_VALUE, 1.0, depth);
+#endif
+        posWS = ComputeWorldSpacePosition(uv, depth, UNITY_MATRIX_I_VP);
+        float3 offset = posWS - ro;
+        offsetLength = length(offset);
+        rd = offset / offsetLength;
+        rdPhase = rd;
+        
+        // In perspective, ray direction should vary in length depending on which fragment we are at.
+        float3 camFwd = normalize(-UNITY_MATRIX_V[2].xyz);
+        float cos = dot(camFwd, rd);
+        float fragElongation = 1.0 / cos;
+        iniOffsetToNearPlane = fragElongation * _ProjectionParams.y;
+    }
+    else
+    {
+        depth = LinearEyeDepthOrthographic(depth);
+        posWS = ComputeOrthographicParams(uv, depth, ro, rd);
+        offsetLength = depth;
+        
+        // Fake the ray direction that will be used to calculate the phase, so we can still use anisotropy in orthographic mode.
+        rdPhase = normalize(posWS - GetCameraPositionWS());
+        iniOffsetToNearPlane = _ProjectionParams.y;
+    }
+}
+
+// Gets the main light phase function.
+float GetMainLightPhase(float3 rd)
+{
+#if _MAIN_LIGHT_CONTRIBUTION_DISABLED
+    return 0.0;
+#else
+    return CornetteShanksPhaseFunction(_Anisotropies[_CustomAdditionalLightsCount], dot(rd, GetMainLight().direction));
+#endif
+}
+
 // Gets the fog density at the given world height.
 float GetFogDensity(float posWSy)
 {
@@ -52,6 +105,21 @@ float GetFogDensity(float posWSy)
     t = lerp(t, 0.0, posWSy < _GroundHeight);
 
     return _Density * t;
+}
+
+// Gets the GI evaluation from the adaptive probe volume at one raymarch step.
+float3 GetStepAdaptiveProbeVolumeEvaluation(float2 uv, float3 posWS, float density)
+{
+    float3 apvDiffuseGI = float3(0.0, 0.0, 0.0);
+    
+#if UNITY_VERSION >= 202310 && _APV_CONTRIBUTION_ENABLED
+    #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
+        EvaluateAdaptiveProbeVolume(posWS, uv * _ScreenSize.xy, apvDiffuseGI);
+        apvDiffuseGI = apvDiffuseGI * _APVContributionWeight * density;
+    #endif
+#endif
+ 
+    return apvDiffuseGI;
 }
 
 // Gets the main light color at one raymarch step.
@@ -122,56 +190,20 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, floa
 // Calculates the volumetric fog. Returns the color in the RGB channels and transmittance in alpha.
 float4 VolumetricFog(float2 uv, float2 positionCS)
 {
-    float depth = SampleDownsampledSceneDepth(uv);
-    
     float3 ro;
     float3 rd;
-    float3 posWS;
-    
     float iniOffsetToNearPlane;
     float offsetLength;
     float3 rdPhase;
 
-    UNITY_BRANCH
-    if (unity_OrthoParams.w <= 0)
-    {
-        ro = GetCameraPositionWS();
-#if !UNITY_REVERSED_Z
-        depth = lerp(UNITY_NEAR_CLIP_VALUE, 1.0, depth);
-#endif
-        posWS = ComputeWorldSpacePosition(uv, depth, UNITY_MATRIX_I_VP);
-        float3 offset = posWS - ro;
-        offsetLength = length(offset);
-        rd = offset / offsetLength;
-        rdPhase = rd;
-        
-        // In perspective, ray direction should vary in length depending on which fragment we are at.
-        float3 camFwd = normalize(-UNITY_MATRIX_V[2].xyz);
-        float cos = dot(camFwd, rd);
-        float fragElongation = 1.0 / cos;
-        iniOffsetToNearPlane = fragElongation * _ProjectionParams.y;
-    }
-    else
-    {
-        depth = LinearEyeDepthOrthographic(depth);
-        posWS = ComputeOrthographicParams(uv, depth, ro, rd);
-        offsetLength = depth;
-        
-        // Fake the ray direction that will be used to calculate the phase, so we can still use anisotropy in orthographic mode.
-        rdPhase = normalize(posWS - GetCameraPositionWS());
-        iniOffsetToNearPlane = _ProjectionParams.y;
-    }
+    CalculateRaymarchingParams(uv, ro, rd, iniOffsetToNearPlane, offsetLength, rdPhase);
 
     offsetLength -= iniOffsetToNearPlane;
     float3 roNearPlane = ro + rd * iniOffsetToNearPlane;
     float stepLength = (_Distance - iniOffsetToNearPlane) / (float)_MaxSteps;
     float jitter = stepLength * InterleavedGradientNoise(positionCS, _FrameCount);
 
-#if _MAIN_LIGHT_CONTRIBUTION_DISABLED
-    float phaseMainLight = 0.0;
-#else
-    float phaseMainLight = CornetteShanksPhaseFunction(_Anisotropies[_CustomAdditionalLightsCount], dot(rdPhase, GetMainLight().direction));
-#endif
+    float phaseMainLight = GetMainLightPhase(rdPhase);
     float minusStepLengthTimesAbsortion = -stepLength * _Absortion;
                 
     float3 volumetricFogColor = float3(0.0, 0.0, 0.0);
@@ -181,7 +213,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
     for (int i = 0; i < _MaxSteps; ++i)
     {
         float dist = jitter + i * stepLength;
-
+        
         UNITY_BRANCH
         if (dist >= offsetLength)
             break;
@@ -200,12 +232,16 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         float stepAttenuation = exp(minusStepLengthTimesAbsortion * density);
         transmittance *= stepAttenuation;
 
+        float3 apvColor = GetStepAdaptiveProbeVolumeEvaluation(uv, currPosWS, density);
         float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight, density);
         float3 additionalLightsColor = GetStepAdditionalLightsColor(uv, currPosWS, rd, density);
-
-        // TODO: Add ambient.
-        float3 stepColor = mainLightColor + additionalLightsColor;
+        
+        // TODO: Additional contributions? Reflection probes, etc...
+        float3 stepColor = apvColor + mainLightColor + additionalLightsColor;
         volumetricFogColor += (stepColor * (transmittance * stepLength));
+        
+        // TODO: Break out when transmittance reaches low threshold and remap the transmittance when doing so.
+        // It does not make sense right now because the fog does not properly support transparency, so having dense fog leads to issues.
     }
 
     return float4(volumetricFogColor, transmittance);

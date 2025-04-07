@@ -18,6 +18,10 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
 	private SerializedDataParameter density;
 	private SerializedDataParameter attenuationDistance;
+#if UNITY_2023_1_OR_NEWER
+	private SerializedDataParameter enableAPVContribution;
+	private SerializedDataParameter APVContributionWeight;
+#endif
 
 	private SerializedDataParameter enableMainLightContribution;
 	private SerializedDataParameter anisotropy;
@@ -52,6 +56,10 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
 		density = Unpack(pf.Find(x => x.density));
 		attenuationDistance = Unpack(pf.Find(x => x.attenuationDistance));
+#if UNITY_2023_1_OR_NEWER
+		enableAPVContribution = Unpack(pf.Find(x => x.enableAPVContribution));
+		APVContributionWeight = Unpack(pf.Find(x => x.APVContributionWeight));
+#endif
 
 		enableMainLightContribution = Unpack(pf.Find(x => x.enableMainLightContribution));
 		anisotropy = Unpack(pf.Find(x => x.anisotropy));
@@ -94,6 +102,12 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
 		PropertyField(density);
 		PropertyField(attenuationDistance);
+#if UNITY_2023_1_OR_NEWER
+		bool enabledAPVContribution = enableAPVContribution.overrideState.boolValue && enableAPVContribution.value.boolValue;
+		PropertyField(enableAPVContribution);
+		if (enabledAPVContribution)
+			PropertyField(APVContributionWeight);
+#endif
 
 		PropertyField(enableMainLightContribution);
 		if (enabledMainLightContribution)
