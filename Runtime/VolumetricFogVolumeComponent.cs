@@ -64,10 +64,6 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	public FloatParameter noiseStrength = new FloatParameter(1.0f);
 	public FloatParameter noiseSize = new FloatParameter(1.0f);
 	public Vector3Parameter noiseSpeeds = new Vector3Parameter(Vector3.zero);
-	public Texture3DParameter distortionTexture = new Texture3DParameter(null);
-	public FloatParameter distortionStrength = new FloatParameter(1.0f);
-	public FloatParameter distortionSize = new FloatParameter(1.0f);
-	public Vector3Parameter distortionSpeeds = new Vector3Parameter(Vector3.zero);
 
 	[Header("Performance & Quality")]
 	[Tooltip("Raymarching steps. Greater values will increase the fog quality at the expense of performance.")]

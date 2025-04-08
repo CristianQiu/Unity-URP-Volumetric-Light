@@ -35,10 +35,6 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	private SerializedDataParameter noiseStrength;
 	private SerializedDataParameter noiseSize;
 	private SerializedDataParameter noiseSpeeds;
-	private SerializedDataParameter distortionTexture;
-	private SerializedDataParameter distortionStrength;
-	private SerializedDataParameter distortionSize;
-	private SerializedDataParameter distortionSpeeds;
 
 	private SerializedDataParameter maxSteps;
 	private SerializedDataParameter blurIterations;
@@ -83,10 +79,6 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		noiseStrength = Unpack(pf.Find(x => x.noiseStrength));
 		noiseSize = Unpack(pf.Find(x => x.noiseSize));
 		noiseSpeeds = Unpack(pf.Find(x => x.noiseSpeeds));
-		distortionTexture = Unpack(pf.Find(x => x.distortionTexture));
-		distortionStrength = Unpack(pf.Find(x => x.distortionStrength));
-		distortionSize = Unpack(pf.Find(x => x.distortionSize));
-		distortionSpeeds = Unpack(pf.Find(x => x.distortionSpeeds));
 
 		maxSteps = Unpack(pf.Find(x => x.maxSteps));
 		blurIterations = Unpack(pf.Find(x => x.blurIterations));
@@ -147,10 +139,6 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 			PropertyField(noiseStrength);
 			PropertyField(noiseSize);
 			PropertyField(noiseSpeeds);
-			PropertyField(distortionTexture);
-			PropertyField(distortionStrength);
-			PropertyField(distortionSize);
-			PropertyField(distortionSpeeds);
 		}
 
 		PropertyField(maxSteps);

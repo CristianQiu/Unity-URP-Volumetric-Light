@@ -31,10 +31,6 @@ TEXTURE3D(_NoiseTexture);
 float _NoiseStrength;
 float _NoiseSize;
 float3 _NoiseSpeeds;
-TEXTURE3D(_DistortionTexture);
-float _DistortionStrength;
-float _DistortionSize;
-float3 _DistortionSpeeds;
 int _MaxSteps;
 
 float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
@@ -105,31 +101,38 @@ float GetMainLightPhase(float3 rd)
 #endif
 }
 
-//float GetNoise(float3 pos)
-//{
-//    pos += Curl(pos);
-//    float4 noiseTex = SAMPLE_TEXTURE3D_LOD(_VFogNoiseTexture, sampler_LinearRepeat, (pos + _Time.y * _VFogNoiseSpeed) / _VFogNoiseSize, 0);
-//    float noise = saturate(dot(noiseTex, _VFogNoiseWeights));
-//    noise = remap(0, 1, _VFogMinMaxNoise.x, _VFogMinMaxNoise.y, noise);
-//    return smoothstep(0, 1, noise);
-//}
-
+// Gets noise at the given world position.
 float Noise(float3 posWS)
 {
     float3 uvw = (posWS + _Time.y * _NoiseSpeeds) / _NoiseSize;
     float4 noiseSample = SAMPLE_TEXTURE3D_LOD(_NoiseTexture, sampler_LinearRepeat, uvw, 0);
+    
+    // noise goes in ascending frequency from r, to g, to b, to a, though b and a are pretty similar. Values go from 0 to 1.0 per channel.
     float noise = noiseSample.r * 0.533 + noiseSample.g * 0.266 + noiseSample.b * 0.133 + noiseSample.a * 0.0666;
     
-    return noise;
+//float noise = saturate(dot(noiseTex, _VFogNoiseWeights));
+//noise = remap(0, 1, _VFogMinMaxNoise.x, _VFogMinMaxNoise.y, noise);
+//return smoothstep(0, 1, noise);
+    
+    return noise * _NoiseStrength;
 }
 
-float DistortionNoise(float3 posWS)
-{
-    float3 uvw = (posWS + _Time.y * _DistortionSpeeds) / _DistortionSize;
-    float3 distortionNoiseSample = SAMPLE_TEXTURE3D_LOD(_DistortionTexture, sampler_LinearRepeat, uvw, 0).rgb;
+// TODO: using a distortion texture to distort the noise becomes very expensive.
+//float DistortionNoise(float3 posWS)
+//{
+//    float3 uvw = (posWS + _Time.y * _DistortionSpeeds) / _DistortionSize;
+//    float3 distortionNoiseSample = SAMPLE_TEXTURE3D_LOD(_DistortionTexture, sampler_LinearRepeat, uvw, 0).rgb;
     
-    distortionNoiseSample = distortionNoiseSample * 0.5 - 1.0;
-    return distortionNoiseSample * _DistortionStrength;
+//    distortionNoiseSample = distortionNoiseSample * 0.5 - 1.0;
+    
+//    return distortionNoiseSample * _DistortionStrength;
+//}
+
+float RemapSaturate(float origVal, float origMin, float origMax, float destMin, float destMax)
+{
+    float t = saturate((origVal - origMin) / (origMax - origMin));
+
+    return lerp(destMin, destMax, t);
 }
 
 // Gets the fog density at the given world height.
@@ -142,9 +145,13 @@ float GetFogDensity(float3 posWS)
     float d = _Density;
     
 #if _NOISE
-    float noise = Noise(posWS);
-    return noise;
-    d = _Density * noise;
+    if (d > 0.0)
+    {
+        float noise = Noise(posWS);
+        noise = RemapSaturate(noise, 0.0, _NoiseStrength, 0.0, .5);
+        
+        d = _Density * noise;
+    }
 #endif
     
     return d * t;

@@ -95,10 +95,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int NoiseStrengthId = Shader.PropertyToID("_NoiseStrength");
 	private static readonly int NoiseSizeId = Shader.PropertyToID("_NoiseSize");
 	private static readonly int NoiseSpeedsId = Shader.PropertyToID("_NoiseSpeeds");
-	private static readonly int DistortionTextureId = Shader.PropertyToID("_DistortionTexture");
-	private static readonly int DistortionStrengthId = Shader.PropertyToID("_DistortionStrength");
-	private static readonly int DistortionSizeId = Shader.PropertyToID("_DistortionSize");
-	private static readonly int DistortionSpeedsId = Shader.PropertyToID("_DistortionSpeeds");
 	private static readonly int MaxStepsId = Shader.PropertyToID("_MaxSteps");
 
 	private static readonly int AnisotropiesArrayId = Shader.PropertyToID("_Anisotropies");
@@ -387,10 +383,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		volumetricFogMaterial.SetFloat(NoiseStrengthId, fogVolume.noiseStrength.value);
 		volumetricFogMaterial.SetFloat(NoiseSizeId, fogVolume.noiseSize.value);
 		volumetricFogMaterial.SetVector(NoiseSpeedsId, fogVolume.noiseSpeeds.value);
-		volumetricFogMaterial.SetTexture(DistortionTextureId, fogVolume.distortionTexture.value);
-		volumetricFogMaterial.SetFloat(DistortionStrengthId, fogVolume.distortionStrength.value);
-		volumetricFogMaterial.SetFloat(DistortionSizeId, fogVolume.distortionSize.value);
-		volumetricFogMaterial.SetVector(DistortionSpeedsId, fogVolume.distortionSpeeds.value);
 		volumetricFogMaterial.SetInteger(MaxStepsId, fogVolume.maxSteps.value);
 	}
 
