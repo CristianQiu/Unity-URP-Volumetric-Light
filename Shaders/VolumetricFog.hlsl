@@ -114,29 +114,11 @@ float GetMainLightPhase(float3 rd)
 //    return smoothstep(0, 1, noise);
 //}
 
-//float Curl(float3 pos)
-//{
-//    float3 c = SAMPLE_TEXTURE3D_LOD(_VFogCurlTexture, sampler_LinearRepeat, (pos + _Time.y * _VFogCurlSpeed) / _VFogCurlSize, 0);
-//    c = c * 0.5 - 1;
-//    return c * _VFogCurlStrength;
-//}
-
 float Noise(float3 posWS)
 {
     float3 uvw = (posWS + _Time.y * _NoiseSpeeds) / _NoiseSize;
     float4 noiseSample = SAMPLE_TEXTURE3D_LOD(_NoiseTexture, sampler_LinearRepeat, uvw, 0);
-    
-    float noise = saturate(dot(noiseSample, _NoiseStrength.xxxx));
-    
-    return noise;
-}
-
-float Noise2(float3 posWS)
-{
-    float3 uvw = (posWS - _Time.y * _NoiseSpeeds) / _NoiseSize;
-    float4 noiseSample = SAMPLE_TEXTURE3D_LOD(_NoiseTexture, sampler_LinearRepeat, uvw, 0);
-    
-    float noise = saturate(dot(noiseSample, _NoiseStrength.xxxx));
+    float noise = noiseSample.r * 0.533 + noiseSample.g * 0.266 + noiseSample.b * 0.133 + noiseSample.a * 0.0666;
     
     return noise;
 }
@@ -160,29 +142,9 @@ float GetFogDensity(float3 posWS)
     float d = _Density;
     
 #if _NOISE
-    float distortionNoise = DistortionNoise(posWS);
-    
-    
-       float noise = Noise(posWS + distortionNoise);
-    
-    //float noise2 = Noise2(posWS);
-    //noise = noise * noise2;
-    
+    float noise = Noise(posWS);
+    return noise;
     d = _Density * noise;
-    
-    //float3 uvw = posWS;
-    //uvw *= (0.25 + (_Time.y * 0.008));
-    
-    //float3 uvw2 = posWS;
-    //uvw2 *= (0.25 - (_Time.y * 0.009));
-    
-    //float4 noise4 = SAMPLE_TEXTURE3D(_NoiseTexture, sampler_LinearRepeat, uvw).rgba;
-    //float noise = noise4.r * 0.5 + noise4.g * 0.25 + noise4.b * 0.125 + noise4.a * 0.125;
-    
-    //float4 noise42 = SAMPLE_TEXTURE3D(_NoiseTexture, sampler_LinearRepeat, uvw2).rgba;
-    //float noise2 = noise42.r * 0.5 + noise42.g * 0.25 + noise42.b * 0.125 + noise42.a * 0.125;
-    
-    //d = _Density - (noise + noise2);
 #endif
     
     return d * t;
@@ -269,8 +231,10 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, floa
 }
 
 // Calculates the volumetric fog. Returns the color in the RGB channels and transmittance in alpha.
-float4 VolumetricFog(float2 uv)
+float4 VolumetricFog(float2 uv, float2 positionCS)
 {
+    float2 pixCoord = uv * _ScreenSize.xy;
+    
     float3 ro;
     float3 rd;
     float iniOffsetToNearPlane;
@@ -283,8 +247,7 @@ float4 VolumetricFog(float2 uv)
     float3 roNearPlane = ro + rd * iniOffsetToNearPlane;
     float stepLength = (_Distance - iniOffsetToNearPlane) / (float)_MaxSteps;
     
-    float2 pixCoord = uv * _ScreenSize.xy;
-    float jitter = stepLength * InterleavedGradientNoise(pixCoord, _FrameCount);
+    float jitter = stepLength * InterleavedGradientNoise(positionCS, _FrameCount);
 
     float phaseMainLight = GetMainLightPhase(rdPhase);
     float minusStepLengthTimesAbsortion = -stepLength * _Absortion;

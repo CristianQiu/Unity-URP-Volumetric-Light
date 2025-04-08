@@ -41,8 +41,8 @@ Shader "Hidden/VolumetricFog"
             float4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-           
-                return VolumetricFog(input.texcoord);
+
+                return VolumetricFog(input.texcoord, input.positionCS.xy);
             }
 
             ENDHLSL
