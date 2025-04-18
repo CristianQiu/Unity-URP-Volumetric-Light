@@ -9,6 +9,7 @@ Unity 2022.3, 2023.1, 2023.2 or Unity 6 along with their corresponding URP versi
 * Support for the main light, spot lights and point lights.
 * Shadows and light cookies support for the lights described above.
 * Realtime and mixed lights support.
+* APV support for Unity 2023.1+.
 * Perspective and orthographic projection support.
 * Single pass VR rendering support. This is verified by users, since I do not work on VR.
 * Seamlessly integrated into URP volume system.
