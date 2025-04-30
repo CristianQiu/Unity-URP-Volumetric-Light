@@ -1,11 +1,10 @@
 # Requirements
 
-Unity 2022.3, 2023.1, 2023.2 or Unity 6 along with their corresponding URP version.
+Unity 2022.3, 2023.1, 2023.2, 6.0 or 6.1 along with its corresponding URP version.
 
 # Features
 
-* Render graph support for Unity 6.
-* Compatibility mode is also supported.
+* Render graph and compatibility mode support for Unity 6 and above.
 * Support for the main light, spot lights and point lights.
 * Shadows and light cookies support for the lights described above.
 * Realtime and mixed lights support.
@@ -13,7 +12,7 @@ Unity 2022.3, 2023.1, 2023.2 or Unity 6 along with their corresponding URP versi
 * Perspective and orthographic projection support.
 * Single pass VR rendering support. This is verified by users, since I do not work on VR.
 * Seamlessly integrated into URP volume system.
-* Works in forward, deferred, and forward+ rendering paths. See limitations section. 
+* Works in forward, deferred, forward+ and deferred+ rendering paths. See limitations section. 
 * Verified in DirectX11, DirectX12, OpenGLES3, OpenGLCore and Vulkan.
 
 # Installation
@@ -43,6 +42,7 @@ Then you can proceed to install this package:
 
 * Multipass VR rendering is not supported.
 * WebGL is not supported. See https://github.com/CristianQiu/Unity-URP-Volumetric-Light/issues/7.
+* Not tested on consoles (Playstation, Xbox, Switch) but very likely to work.
 * Transparent objects are not blended correctly with fog.
 * Fully baked lights are not supported.
 * Fog is only rendered up to a certain distance from the camera.
@@ -58,8 +58,7 @@ Then you can proceed to install this package:
 There are a few things that I would like to add at some point, as I like coming back to this project from time to time in my spare time.
 Some of which are (in no particular order):
 
-* Deferred+ support for Unity 6.1 when it goes out of beta. I would expect the package to work with it with very minimal changes.
-* WebGL / WebGPU support.
+* WebGL support.
 * Further improvements on performance and quality: quarter resolution rendering, reprojection, better transparency support...
 * New features: density volumes, noise, self shadowing...
 * And of course... bug fixing! Do not hesitate to open issues for anything that you find unexpected or buggy.
