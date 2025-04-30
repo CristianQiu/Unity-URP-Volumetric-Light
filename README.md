@@ -1,6 +1,6 @@
 # Requirements
 
-Unity 2022.3, 2023.1, 2023.2, 6.0 or 6.1 along with its corresponding URP version.
+Unity 2022.3, 2023.1, 2023.2, 6000.0 or 6000.1 along with its corresponding URP version.
 
 # Features
 
