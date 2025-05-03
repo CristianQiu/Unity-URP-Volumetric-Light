@@ -8,7 +8,7 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Random.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/VolumeRendering.hlsl"
-#if UNITY_VERSION >= 202310 && _APV_CONTRIBUTION_ENABLED
+#if _APV_CONTRIBUTION_ENABLED
     #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
         #include "Packages/com.unity.render-pipelines.core/Runtime/Lighting/ProbeVolume/ProbeVolume.hlsl"
     #endif
@@ -112,7 +112,7 @@ float3 GetStepAdaptiveProbeVolumeEvaluation(float2 uv, float3 posWS, float densi
 {
     float3 apvDiffuseGI = float3(0.0, 0.0, 0.0);
     
-#if UNITY_VERSION >= 202310 && _APV_CONTRIBUTION_ENABLED
+#if _APV_CONTRIBUTION_ENABLED
     #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
         EvaluateAdaptiveProbeVolume(posWS, uv * _ScreenSize.xy, apvDiffuseGI);
         apvDiffuseGI = apvDiffuseGI * _APVContributionWeight * density;
@@ -143,8 +143,7 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, floa
 #if _ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED
     return float3(0.0, 0.0, 0.0);
 #endif
-#if _FORWARD_PLUS
-    // Forward+ rendering path needs this data before the light loop.
+#if _CLUSTER_LIGHT_LOOP
     InputData inputData = (InputData)0;
     inputData.normalizedScreenSpaceUV = uv;
     inputData.positionWS = currPosWS;

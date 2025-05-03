@@ -3,11 +3,7 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using Unity.Collections;
-
-#if UNITY_6000_0_OR_NEWER
-using System;
 using UnityEngine.Rendering.RenderGraphModule;
-#endif
 
 /// <summary>
 /// The volumetric fog render pass.
@@ -25,8 +21,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		// TODO: Add quarter downsample factor.
 		Half = 2,
 	}
-
-#if UNITY_6000_0_OR_NEWER
 
 	/// <summary>
 	/// The subpasses the volumetric fog render pass is made of.
@@ -58,8 +52,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		public UniversalLightData lightData;
 	}
 
-#endif
-
 	#endregion
 
 	#region Public Attributes
@@ -87,9 +79,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int GroundHeightId = Shader.PropertyToID("_GroundHeight");
 	private static readonly int DensityId = Shader.PropertyToID("_Density");
 	private static readonly int AbsortionId = Shader.PropertyToID("_Absortion");
-#if UNITY_2023_1_OR_NEWER
 	private static readonly int APVContributionWeigthId = Shader.PropertyToID("_APVContributionWeight");
-#endif
 	private static readonly int TintId = Shader.PropertyToID("_Tint");
 	private static readonly int MaxStepsId = Shader.PropertyToID("_MaxSteps");
 
@@ -110,11 +100,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private Material downsampleDepthMaterial;
 	private Material volumetricFogMaterial;
 
-	private RTHandle downsampledCameraDepthRTHandle;
-	private RTHandle volumetricFogRenderRTHandle;
-	private RTHandle volumetricFogBlurRTHandle;
-	private RTHandle volumetricFogUpsampleCompositionRTHandle;
-
 	private ProfilingSampler downsampleDepthProfilingSampler;
 
 	#endregion
@@ -132,9 +117,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		profilingSampler = new ProfilingSampler("Volumetric Fog");
 		downsampleDepthProfilingSampler = new ProfilingSampler("Downsample Depth");
 		renderPassEvent = passEvent;
-#if UNITY_6000_0_OR_NEWER
 		requiresIntermediateTexture = false;
-#endif
 
 		this.downsampleDepthMaterial = downsampleDepthMaterial;
 		this.volumetricFogMaterial = volumetricFogMaterial;
@@ -157,86 +140,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	#endregion
 
 	#region Scriptable Render Pass Methods
-
-	/// <summary>
-	/// <inheritdoc/>
-	/// </summary>
-	/// <param name="cmd"></param>
-	/// <param name="renderingData"></param>
-#if UNITY_6000_0_OR_NEWER
-	[Obsolete]
-#endif
-	public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
-	{
-		base.OnCameraSetup(cmd, ref renderingData);
-
-		RenderTextureDescriptor cameraTargetDescriptor = renderingData.cameraData.cameraTargetDescriptor;
-		cameraTargetDescriptor.depthBufferBits = (int)DepthBits.None;
-
-		RenderTextureFormat originalColorFormat = cameraTargetDescriptor.colorFormat;
-		Vector2Int originalResolution = new Vector2Int(cameraTargetDescriptor.width, cameraTargetDescriptor.height);
-
-		cameraTargetDescriptor.width /= (int)DownsampleFactor.Half;
-		cameraTargetDescriptor.height /= (int)DownsampleFactor.Half;
-		cameraTargetDescriptor.graphicsFormat = GraphicsFormat.R32_SFloat;
-		ReAllocateIfNeeded(ref downsampledCameraDepthRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: DownsampledCameraDepthRTName);
-
-		cameraTargetDescriptor.colorFormat = RenderTextureFormat.ARGBHalf;
-		ReAllocateIfNeeded(ref volumetricFogRenderRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogRenderRTName);
-		ReAllocateIfNeeded(ref volumetricFogBlurRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogBlurRTName);
-
-		cameraTargetDescriptor.width = originalResolution.x;
-		cameraTargetDescriptor.height = originalResolution.y;
-		cameraTargetDescriptor.colorFormat = originalColorFormat;
-		ReAllocateIfNeeded(ref volumetricFogUpsampleCompositionRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogUpsampleCompositionRTName);
-	}
-
-	/// <summary>
-	/// <inheritdoc/>
-	/// </summary>
-	/// <param name="context"></param>
-	/// <param name="renderingData"></param>
-#if UNITY_6000_0_OR_NEWER
-	[Obsolete]
-#endif
-	public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
-	{
-		CommandBuffer cmd = CommandBufferPool.Get();
-
-		using (new ProfilingScope(cmd, downsampleDepthProfilingSampler))
-		{
-			Blitter.BlitCameraTexture(cmd, downsampledCameraDepthRTHandle, downsampledCameraDepthRTHandle, downsampleDepthMaterial, downsampleDepthPassIndex);
-			volumetricFogMaterial.SetTexture(DownsampledCameraDepthTextureId, downsampledCameraDepthRTHandle);
-		}
-
-		using (new ProfilingScope(cmd, profilingSampler))
-		{
-			UpdateVolumetricFogMaterialParameters(volumetricFogMaterial, renderingData.lightData.mainLightIndex, renderingData.lightData.additionalLightsCount, renderingData.lightData.visibleLights);
-			Blitter.BlitCameraTexture(cmd, volumetricFogRenderRTHandle, volumetricFogRenderRTHandle, volumetricFogMaterial, volumetricFogRenderPassIndex);
-
-			int blurIterations = VolumeManager.instance.stack.GetComponent<VolumetricFogVolumeComponent>().blurIterations.value;
-
-			for (int i = 0; i < blurIterations; ++i)
-			{
-				Blitter.BlitCameraTexture(cmd, volumetricFogRenderRTHandle, volumetricFogBlurRTHandle, volumetricFogMaterial, volumetricFogHorizontalBlurPassIndex);
-				Blitter.BlitCameraTexture(cmd, volumetricFogBlurRTHandle, volumetricFogRenderRTHandle, volumetricFogMaterial, volumetricFogVerticalBlurPassIndex);
-			}
-
-			volumetricFogMaterial.SetTexture(VolumetricFogTextureId, volumetricFogRenderRTHandle);
-
-			RTHandle cameraColorRt = renderingData.cameraData.renderer.cameraColorTargetHandle;
-			Blitter.BlitCameraTexture(cmd, cameraColorRt, volumetricFogUpsampleCompositionRTHandle, volumetricFogMaterial, volumetricFogUpsampleCompositionPassIndex);
-			Blitter.BlitCameraTexture(cmd, volumetricFogUpsampleCompositionRTHandle, cameraColorRt);
-		}
-
-		context.ExecuteCommandBuffer(cmd);
-
-		cmd.Clear();
-
-		CommandBufferPool.Release(cmd);
-	}
-
-#if UNITY_6000_0_OR_NEWER
 
 	/// <summary>
 	/// <inheritdoc/>
@@ -317,8 +220,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		resourceData.cameraColor = volumetricFogUpsampleCompositionTarget;
 	}
 
-#endif
-
 	#endregion
 
 	#region Methods
@@ -337,13 +238,11 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		bool enableMainLightContribution = fogVolume.enableMainLightContribution.value && fogVolume.scattering.value > 0.0f && mainLightIndex > -1;
 		bool enableAdditionalLightsContribution = fogVolume.enableAdditionalLightsContribution.value && additionalLightsCount > 0;
 
-#if UNITY_2023_1_OR_NEWER
 		bool enableAPVContribution = fogVolume.enableAPVContribution.value && fogVolume.APVContributionWeight.value > 0.0f;
 		if (enableAPVContribution)
 			volumetricFogMaterial.EnableKeyword("_APV_CONTRIBUTION_ENABLED");
 		else
 			volumetricFogMaterial.DisableKeyword("_APV_CONTRIBUTION_ENABLED");
-#endif
 
 		if (enableMainLightContribution)
 			volumetricFogMaterial.DisableKeyword("_MAIN_LIGHT_CONTRIBUTION_DISABLED");
@@ -365,9 +264,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		volumetricFogMaterial.SetFloat(GroundHeightId, (fogVolume.enableGround.overrideState && fogVolume.enableGround.value) ? fogVolume.groundHeight.value : float.MinValue);
 		volumetricFogMaterial.SetFloat(DensityId, fogVolume.density.value);
 		volumetricFogMaterial.SetFloat(AbsortionId, 1.0f / fogVolume.attenuationDistance.value);
-#if UNITY_2023_1_OR_NEWER
 		volumetricFogMaterial.SetFloat(APVContributionWeigthId, fogVolume.enableAPVContribution.value ? fogVolume.APVContributionWeight.value : 0.0f);
-#endif
 		volumetricFogMaterial.SetColor(TintId, fogVolume.tint.value);
 		volumetricFogMaterial.SetInteger(MaxStepsId, fogVolume.maxSteps.value);
 	}
@@ -425,8 +322,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			volumetricFogMaterial.SetFloatArray(RadiiSqArrayId, RadiiSq);
 		}
 	}
-
-#if UNITY_6000_0_OR_NEWER
 
 	/// <summary>
 	/// Creates and returns all the necessary render graph textures.
@@ -498,35 +393,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			Blitter.BlitCameraTexture(unsafeCmd, passData.source, passData.target, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, passData.material, passData.materialPassIndex);
 			Blitter.BlitCameraTexture(unsafeCmd, passData.target, passData.source, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, passData.material, passData.materialAdditionalPassIndex);
 		}
-	}
-
-#endif
-
-	/// <summary>
-	/// Re-allocate fixed-size RTHandle if it is not allocated or doesn't match the descriptor.
-	/// </summary>
-	/// <param name="handle"></param>
-	/// <param name="descriptor"></param>
-	/// <param name="wrapMode"></param>
-	/// <param name="name"></param>
-	private void ReAllocateIfNeeded(ref RTHandle handle, in RenderTextureDescriptor descriptor, TextureWrapMode wrapMode, string name)
-	{
-#if UNITY_6000_0_OR_NEWER
-		RenderingUtils.ReAllocateHandleIfNeeded(ref handle, descriptor, wrapMode: wrapMode, name: name);
-#else
-		RenderingUtils.ReAllocateIfNeeded(ref handle, descriptor, wrapMode: wrapMode, name: name);
-#endif
-	}
-
-	/// <summary>
-	/// Disposes the resources used by this pass.
-	/// </summary>
-	public void Dispose()
-	{
-		downsampledCameraDepthRTHandle?.Release();
-		volumetricFogRenderRTHandle?.Release();
-		volumetricFogBlurRTHandle?.Release();
-		volumetricFogUpsampleCompositionRTHandle?.Release();
 	}
 
 	#endregion

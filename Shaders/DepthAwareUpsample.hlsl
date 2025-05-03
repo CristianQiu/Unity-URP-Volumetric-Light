@@ -18,16 +18,7 @@ float4 DepthAwareUpsample(float2 uv, TEXTURE2D_X(textureToUpsample))
         downsampledTopLeftCornerUv
     };
 
-    float4 downsampledDepths;
-    
-#if SHADER_TARGET >= 45
-    downsampledDepths = GATHER_RED_TEXTURE2D_X(_DownsampledCameraDepthTexture, sampler_PointClamp, uv);
-#else
-    downsampledDepths.x = SampleDownsampledSceneDepth(uvs[0]);
-    downsampledDepths.y = SampleDownsampledSceneDepth(uvs[1]);
-    downsampledDepths.z = SampleDownsampledSceneDepth(uvs[2]);
-    downsampledDepths.w = SampleDownsampledSceneDepth(uvs[3]);
-#endif
+    float4 downsampledDepths = GATHER_RED_TEXTURE2D_X(_DownsampledCameraDepthTexture, sampler_PointClamp, uv);
 
     float fullResDepth = SampleSceneDepth(uv);
     float fullResLinearEyeDepth = LinearEyeDepthConsiderProjection(fullResDepth);
