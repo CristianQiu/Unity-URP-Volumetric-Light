@@ -87,6 +87,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		bool enabledGround = enableGround.overrideState.boolValue && enableGround.value.boolValue;
 		bool enabledMainLightContribution = enableMainLightContribution.overrideState.boolValue && enableMainLightContribution.value.boolValue;
 		bool enabledAdditionalLightsContribution = enableAdditionalLightsContribution.overrideState.boolValue && enableAdditionalLightsContribution.value.boolValue;
+		bool enabledAPVContribution = enableAPVContribution.overrideState.boolValue && enableAPVContribution.value.boolValue;
 
 		PropertyField(distance);
 		PropertyField(baseHeight);
@@ -98,8 +99,6 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
 		PropertyField(density);
 		PropertyField(attenuationDistance);
-
-		bool enabledAPVContribution = enableAPVContribution.overrideState.boolValue && enableAPVContribution.value.boolValue;
 		PropertyField(enableAPVContribution);
 		if (enabledAPVContribution)
 			PropertyField(APVContributionWeight);

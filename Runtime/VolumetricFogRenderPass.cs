@@ -237,12 +237,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 		bool enableMainLightContribution = fogVolume.enableMainLightContribution.value && fogVolume.scattering.value > 0.0f && mainLightIndex > -1;
 		bool enableAdditionalLightsContribution = fogVolume.enableAdditionalLightsContribution.value && additionalLightsCount > 0;
-
 		bool enableAPVContribution = fogVolume.enableAPVContribution.value && fogVolume.APVContributionWeight.value > 0.0f;
-		if (enableAPVContribution)
-			volumetricFogMaterial.EnableKeyword("_APV_CONTRIBUTION_ENABLED");
-		else
-			volumetricFogMaterial.DisableKeyword("_APV_CONTRIBUTION_ENABLED");
 
 		if (enableMainLightContribution)
 			volumetricFogMaterial.DisableKeyword("_MAIN_LIGHT_CONTRIBUTION_DISABLED");
@@ -253,7 +248,12 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			volumetricFogMaterial.DisableKeyword("_ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED");
 		else
 			volumetricFogMaterial.EnableKeyword("_ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED");
-		
+
+		if (enableAPVContribution)
+			volumetricFogMaterial.EnableKeyword("_APV_CONTRIBUTION_ENABLED");
+		else
+			volumetricFogMaterial.DisableKeyword("_APV_CONTRIBUTION_ENABLED");
+
 		UpdateLightsParameters(volumetricFogMaterial, fogVolume, enableMainLightContribution, enableAdditionalLightsContribution, mainLightIndex, visibleLights);
 
 		volumetricFogMaterial.SetInteger(FrameCountId, Time.renderedFrameCount % 64);
