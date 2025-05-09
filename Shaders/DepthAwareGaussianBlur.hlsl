@@ -17,13 +17,14 @@ float4 DepthAwareGaussianBlur(float2 uv, float2 dir, TEXTURE2D_X(textureToBlur),
     float centerDepth = SampleDownsampledSceneDepth(uv);
     float centerLinearEyeDepth = LinearEyeDepthConsiderProjection(centerDepth);
 
-    float3 rgbResult = centerSample.rgb * KernelWeights[0];
-    float weights = KernelWeights[0];
+    int i = 0;
+    float3 rgbResult = centerSample.rgb * KernelWeights[i];
+    float weights = KernelWeights[i];
 
     float2 texelSizeTimesDir = textureToBlurTexelSizeXy * dir;
 
     UNITY_UNROLL
-    for (int i = -KERNEL_RADIUS; i < 0; ++i)
+    for (i = -KERNEL_RADIUS; i < 0; ++i)
     {
         float2 uvOffset = (float)i * texelSizeTimesDir;
         float2 uvSample = uv + uvOffset;
