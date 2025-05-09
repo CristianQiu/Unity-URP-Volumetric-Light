@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.5.6] - 2025-05-09
+
+* Minor change to prevent PS5 error reported by user.
+
 ## [0.5.5] - 2025-04-30
 
 * Updated some of the documentation to make it clear that the package supports deferred+ on Unity 6000.1.0f1.

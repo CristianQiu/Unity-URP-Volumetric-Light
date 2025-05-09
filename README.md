@@ -42,7 +42,7 @@ Then you can proceed to install this package:
 
 * Multipass VR rendering is not supported.
 * WebGL is not supported. See https://github.com/CristianQiu/Unity-URP-Volumetric-Light/issues/7.
-* Not tested on consoles (Playstation, Xbox, Switch) but very likely to work.
+* Not tested on consoles spectrum (Playstation, Xbox, Switch) but very likely to work. PS5 has been verified by users (v0.5.6).
 * Transparent objects are not blended correctly with fog.
 * Fully baked lights are not supported.
 * Fog is only rendered up to a certain distance from the camera.
