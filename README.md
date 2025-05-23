@@ -47,7 +47,7 @@ Then you can proceed to install this package:
 * Fully baked lights are not supported.
 * Fog is only rendered up to a certain distance from the camera.
 * It may be possible to notice more noise in some light regions at certain view angles.
-* When using forward or deferred rendering path, performance can be heavily affected when adding multiple additional lights. Forward+ is highly recommended for best performance when support for additional lights is needed.
+* When using forward or deferred rendering path, performance can be heavily affected when adding multiple additional lights. Forward+ or Deferred+ is highly recommended for best performance when support for additional lights is needed.
 
 # Known Bugs
 
