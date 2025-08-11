@@ -1,9 +1,9 @@
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
-using UnityEngine.Rendering.Universal;
-using Unity.Collections;
 using UnityEngine.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.Universal;
 
 /// <summary>
 /// The volumetric fog render pass.
@@ -11,16 +11,6 @@ using UnityEngine.Rendering.RenderGraphModule;
 public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 {
 	#region Definitions
-
-	/// <summary>
-	/// Downsampling factor for the camera depth texture that the volumetric fog will use to render
-	/// the fog.
-	/// </summary>
-	private enum DownsampleFactor : byte
-	{
-		// TODO: Add quarter downsample factor.
-		Half = 2,
-	}
 
 	/// <summary>
 	/// The subpasses the volumetric fog render pass is made of.
@@ -51,13 +41,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		public TextureHandle volumetricFogRenderTarget;
 		public UniversalLightData lightData;
 	}
-
-	#endregion
-
-	#region Public Attributes
-
-	public const RenderPassEvent DefaultRenderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
-	public const VolumetricFogRenderPassEvent DefaultVolumetricFogRenderPassEvent = (VolumetricFogRenderPassEvent)DefaultRenderPassEvent;
 
 	#endregion
 
@@ -225,6 +208,106 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	#region Methods
 
 	/// <summary>
+	/// Configures the volumetric fog render pass for the tick, before adding the pass to the renderer.
+	/// </summary>
+	public void ConfigurePassForTick()
+	{
+		renderPassEvent = (RenderPassEvent)GetVolumetricFogVolumeComponent().renderPassEvent.value;
+		ConfigureInput(ScriptableRenderPassInput.Depth);
+	}
+
+	/// <summary>
+	/// Creates and returns all the necessary render graph textures.
+	/// </summary>
+	/// <param name="renderGraph"></param>
+	/// <param name="cameraData"></param>
+	/// <param name="downsampledCameraDepthTarget"></param>
+	/// <param name="volumetricFogRenderTarget"></param>
+	/// <param name="volumetricFogBlurRenderTarget"></param>
+	/// <param name="volumetricFogUpsampleCompositionTarget"></param>
+	private void CreateRenderGraphTextures(RenderGraph renderGraph, UniversalCameraData cameraData, out TextureHandle downsampledCameraDepthTarget, out TextureHandle volumetricFogRenderTarget, out TextureHandle volumetricFogBlurRenderTarget, out TextureHandle volumetricFogUpsampleCompositionTarget)
+	{
+		RenderTextureDescriptor cameraTargetDescriptor = cameraData.cameraTargetDescriptor;
+		cameraTargetDescriptor.depthBufferBits = (int)DepthBits.None;
+
+		RenderTextureFormat originalColorFormat = cameraTargetDescriptor.colorFormat;
+		Vector2Int originalResolution = new Vector2Int(cameraTargetDescriptor.width, cameraTargetDescriptor.height);
+
+		int downsampleFactor = (int)GetVolumetricFogVolumeComponent().resolution.value;
+
+		cameraTargetDescriptor.width /= downsampleFactor;
+		cameraTargetDescriptor.height /= downsampleFactor;
+		cameraTargetDescriptor.graphicsFormat = GraphicsFormat.R32_SFloat;
+		downsampledCameraDepthTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, DownsampledCameraDepthRTName, false);
+
+		cameraTargetDescriptor.colorFormat = RenderTextureFormat.ARGBHalf;
+		volumetricFogRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogRenderRTName, false);
+		volumetricFogBlurRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogBlurRTName, false);
+
+		cameraTargetDescriptor.width = originalResolution.x;
+		cameraTargetDescriptor.height = originalResolution.y;
+		cameraTargetDescriptor.colorFormat = originalColorFormat;
+		volumetricFogUpsampleCompositionTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogUpsampleCompositionRTName, false);
+	}
+
+	/// <summary>
+	/// Gets the volume component for the volumetric fog.
+	/// </summary>
+	/// <returns></returns>
+	private static VolumetricFogVolumeComponent GetVolumetricFogVolumeComponent()
+	{
+		return VolumeManager.instance.stack.GetComponent<VolumetricFogVolumeComponent>();
+	}
+
+	#endregion
+
+	#region Pass Execution Methods
+
+	/// <summary>
+	/// Executes the pass with the information from the pass data.
+	/// </summary>
+	/// <param name="passData"></param>
+	/// <param name="context"></param>
+	private static void ExecutePass(PassData passData, RasterGraphContext context)
+	{
+		PassStage stage = passData.stage;
+
+		if (stage == PassStage.VolumetricFogRender)
+		{
+			passData.material.SetTexture(DownsampledCameraDepthTextureId, passData.downsampledCameraDepthTarget);
+			UpdateVolumetricFogMaterialParameters(passData.material, passData.lightData.mainLightIndex, passData.lightData.additionalLightsCount, passData.lightData.visibleLights);
+		}
+		else if (stage == PassStage.VolumetricFogUpsampleComposition)
+		{
+			passData.material.SetTexture(VolumetricFogTextureId, passData.volumetricFogRenderTarget);
+		}
+
+		Blitter.BlitTexture(context.cmd, passData.source, Vector2.one, passData.material, passData.materialPassIndex);
+	}
+
+	/// <summary>
+	/// Executes the unsafe pass that does up to multiple separable blurs to the volumetric fog.
+	/// </summary>
+	/// <param name="passData"></param>
+	/// <param name="context"></param>
+	private static void ExecuteUnsafeBlurPass(PassData passData, UnsafeGraphContext context)
+	{
+		CommandBuffer unsafeCmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
+
+		int blurIterations = GetVolumetricFogVolumeComponent().blurIterations.value;
+
+		for (int i = 0; i < blurIterations; ++i)
+		{
+			Blitter.BlitCameraTexture(unsafeCmd, passData.source, passData.target, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, passData.material, passData.materialPassIndex);
+			Blitter.BlitCameraTexture(unsafeCmd, passData.target, passData.source, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, passData.material, passData.materialAdditionalPassIndex);
+		}
+	}
+
+	#endregion
+
+	#region Material Parameters Methods
+
+	/// <summary>
 	/// Updates the volumetric fog material parameters.
 	/// </summary>
 	/// <param name="volumetricFogMaterial"></param>
@@ -233,11 +316,17 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// <param name="visibleLights"></param>
 	private static void UpdateVolumetricFogMaterialParameters(Material volumetricFogMaterial, int mainLightIndex, int additionalLightsCount, NativeArray<VisibleLight> visibleLights)
 	{
-		VolumetricFogVolumeComponent fogVolume = VolumeManager.instance.stack.GetComponent<VolumetricFogVolumeComponent>();
+		VolumetricFogVolumeComponent fogVolume = GetVolumetricFogVolumeComponent();
 
+		bool enableGround = fogVolume.enableGround.overrideState && fogVolume.enableGround.value;
+		bool enableAPVContribution = fogVolume.enableAPVContribution.value && fogVolume.APVContributionWeight.value > 0.0f;
 		bool enableMainLightContribution = fogVolume.enableMainLightContribution.value && fogVolume.scattering.value > 0.0f && mainLightIndex > -1;
 		bool enableAdditionalLightsContribution = fogVolume.enableAdditionalLightsContribution.value && additionalLightsCount > 0;
-		bool enableAPVContribution = fogVolume.enableAPVContribution.value && fogVolume.APVContributionWeight.value > 0.0f;
+
+		if (enableAPVContribution)
+			volumetricFogMaterial.EnableKeyword("_APV_CONTRIBUTION_ENABLED");
+		else
+			volumetricFogMaterial.DisableKeyword("_APV_CONTRIBUTION_ENABLED");
 
 		if (enableMainLightContribution)
 			volumetricFogMaterial.DisableKeyword("_MAIN_LIGHT_CONTRIBUTION_DISABLED");
@@ -249,11 +338,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		else
 			volumetricFogMaterial.EnableKeyword("_ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED");
 
-		if (enableAPVContribution)
-			volumetricFogMaterial.EnableKeyword("_APV_CONTRIBUTION_ENABLED");
-		else
-			volumetricFogMaterial.DisableKeyword("_APV_CONTRIBUTION_ENABLED");
-
 		UpdateLightsParameters(volumetricFogMaterial, fogVolume, enableMainLightContribution, enableAdditionalLightsContribution, mainLightIndex, visibleLights);
 
 		volumetricFogMaterial.SetInteger(FrameCountId, Time.renderedFrameCount % 64);
@@ -261,10 +345,10 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		volumetricFogMaterial.SetFloat(DistanceId, fogVolume.distance.value);
 		volumetricFogMaterial.SetFloat(BaseHeightId, fogVolume.baseHeight.value);
 		volumetricFogMaterial.SetFloat(MaximumHeightId, fogVolume.maximumHeight.value);
-		volumetricFogMaterial.SetFloat(GroundHeightId, (fogVolume.enableGround.overrideState && fogVolume.enableGround.value) ? fogVolume.groundHeight.value : float.MinValue);
+		volumetricFogMaterial.SetFloat(GroundHeightId, enableGround ? fogVolume.groundHeight.value : float.MinValue);
 		volumetricFogMaterial.SetFloat(DensityId, fogVolume.density.value);
 		volumetricFogMaterial.SetFloat(AbsortionId, 1.0f / fogVolume.attenuationDistance.value);
-		volumetricFogMaterial.SetFloat(APVContributionWeigthId, fogVolume.enableAPVContribution.value ? fogVolume.APVContributionWeight.value : 0.0f);
+		volumetricFogMaterial.SetFloat(APVContributionWeigthId, enableAPVContribution ? fogVolume.APVContributionWeight.value : 0.0f);
 		volumetricFogMaterial.SetColor(TintId, fogVolume.tint.value);
 		volumetricFogMaterial.SetInteger(MaxStepsId, fogVolume.maxSteps.value);
 	}
@@ -320,78 +404,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			volumetricFogMaterial.SetFloatArray(AnisotropiesArrayId, Anisotropies);
 			volumetricFogMaterial.SetFloatArray(ScatteringsArrayId, Scatterings);
 			volumetricFogMaterial.SetFloatArray(RadiiSqArrayId, RadiiSq);
-		}
-	}
-
-	/// <summary>
-	/// Creates and returns all the necessary render graph textures.
-	/// </summary>
-	/// <param name="renderGraph"></param>
-	/// <param name="cameraData"></param>
-	/// <param name="downsampledCameraDepthTarget"></param>
-	/// <param name="volumetricFogRenderTarget"></param>
-	/// <param name="volumetricFogBlurRenderTarget"></param>
-	/// <param name="volumetricFogUpsampleCompositionTarget"></param>
-	private void CreateRenderGraphTextures(RenderGraph renderGraph, UniversalCameraData cameraData, out TextureHandle downsampledCameraDepthTarget, out TextureHandle volumetricFogRenderTarget, out TextureHandle volumetricFogBlurRenderTarget, out TextureHandle volumetricFogUpsampleCompositionTarget)
-	{
-		RenderTextureDescriptor cameraTargetDescriptor = cameraData.cameraTargetDescriptor;
-		cameraTargetDescriptor.depthBufferBits = (int)DepthBits.None;
-
-		RenderTextureFormat originalColorFormat = cameraTargetDescriptor.colorFormat;
-		Vector2Int originalResolution = new Vector2Int(cameraTargetDescriptor.width, cameraTargetDescriptor.height);
-
-		cameraTargetDescriptor.width /= (int)DownsampleFactor.Half;
-		cameraTargetDescriptor.height /= (int)DownsampleFactor.Half;
-		cameraTargetDescriptor.graphicsFormat = GraphicsFormat.R32_SFloat;
-		downsampledCameraDepthTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, DownsampledCameraDepthRTName, false);
-
-		cameraTargetDescriptor.colorFormat = RenderTextureFormat.ARGBHalf;
-		volumetricFogRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogRenderRTName, false);
-		volumetricFogBlurRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogBlurRTName, false);
-
-		cameraTargetDescriptor.width = originalResolution.x;
-		cameraTargetDescriptor.height = originalResolution.y;
-		cameraTargetDescriptor.colorFormat = originalColorFormat;
-		volumetricFogUpsampleCompositionTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogUpsampleCompositionRTName, false);
-	}
-
-	/// <summary>
-	/// Executes the pass with the information from the pass data.
-	/// </summary>
-	/// <param name="passData"></param>
-	/// <param name="context"></param>
-	private static void ExecutePass(PassData passData, RasterGraphContext context)
-	{
-		PassStage stage = passData.stage;
-
-		if (stage == PassStage.VolumetricFogRender)
-		{
-			passData.material.SetTexture(DownsampledCameraDepthTextureId, passData.downsampledCameraDepthTarget);
-			UpdateVolumetricFogMaterialParameters(passData.material, passData.lightData.mainLightIndex, passData.lightData.additionalLightsCount, passData.lightData.visibleLights);
-		}
-		else if (stage == PassStage.VolumetricFogUpsampleComposition)
-		{
-			passData.material.SetTexture(VolumetricFogTextureId, passData.volumetricFogRenderTarget);
-		}
-
-		Blitter.BlitTexture(context.cmd, passData.source, Vector2.one, passData.material, passData.materialPassIndex);
-	}
-
-	/// <summary>
-	/// Executes the unsafe pass that does up to multiple separable blurs to the volumetric fog.
-	/// </summary>
-	/// <param name="passData"></param>
-	/// <param name="context"></param>
-	private static void ExecuteUnsafeBlurPass(PassData passData, UnsafeGraphContext context)
-	{
-		CommandBuffer unsafeCmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
-
-		int blurIterations = VolumeManager.instance.stack.GetComponent<VolumetricFogVolumeComponent>().blurIterations.value;
-
-		for (int i = 0; i < blurIterations; ++i)
-		{
-			Blitter.BlitCameraTexture(unsafeCmd, passData.source, passData.target, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, passData.material, passData.materialPassIndex);
-			Blitter.BlitCameraTexture(unsafeCmd, passData.target, passData.source, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, passData.material, passData.materialAdditionalPassIndex);
 		}
 	}
 

@@ -20,6 +20,8 @@ Shader "Hidden/VolumetricFog"
 
             #include "./VolumetricFog.hlsl"
 
+            #pragma target 4.5
+
             #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
 
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
@@ -60,6 +62,8 @@ Shader "Hidden/VolumetricFog"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "./DepthAwareGaussianBlur.hlsl"
 
+            #pragma target 4.5
+
             #pragma vertex Vert
             #pragma fragment Frag
 
@@ -87,6 +91,8 @@ Shader "Hidden/VolumetricFog"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "./DepthAwareGaussianBlur.hlsl"
+
+            #pragma target 4.5
 
             #pragma vertex Vert
             #pragma fragment Frag

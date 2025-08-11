@@ -102,7 +102,7 @@ float GetFogDensity(float posWSy)
 {
     float t = saturate((posWSy - _BaseHeight) / (_MaximumHeight - _BaseHeight));
     t = 1.0 - t;
-    t = lerp(t, 0.0, posWSy < _GroundHeight);
+    t = posWSy < _GroundHeight ? 0.0 : t;
 
     return _Density * t;
 }
@@ -150,7 +150,6 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, floa
 #endif
     float3 additionalLightsColor = float3(0.0, 0.0, 0.0);
                 
-    // Loop differently through lights in Forward+ while considering Forward and Deferred too.
     LIGHT_LOOP_BEGIN(_CustomAdditionalLightsCount)
         UNITY_BRANCH
         if (_Scatterings[lightIndex] <= 0.0)

@@ -49,7 +49,7 @@ half VolumetricAdditionalLightRealtimeShadow(int lightIndex, float3 positionWS, 
     if (isPointLight)
     {
         // This is a point light, we have to find out which shadow slice to sample from
-        float cubemapFaceId = CubeMapFaceID(-lightDirection);
+        const int cubemapFaceId = CubeMapFaceID(-lightDirection);
         shadowSliceIndex += cubemapFaceId;
     }
 
