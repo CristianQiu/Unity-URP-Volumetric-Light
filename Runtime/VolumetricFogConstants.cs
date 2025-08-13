@@ -11,7 +11,7 @@ public enum VolumetricFogResolution : byte
 }
 
 /// <summary>
-/// Render pass events for the volumetric fog. Matches the ones in the Universal Render Pipeline.
+/// Render pass events for the volumetric fog. They match the ones in the Universal Render Pipeline.
 /// </summary>
 public enum VolumetricFogRenderPassEvent
 {

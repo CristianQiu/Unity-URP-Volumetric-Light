@@ -261,50 +261,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 	#endregion
 
-	#region Pass Execution Methods
-
-	/// <summary>
-	/// Executes the pass with the information from the pass data.
-	/// </summary>
-	/// <param name="passData"></param>
-	/// <param name="context"></param>
-	private static void ExecutePass(PassData passData, RasterGraphContext context)
-	{
-		PassStage stage = passData.stage;
-
-		if (stage == PassStage.VolumetricFogRender)
-		{
-			passData.material.SetTexture(DownsampledCameraDepthTextureId, passData.downsampledCameraDepthTarget);
-			UpdateVolumetricFogMaterialParameters(passData.material, passData.lightData.mainLightIndex, passData.lightData.additionalLightsCount, passData.lightData.visibleLights);
-		}
-		else if (stage == PassStage.VolumetricFogUpsampleComposition)
-		{
-			passData.material.SetTexture(VolumetricFogTextureId, passData.volumetricFogRenderTarget);
-		}
-
-		Blitter.BlitTexture(context.cmd, passData.source, Vector2.one, passData.material, passData.materialPassIndex);
-	}
-
-	/// <summary>
-	/// Executes the unsafe pass that does up to multiple separable blurs to the volumetric fog.
-	/// </summary>
-	/// <param name="passData"></param>
-	/// <param name="context"></param>
-	private static void ExecuteUnsafeBlurPass(PassData passData, UnsafeGraphContext context)
-	{
-		CommandBuffer unsafeCmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
-
-		int blurIterations = GetVolumetricFogVolumeComponent().blurIterations.value;
-
-		for (int i = 0; i < blurIterations; ++i)
-		{
-			Blitter.BlitCameraTexture(unsafeCmd, passData.source, passData.target, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, passData.material, passData.materialPassIndex);
-			Blitter.BlitCameraTexture(unsafeCmd, passData.target, passData.source, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, passData.material, passData.materialAdditionalPassIndex);
-		}
-	}
-
-	#endregion
-
 	#region Material Parameters Methods
 
 	/// <summary>
@@ -404,6 +360,50 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			volumetricFogMaterial.SetFloatArray(AnisotropiesArrayId, Anisotropies);
 			volumetricFogMaterial.SetFloatArray(ScatteringsArrayId, Scatterings);
 			volumetricFogMaterial.SetFloatArray(RadiiSqArrayId, RadiiSq);
+		}
+	}
+
+	#endregion
+
+	#region Pass Execution Methods
+
+	/// <summary>
+	/// Executes the pass with the information from the pass data.
+	/// </summary>
+	/// <param name="passData"></param>
+	/// <param name="context"></param>
+	private static void ExecutePass(PassData passData, RasterGraphContext context)
+	{
+		PassStage stage = passData.stage;
+
+		if (stage == PassStage.VolumetricFogRender)
+		{
+			passData.material.SetTexture(DownsampledCameraDepthTextureId, passData.downsampledCameraDepthTarget);
+			UpdateVolumetricFogMaterialParameters(passData.material, passData.lightData.mainLightIndex, passData.lightData.additionalLightsCount, passData.lightData.visibleLights);
+		}
+		else if (stage == PassStage.VolumetricFogUpsampleComposition)
+		{
+			passData.material.SetTexture(VolumetricFogTextureId, passData.volumetricFogRenderTarget);
+		}
+
+		Blitter.BlitTexture(context.cmd, passData.source, Vector2.one, passData.material, passData.materialPassIndex);
+	}
+
+	/// <summary>
+	/// Executes the unsafe pass that does up to multiple separable blurs to the volumetric fog.
+	/// </summary>
+	/// <param name="passData"></param>
+	/// <param name="context"></param>
+	private static void ExecuteUnsafeBlurPass(PassData passData, UnsafeGraphContext context)
+	{
+		CommandBuffer unsafeCmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
+
+		int blurIterations = GetVolumetricFogVolumeComponent().blurIterations.value;
+
+		for (int i = 0; i < blurIterations; ++i)
+		{
+			Blitter.BlitCameraTexture(unsafeCmd, passData.source, passData.target, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, passData.material, passData.materialPassIndex);
+			Blitter.BlitCameraTexture(unsafeCmd, passData.target, passData.source, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, passData.material, passData.materialAdditionalPassIndex);
 		}
 	}
 

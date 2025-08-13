@@ -22,12 +22,12 @@ half VolumetricMainLightRealtimeShadow(float4 shadowCoord)
 {
 #if !defined(MAIN_LIGHT_CALCULATE_SHADOWS)
     return half(1.0);
-#elif defined(_MAIN_LIGHT_SHADOWS_SCREEN) && !defined(_SURFACE_TYPE_TRANSPARENT)
+#endif
+
+#if defined(_MAIN_LIGHT_SHADOWS_SCREEN) && !defined(_SURFACE_TYPE_TRANSPARENT)
     return SampleScreenSpaceShadowmap(shadowCoord);
 #else
-    ShadowSamplingData shadowSamplingData = GetMainLightShadowSamplingData();
-    half4 shadowParams = GetMainLightShadowParams();
-    return VolumetricSampleShadowmap(TEXTURE2D_ARGS(_MainLightShadowmapTexture, sampler_LinearClampCompare), shadowCoord, shadowSamplingData, shadowParams, false);
+    return VolumetricSampleShadowmap(TEXTURE2D_ARGS(_MainLightShadowmapTexture, sampler_LinearClampCompare), shadowCoord, GetMainLightShadowSamplingData(), GetMainLightShadowParams(), false);
 #endif
 }
 
@@ -35,8 +35,6 @@ half VolumetricMainLightRealtimeShadow(float4 shadowCoord)
 half VolumetricAdditionalLightRealtimeShadow(int lightIndex, float3 positionWS, half3 lightDirection)
 {
 #if defined(ADDITIONAL_LIGHT_CALCULATE_SHADOWS)
-    ShadowSamplingData shadowSamplingData = GetAdditionalLightShadowSamplingData(lightIndex);
-
     half4 shadowParams = GetAdditionalLightShadowParams(lightIndex);
 
     int shadowSliceIndex = shadowParams.w;
@@ -48,9 +46,8 @@ half VolumetricAdditionalLightRealtimeShadow(int lightIndex, float3 positionWS, 
     UNITY_BRANCH
     if (isPointLight)
     {
-        // This is a point light, we have to find out which shadow slice to sample from
-        const int cubemapFaceId = CubeMapFaceID(-lightDirection);
-        shadowSliceIndex += cubemapFaceId;
+        const int cubeFaceOffset = CubeMapFaceID(-lightDirection);
+        shadowSliceIndex += cubeFaceOffset;
     }
 
     #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
@@ -59,7 +56,7 @@ half VolumetricAdditionalLightRealtimeShadow(int lightIndex, float3 positionWS, 
         float4 shadowCoord = mul(_AdditionalLightsWorldToShadow[shadowSliceIndex], float4(positionWS, 1.0));
     #endif
 
-    return VolumetricSampleShadowmap(TEXTURE2D_ARGS(_AdditionalLightsShadowmapTexture, sampler_LinearClampCompare), shadowCoord, shadowSamplingData, shadowParams, true);
+    return VolumetricSampleShadowmap(TEXTURE2D_ARGS(_AdditionalLightsShadowmapTexture, sampler_LinearClampCompare), shadowCoord, GetAdditionalLightShadowSamplingData(lightIndex), shadowParams, true);
 #else
     return half(1.0);
 #endif

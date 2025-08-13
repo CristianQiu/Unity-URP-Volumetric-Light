@@ -170,7 +170,7 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, floa
         // Gradually reduce additional lights scattering to zero at their origin to try to avoid flicker-aliasing.
         float3 distToPos = additionalLightPos.xyz - currPosWS;
         float distToPosMagnitudeSq = dot(distToPos, distToPos);
-        float newScattering = smoothstep(0.0, _RadiiSq[lightIndex], distToPosMagnitudeSq) ;
+        float newScattering = smoothstep(0.0, _RadiiSq[lightIndex], distToPosMagnitudeSq);
         newScattering *= newScattering;
         newScattering *= _Scatterings[lightIndex];
 
@@ -237,7 +237,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         // TODO: Additional contributions? Reflection probes, etc...
         float3 stepColor = apvColor + mainLightColor + additionalLightsColor;
         volumetricFogColor += (stepColor * (transmittance * stepLength));
-        
+
         // TODO: Break out when transmittance reaches low threshold and remap the transmittance when doing so.
         // It does not make sense right now because the fog does not properly support transparency, so having dense fog leads to issues.
     }
