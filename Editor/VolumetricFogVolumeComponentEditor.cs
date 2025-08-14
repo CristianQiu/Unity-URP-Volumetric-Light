@@ -20,6 +20,8 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	private SerializedDataParameter attenuationDistance;
 	private SerializedDataParameter enableAPVContribution;
 	private SerializedDataParameter APVContributionWeight;
+	private SerializedDataParameter enableReflectionProbesContribution;
+	private SerializedDataParameter reflectionProbesContributionWeight;
 
 	private SerializedDataParameter enableMainLightContribution;
 	private SerializedDataParameter anisotropy;
@@ -57,6 +59,8 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		attenuationDistance = Unpack(pf.Find(x => x.attenuationDistance));
 		enableAPVContribution = Unpack(pf.Find(x => x.enableAPVContribution));
 		APVContributionWeight = Unpack(pf.Find(x => x.APVContributionWeight));
+		enableReflectionProbesContribution = Unpack(pf.Find(x => x.enableReflectionProbesContribution));
+		reflectionProbesContributionWeight = Unpack(pf.Find(x => x.reflectionProbesContributionWeight));
 
 		enableMainLightContribution = Unpack(pf.Find(x => x.enableMainLightContribution));
 		anisotropy = Unpack(pf.Find(x => x.anisotropy));
@@ -90,6 +94,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		bool enabledMainLightContribution = enableMainLightContribution.overrideState.boolValue && enableMainLightContribution.value.boolValue;
 		bool enabledAdditionalLightsContribution = enableAdditionalLightsContribution.overrideState.boolValue && enableAdditionalLightsContribution.value.boolValue;
 		bool enabledAPVContribution = enableAPVContribution.overrideState.boolValue && enableAPVContribution.value.boolValue;
+		bool enabledReflectionProbesContribution = enableReflectionProbesContribution.overrideState.boolValue && enableReflectionProbesContribution.value.boolValue;
 
 		PropertyField(distance);
 		PropertyField(baseHeight);
@@ -104,6 +109,9 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		PropertyField(enableAPVContribution);
 		if (enabledAPVContribution)
 			PropertyField(APVContributionWeight);
+		PropertyField(enableReflectionProbesContribution);
+		if (enabledReflectionProbesContribution)
+			PropertyField(reflectionProbesContributionWeight);
 
 		PropertyField(enableMainLightContribution);
 		if (enabledMainLightContribution)

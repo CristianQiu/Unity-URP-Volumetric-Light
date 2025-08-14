@@ -8,10 +8,13 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Random.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/VolumeRendering.hlsl"
-#if _APV_CONTRIBUTION_ENABLED
+#if _APV_CONTRIBUTION
     #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
         #include "Packages/com.unity.render-pipelines.core/Runtime/Lighting/ProbeVolume/ProbeVolume.hlsl"
     #endif
+#endif
+#if _CLUSTER_LIGHT_LOOP && _REFLECTION_PROBES_CONTRIBUTION
+    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/GlobalIllumination.hlsl"
 #endif
 #include "./DeclareDownsampledDepthTexture.hlsl"
 #include "./VolumetricShadows.hlsl"
@@ -26,6 +29,7 @@ float _GroundHeight;
 float _Density;
 float _Absortion;
 float _APVContributionWeight;
+float _ReflectionProbesContributionWeight;
 float3 _Tint;
 int _MaxSteps;
 
@@ -90,10 +94,10 @@ void CalculateRaymarchingParams(float2 uv, out float3 ro, out float3 rd, out flo
 // Gets the main light phase function.
 float GetMainLightPhase(float3 rd)
 {
-#if _MAIN_LIGHT_CONTRIBUTION_DISABLED
-    return 0.0;
-#else
+#if _MAIN_LIGHT_CONTRIBUTION
     return CornetteShanksPhaseFunction(_Anisotropies[_CustomAdditionalLightsCount], dot(rd, GetMainLight().direction));
+#else
+    return 0.0;
 #endif
 }
 
@@ -112,7 +116,7 @@ float3 GetStepAdaptiveProbeVolumeEvaluation(float2 uv, float3 posWS, float densi
 {
     float3 apvDiffuseGI = float3(0.0, 0.0, 0.0);
     
-#if _APV_CONTRIBUTION_ENABLED
+#if _APV_CONTRIBUTION
     #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
         EvaluateAdaptiveProbeVolume(posWS, uv * _ScreenSize.xy, apvDiffuseGI);
         apvDiffuseGI = apvDiffuseGI * _APVContributionWeight * density;
@@ -122,12 +126,20 @@ float3 GetStepAdaptiveProbeVolumeEvaluation(float2 uv, float3 posWS, float densi
     return apvDiffuseGI;
 }
 
+// Gets the reflection probe evaluation at one raymarch step.
+float3 GetStepReflectionProbeEvaluation(float2 uv, float3 currPosWS, float3 rd, float density)
+{
+#if _CLUSTER_LIGHT_LOOP && _REFLECTION_PROBES_CONTRIBUTION
+    return CalculateIrradianceFromReflectionProbes(rd, currPosWS, 1.0, uv) * _ReflectionProbesContributionWeight * density;
+#else
+    return float3(0.0, 0.0, 0.0);
+#endif
+}
+
 // Gets the main light color at one raymarch step.
 float3 GetStepMainLightColor(float3 currPosWS, float phaseMainLight, float density)
 {
-#if _MAIN_LIGHT_CONTRIBUTION_DISABLED
-    return float3(0.0, 0.0, 0.0);
-#endif
+#if _MAIN_LIGHT_CONTRIBUTION
     Light mainLight = GetMainLight();
     float4 shadowCoord = TransformWorldToShadowCoord(currPosWS);
     mainLight.shadowAttenuation = VolumetricMainLightRealtimeShadow(shadowCoord);
@@ -135,14 +147,15 @@ float3 GetStepMainLightColor(float3 currPosWS, float phaseMainLight, float densi
     mainLight.color *= SampleMainLightCookie(currPosWS);
 #endif
     return (mainLight.color * _Tint) * (mainLight.shadowAttenuation * phaseMainLight * density * _Scatterings[_CustomAdditionalLightsCount]);
+#else
+    return float3(0.0, 0.0, 0.0);
+#endif
 }
 
 // Gets the accumulated color from additional lights at one raymarch step.
 float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, float density)
 {
-#if _ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED
-    return float3(0.0, 0.0, 0.0);
-#endif
+#if _ADDITIONAL_LIGHTS_CONTRIBUTION
 #if _CLUSTER_LIGHT_LOOP
     InputData inputData = (InputData)0;
     inputData.normalizedScreenSpaceUV = uv;
@@ -183,6 +196,9 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, floa
     LIGHT_LOOP_END
 
     return additionalLightsColor;
+#else
+    return float3(0.0, 0.0, 0.0);
+#endif
 }
 
 // Calculates the volumetric fog. Returns the color in the RGB channels and transmittance in alpha.
@@ -231,11 +247,11 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         transmittance *= stepAttenuation;
 
         float3 apvColor = GetStepAdaptiveProbeVolumeEvaluation(uv, currPosWS, density);
+        float3 reflectionProbeColor = GetStepReflectionProbeEvaluation(uv, currPosWS, rd, density);
         float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight, density);
         float3 additionalLightsColor = GetStepAdditionalLightsColor(uv, currPosWS, rd, density);
         
-        // TODO: Additional contributions? Reflection probes, etc...
-        float3 stepColor = apvColor + mainLightColor + additionalLightsColor;
+        float3 stepColor = apvColor + reflectionProbeColor + mainLightColor + additionalLightsColor;
         volumetricFogColor += (stepColor * (transmittance * stepLength));
 
         // TODO: Break out when transmittance reaches low threshold and remap the transmittance when doing so.

@@ -30,9 +30,10 @@ Shader "Hidden/VolumetricFog"
             #pragma multi_compile_fragment _ _LIGHT_COOKIES
             #pragma multi_compile_fragment _ PROBE_VOLUMES_L1 PROBE_VOLUMES_L2
 
-            #pragma multi_compile_local_fragment _ _MAIN_LIGHT_CONTRIBUTION_DISABLED
-            #pragma multi_compile_local_fragment _ _ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED
-            #pragma multi_compile_local_fragment _ _APV_CONTRIBUTION_ENABLED
+            #pragma multi_compile_local_fragment _ _MAIN_LIGHT_CONTRIBUTION
+            #pragma multi_compile_local_fragment _ _ADDITIONAL_LIGHTS_CONTRIBUTION
+            #pragma multi_compile_local_fragment _ _APV_CONTRIBUTION
+            #pragma multi_compile_local_fragment _ _REFLECTION_PROBES_CONTRIBUTION
             
             #pragma vertex Vert
             #pragma fragment Frag
