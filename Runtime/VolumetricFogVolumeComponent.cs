@@ -35,7 +35,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	public BoolParameter enableAPVContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("A weight factor for the light coming from adaptive probe volumes (APV) when the probe volume contribution is enabled.")]
 	public ClampedFloatParameter APVContributionWeight = new ClampedFloatParameter(1.0f, 0.0f, 1.0f);
-	[Tooltip("When enabled, reflection probes will be sampled to contribute to fog.")]
+	[Tooltip("When enabled, reflection probes will be sampled to contribute to fog. Forward+ or Deferred+ rendering path is required for this option. It will be ignored and it will not work otherwise.")]
 	public BoolParameter enableReflectionProbesContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("A weight factor for the light coming from reflection probes when the reflection probes contribution is enabled.")]
 	public ClampedFloatParameter reflectionProbesContributionWeight = new ClampedFloatParameter(1.0f, 0.0f, 1.0f);
