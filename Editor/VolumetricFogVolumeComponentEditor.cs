@@ -31,8 +31,8 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
 	private SerializedDataParameter enableNoise;
 	private SerializedDataParameter noiseTexture;
-	private SerializedDataParameter noiseStrength;
-	private SerializedDataParameter noiseSize;
+	private SerializedDataParameter noiseScale;
+	private SerializedDataParameter noiseMinMax;
 	private SerializedDataParameter noiseVelocity;
 
 	private SerializedDataParameter resolution;
@@ -75,8 +75,8 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
 		enableNoise = Unpack(pf.Find(x => x.enableNoise));
 		noiseTexture = Unpack(pf.Find(x => x.noiseTexture));
-		noiseStrength = Unpack(pf.Find(x => x.noiseStrength));
-		noiseSize = Unpack(pf.Find(x => x.noiseSize));
+		noiseScale = Unpack(pf.Find(x => x.noiseScale));
+		noiseMinMax = Unpack(pf.Find(x => x.noiseMinMax));
 		noiseVelocity = Unpack(pf.Find(x => x.noiseVelocity));
 
 		resolution = Unpack(pf.Find(x => x.resolution));
@@ -137,8 +137,8 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		if (enabledNoise)
 		{
 			PropertyField(noiseTexture);
-			PropertyField(noiseStrength);
-			PropertyField(noiseSize);
+			PropertyField(noiseScale);
+			PropertyField(noiseMinMax);
 			PropertyField(noiseVelocity);
 		}
 

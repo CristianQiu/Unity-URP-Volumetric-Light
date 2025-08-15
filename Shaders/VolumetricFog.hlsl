@@ -28,18 +28,34 @@ float _MaximumHeight;
 float _GroundHeight;
 float _Density;
 float _Absortion;
+#if _APV_CONTRIBUTION
+    #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
 float _APVContributionWeight;
+    #endif
+#endif
+#if _CLUSTER_LIGHT_LOOP && _REFLECTION_PROBES_CONTRIBUTION
 float _ReflectionProbesContributionWeight;
+#endif
 float3 _Tint;
+#if _NOISE
 TEXTURE3D(_NoiseTexture);
-float _NoiseStrength;
-float _NoiseSize;
+float _NoiseFrequency;
+float2 _NoiseMinMax;
 float3 _NoiseVelocity;
+#endif
 int _MaxSteps;
 
 float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
 float _Scatterings[MAX_VISIBLE_LIGHTS + 1];
 float _RadiiSq[MAX_VISIBLE_LIGHTS];
+
+// Remaps the original value from one range to another.
+float RemapSaturate(float origVal, float origMin, float origMax, float destMin, float destMax)
+{
+    float t = saturate((origVal - origMin) / (origMax - origMin));
+
+    return lerp(destMin, destMax, t);
+}
 
 // Computes the ray origin, direction, and returns the reconstructed world position for orthographic projection.
 float3 ComputeOrthographicParams(float2 uv, float depth, out float3 ro, out float3 rd)
@@ -105,14 +121,27 @@ float GetMainLightPhase(float3 rd)
 #endif
 }
 
-// Gets the fog density at the given world height.
-float GetFogDensity(float posWSy)
+// Gets the noise value based on the world position.
+float GetNoise(float3 posWS)
 {
-    float t = saturate((posWSy - _BaseHeight) / (_MaximumHeight - _BaseHeight));
-    t = 1.0 - t;
-    t = posWSy < _GroundHeight ? 0.0 : t;
+#if _NOISE
+    float3 uvw = (posWS * _NoiseFrequency) + (_Time.y * _NoiseVelocity);
+    float noise = SAMPLE_TEXTURE3D_LOD(_NoiseTexture, sampler_LinearRepeat, uvw, 0).r;
+    noise = RemapSaturate(noise, 0.0, 1.0, _NoiseMinMax.x, _NoiseMinMax.y);
+    return noise;
+#else
+    return 1.0;
+#endif
+}
 
-    return _Density * t;
+// Gets the fog density at the given world height.
+float GetFogDensity(float3 posWS)
+{
+    float t = saturate((posWS.y - _BaseHeight) / (_MaximumHeight - _BaseHeight));
+    t = 1.0 - t;
+    t = posWS.y < _GroundHeight ? 0.0 : t;
+
+    return _Density * t * GetNoise(posWS);
 }
 
 // Gets the GI evaluation from the adaptive probe volume at one raymarch step.
@@ -241,7 +270,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         // and certain combinations of field of view, raymarching resolution and camera near plane.
         // In those edge cases, it looks so much better, specially when near plane is higher than the minimum (0.01) allowed.
         float3 currPosWS = roNearPlane + rd * dist;
-        float density = GetFogDensity(currPosWS.y);
+        float density = GetFogDensity(currPosWS);
                     
         UNITY_BRANCH
         if (density <= 0.0)

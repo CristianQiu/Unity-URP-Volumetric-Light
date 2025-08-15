@@ -33,7 +33,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	public BoolParameter enableAPVContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("A weight factor for the light coming from adaptive probe volumes (APV) when the probe volume contribution is enabled.")]
 	public ClampedFloatParameter APVContributionWeight = new ClampedFloatParameter(0.5f, 0.0f, 1.0f);
-	[Tooltip("When enabled, reflection probes will be sampled to contribute to fog. Forward+ or Deferred+ rendering path is required for this option. It will be ignored and it will not work otherwise.")]
+	[Tooltip("When enabled, reflection probes will be sampled to contribute to fog. Forward+ or Deferred+ rendering path is required. It will be ignored and it will not work otherwise.")]
 	public BoolParameter enableReflectionProbesContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("A weight factor for the light coming from reflection probes when the reflection probes contribution is enabled.")]
 	public ClampedFloatParameter reflectionProbesContributionWeight = new ClampedFloatParameter(0.1f, 0.0f, 1.0f);
@@ -53,11 +53,16 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	public BoolParameter enableAdditionalLightsContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 
 	[Header("Noise")]
+	[Tooltip("Whether or not to enable the noise feature to break the fog uniformity.")]
 	public BoolParameter enableNoise = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
+	[Tooltip("The 3D texture used to add noise. The noise needs to be in the red channel of the texture. You can use your own texture or find the provided one with the package in 'Packages -> URP Volumetric Fog -> Textures'.")]
 	public Texture3DParameter noiseTexture = new Texture3DParameter(null, true);
-	public FloatParameter noiseStrength = new FloatParameter(1.0f);
-	public FloatParameter noiseSize = new FloatParameter(1.0f);
-	public Vector3Parameter noiseVelocity = new Vector3Parameter(Vector3.zero);
+	[Tooltip("The size of noise. Lower values mean higher frequency noise.")]
+	public FloatParameter noiseScale = new FloatParameter(5f);
+	[Tooltip("These values alter how the noise carves into the uniform fog. Decrease the minimum value to accentuate holes and increase the maximum value to keep the high values of noise closer to the original uniform fog density.")]
+	public FloatRangeParameter noiseMinMax = new FloatRangeParameter(new Vector2(0.0f, 1.0f), -2.0f, 2.0f);
+	[Tooltip("The speed of noise in each axii.")]
+	public Vector3Parameter noiseVelocity = new Vector3Parameter(new Vector3(0.05f, 0.1f, 0.075f));
 
 	[Header("Performance & Quality")]
 	[Tooltip("Resolution used to render the volumetric fog. At half resolution, 1/4 of the pixels are rendered. At quarter resolution, 1/16 of the pixels are rendered.")]
@@ -91,6 +96,8 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 		maximumHeight.overrideState = baseHeight.overrideState;
 		maximumHeight.value = Mathf.Max(baseHeight.value, maximumHeight.value);
 		baseHeight.value = Mathf.Min(baseHeight.value, maximumHeight.value);
+
+		noiseScale.value = Mathf.Max(0.0f, noiseScale.value);
 	}
 
 	#endregion
