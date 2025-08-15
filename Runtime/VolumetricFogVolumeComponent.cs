@@ -19,8 +19,6 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	public FloatParameter baseHeight = new FloatParameter(0.0f, true);
 	[Tooltip("The world height at which the fog will have no density at all.")]
 	public FloatParameter maximumHeight = new FloatParameter(50.0f, true);
-
-	[Header("Ground")]
 	[Tooltip("When enabled, allows to define a world height. Below it, fog will have no density at all.")]
 	public BoolParameter enableGround = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("Below this world height, fog will have no density at all.")]
@@ -34,11 +32,11 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("When enabled, adaptive probe volumes (APV) will be sampled to contribute to fog.")]
 	public BoolParameter enableAPVContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("A weight factor for the light coming from adaptive probe volumes (APV) when the probe volume contribution is enabled.")]
-	public ClampedFloatParameter APVContributionWeight = new ClampedFloatParameter(1.0f, 0.0f, 1.0f);
+	public ClampedFloatParameter APVContributionWeight = new ClampedFloatParameter(0.5f, 0.0f, 1.0f);
 	[Tooltip("When enabled, reflection probes will be sampled to contribute to fog. Forward+ or Deferred+ rendering path is required for this option. It will be ignored and it will not work otherwise.")]
 	public BoolParameter enableReflectionProbesContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("A weight factor for the light coming from reflection probes when the reflection probes contribution is enabled.")]
-	public ClampedFloatParameter reflectionProbesContributionWeight = new ClampedFloatParameter(1.0f, 0.0f, 1.0f);
+	public ClampedFloatParameter reflectionProbesContributionWeight = new ClampedFloatParameter(0.1f, 0.0f, 1.0f);
 
 	[Header("Main Light")]
 	[Tooltip("Disabling this will avoid computing the main light contribution to fog, which in most cases will lead to better performance.")]
@@ -53,6 +51,13 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Header("Additional Lights")]
 	[Tooltip("Disabling this will avoid computing additional lights contribution to fog, which in most cases will lead to better performance.")]
 	public BoolParameter enableAdditionalLightsContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
+
+	[Header("Noise")]
+	public BoolParameter enableNoise = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
+	public Texture3DParameter noiseTexture = new Texture3DParameter(null, true);
+	public FloatParameter noiseStrength = new FloatParameter(1.0f);
+	public FloatParameter noiseSize = new FloatParameter(1.0f);
+	public Vector3Parameter noiseVelocity = new Vector3Parameter(Vector3.zero);
 
 	[Header("Performance & Quality")]
 	[Tooltip("Resolution used to render the volumetric fog. At half resolution, 1/4 of the pixels are rendered. At quarter resolution, 1/16 of the pixels are rendered.")]

@@ -12,7 +12,6 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	private SerializedDataParameter distance;
 	private SerializedDataParameter baseHeight;
 	private SerializedDataParameter maximumHeight;
-
 	private SerializedDataParameter enableGround;
 	private SerializedDataParameter groundHeight;
 
@@ -29,6 +28,12 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	private SerializedDataParameter tint;
 
 	private SerializedDataParameter enableAdditionalLightsContribution;
+
+	private SerializedDataParameter enableNoise;
+	private SerializedDataParameter noiseTexture;
+	private SerializedDataParameter noiseStrength;
+	private SerializedDataParameter noiseSize;
+	private SerializedDataParameter noiseVelocity;
 
 	private SerializedDataParameter resolution;
 	private SerializedDataParameter maxSteps;
@@ -51,7 +56,6 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		distance = Unpack(pf.Find(x => x.distance));
 		baseHeight = Unpack(pf.Find(x => x.baseHeight));
 		maximumHeight = Unpack(pf.Find(x => x.maximumHeight));
-
 		enableGround = Unpack(pf.Find(x => x.enableGround));
 		groundHeight = Unpack(pf.Find(x => x.groundHeight));
 
@@ -68,6 +72,12 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		tint = Unpack(pf.Find(x => x.tint));
 
 		enableAdditionalLightsContribution = Unpack(pf.Find(x => x.enableAdditionalLightsContribution));
+
+		enableNoise = Unpack(pf.Find(x => x.enableNoise));
+		noiseTexture = Unpack(pf.Find(x => x.noiseTexture));
+		noiseStrength = Unpack(pf.Find(x => x.noiseStrength));
+		noiseSize = Unpack(pf.Find(x => x.noiseSize));
+		noiseVelocity = Unpack(pf.Find(x => x.noiseVelocity));
 
 		resolution = Unpack(pf.Find(x => x.resolution));
 		maxSteps = Unpack(pf.Find(x => x.maxSteps));
@@ -95,11 +105,11 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		bool enabledAdditionalLightsContribution = enableAdditionalLightsContribution.overrideState.boolValue && enableAdditionalLightsContribution.value.boolValue;
 		bool enabledAPVContribution = enableAPVContribution.overrideState.boolValue && enableAPVContribution.value.boolValue;
 		bool enabledReflectionProbesContribution = enableReflectionProbesContribution.overrideState.boolValue && enableReflectionProbesContribution.value.boolValue;
+		bool enabledNoise = enableNoise.overrideState.boolValue && enableNoise.value.boolValue;
 
 		PropertyField(distance);
 		PropertyField(baseHeight);
 		PropertyField(maximumHeight);
-
 		PropertyField(enableGround);
 		if (enabledGround)
 			PropertyField(groundHeight);
@@ -122,6 +132,15 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		}
 
 		PropertyField(enableAdditionalLightsContribution);
+
+		PropertyField(enableNoise);
+		if (enabledNoise)
+		{
+			PropertyField(noiseTexture);
+			PropertyField(noiseStrength);
+			PropertyField(noiseSize);
+			PropertyField(noiseVelocity);
+		}
 
 		PropertyField(resolution);
 		PropertyField(maxSteps);

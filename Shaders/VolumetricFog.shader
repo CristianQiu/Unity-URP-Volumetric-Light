@@ -34,6 +34,7 @@ Shader "Hidden/VolumetricFog"
             #pragma multi_compile_local_fragment _ _ADDITIONAL_LIGHTS_CONTRIBUTION
             #pragma multi_compile_local_fragment _ _APV_CONTRIBUTION
             #pragma multi_compile_local_fragment _ _REFLECTION_PROBES_CONTRIBUTION
+            #pragma multi_compile_local_fragment _ _NOISE
             
             #pragma vertex Vert
             #pragma fragment Frag

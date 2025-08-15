@@ -31,6 +31,10 @@ float _Absortion;
 float _APVContributionWeight;
 float _ReflectionProbesContributionWeight;
 float3 _Tint;
+TEXTURE3D(_NoiseTexture);
+float _NoiseStrength;
+float _NoiseSize;
+float3 _NoiseVelocity;
 int _MaxSteps;
 
 float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
@@ -127,7 +131,7 @@ float3 GetStepAdaptiveProbeVolumeEvaluation(float2 uv, float3 posWS, float densi
 }
 
 // Gets the reflection probe evaluation at one raymarch step.
-float3 GetStepReflectionProbeEvaluation(float2 uv, float3 currPosWS, float3 rd, float density)
+float3 GetStepReflectionProbesEvaluation(float2 uv, float3 currPosWS, float3 rd, float density)
 {
 #if _CLUSTER_LIGHT_LOOP && _REFLECTION_PROBES_CONTRIBUTION
     return CalculateIrradianceFromReflectionProbes(rd, currPosWS, 1.0, uv) * _ReflectionProbesContributionWeight * density;
@@ -247,7 +251,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         transmittance *= stepAttenuation;
 
         float3 apvColor = GetStepAdaptiveProbeVolumeEvaluation(uv, currPosWS, density);
-        float3 reflectionProbeColor = GetStepReflectionProbeEvaluation(uv, currPosWS, rd, density);
+        float3 reflectionProbeColor = GetStepReflectionProbesEvaluation(uv, currPosWS, rd, density);
         float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight, density);
         float3 additionalLightsColor = GetStepAdditionalLightsColor(uv, currPosWS, rd, density);
         
