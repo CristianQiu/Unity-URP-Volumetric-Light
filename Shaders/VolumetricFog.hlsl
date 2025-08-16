@@ -19,6 +19,7 @@
 #include "./DeclareDownsampledDepthTexture.hlsl"
 #include "./VolumetricShadows.hlsl"
 #include "./ProjectionUtils.hlsl"
+#include "./Utils.hlsl"
 
 int _FrameCount;
 uint _CustomAdditionalLightsCount;
@@ -48,14 +49,6 @@ int _MaxSteps;
 float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
 float _Scatterings[MAX_VISIBLE_LIGHTS + 1];
 float _RadiiSq[MAX_VISIBLE_LIGHTS];
-
-// Remaps the original value from one range to another.
-float RemapSaturate(float origVal, float origMin, float origMax, float destMin, float destMax)
-{
-    float t = saturate((origVal - origMin) / (origMax - origMin));
-
-    return lerp(destMin, destMax, t);
-}
 
 // Computes the ray origin, direction, and returns the reconstructed world position for orthographic projection.
 float3 ComputeOrthographicParams(float2 uv, float depth, out float3 ro, out float3 rd)
