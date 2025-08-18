@@ -22,7 +22,7 @@
 
 int _FrameCount;
 uint _CustomAdditionalLightsCount;
-float _MaxDistance;
+float _Distance;
 float _BaseHeight;
 float _MaximumHeight;
 float _GroundHeight;
@@ -43,7 +43,8 @@ float _NoiseFrequency;
 float2 _NoiseMinMax;
 float3 _NoiseVelocity;
 #endif
-int _Steps;
+int _MaximumSteps;
+float _MinimumStepSize;
 
 float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
 float _Scatterings[MAX_VISIBLE_LIGHTS + 1];
@@ -237,22 +238,30 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
 
     CalculateRaymarchingParams(uv, ro, rd, iniOffsetToNearPlane, offsetLength, rdPhase);
 
-    offsetLength -= iniOffsetToNearPlane;
     float3 roNearPlane = ro + rd * iniOffsetToNearPlane;
-    float stepLength = min(max(_MaxDistance - iniOffsetToNearPlane, 0.0), offsetLength) / (float)_Steps;
-    float jitter = stepLength * IGN(positionCS, _FrameCount);
+    offsetLength -= iniOffsetToNearPlane;
+
+    // Clamp the step length and recalculate the steps, because we do not want to step hundred of times when a column is just a few centimeters away in the depth buffer.
+    float stepSize = min(max(_Distance - iniOffsetToNearPlane, 0.0), offsetLength) / (float)_MaximumSteps;
+    stepSize = max(stepSize, _MinimumStepSize);
+    int actualSteps = (int)ceil(offsetLength / stepSize);
+    float jitter = stepSize * IGN(positionCS, _FrameCount);
 
     float phaseMainLight = GetMainLightPhase(rdPhase);
-    float minusStepLengthTimesAbsortion = -stepLength * _Absortion;
+    float minusStepSizeTimesAbsortion = -stepSize * _Absortion;
                 
     float3 volumetricFogColor = float3(0.0, 0.0, 0.0);
     float transmittance = 1.0;
 
     UNITY_LOOP
-    for (int i = 0; i < _Steps; ++i)
+    for (int i = 0; i < actualSteps; ++i)
     {
-        float dist = jitter + i * stepLength;
-        
+        float dist = jitter + i * stepSize;
+
+        UNITY_BRANCH
+        if (dist >= offsetLength)
+            break;        
+
         // We are making the space between the camera position and the near plane "non existant", as if fog did not exist there.
         // However, it removes a lot of noise when in closed environments with an attenuation that makes the scene darker
         // and certain combinations of field of view, raymarching resolution and camera near plane.
@@ -271,7 +280,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
 
         float3 stepColor = apvColor + reflectionProbeColor + mainLightColor + additionalLightsColor;
 
-        float stepAttenuation = exp(minusStepLengthTimesAbsortion * density);
+        float stepAttenuation = exp(minusStepSizeTimesAbsortion * density);
         float transmittanceFactor = (1.0 - stepAttenuation) / max(density * _Absortion, 1e-5);        
 
         volumetricFogColor += (stepColor * (transmittance * transmittanceFactor));
