@@ -62,9 +62,9 @@ Shader "Hidden/VolumetricFog"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "./DeclareDownsampledDepthTexture.hlsl"
             #include "./DeclarePrevFrameDownsampledDepthTexture.hlsl"
-            #include "./ProjectionUtils.hlsl"
             #include "./Utils.hlsl"
 
             #pragma target 4.5
@@ -83,36 +83,72 @@ Shader "Hidden/VolumetricFog"
                 float2(-1.0,  1.0), float2(0.0,  1.0), float2(1.0,  1.0)
             };
 
-            static const float2 Square[] = {
-                float2(-1.0, -1.0), float2(0.0, -1.0), float2(1.0, -1.0),
-                float2(-1.0,  0.0), float2(0.0,  0.0), float2(1.0,  0.0),
-                float2(-1.0,  1.0), float2(0.0,  1.0), float2(1.0,  1.0)
-            };
-
-            // Gets the motion vector at the given uv.
-            float2 GetMotion(float2 uv)
+            // Gets the motion vector at the given uv by downsampling the motion texture following the checkerboard pattern that is used to downsample the depth texture.
+            float2 GetMotion(float2 uv, float2 positionCS)
             {
-                return SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_PointClamp, uv).xy;
+                float4 depths = GATHER_RED_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, uv);
+                
+                int checkerboard = uint(positionCS.x + positionCS.y) & 1;
+                
+                int depthUv = 0;
+                float depth = depths.x;
 
-                int closestNeighbor = 0;
-                float closestDepth = SampleDownsampledSceneDepth(uv + (Square[0] * _DownsampledCameraDepthTexture_TexelSize.xy));
-
-                UNITY_UNROLL
-                for (int i = 1; i < 9; ++i)
+                if (checkerboard > 0)
                 {
-                    float2 currUv = uv + Square[i] * _DownsampledCameraDepthTexture_TexelSize.xy;
-                    float currDepth = SampleDownsampledSceneDepth(currUv);
-
-                    if (currDepth < closestDepth)
+                    if (depths.y < depth)
                     {
-                        closestDepth = currDepth;
-                        closestNeighbor = i;
+                        depthUv  = 1;
+                        depth = depths.y;
+                    }
+                    
+                    if (depths.z < depth)
+                    {
+                        depthUv  = 2;
+                        depth = depths.z;
+                    }
+
+                    if (depths.w < depth)
+                    {
+                        depthUv  = 3;
+                        depth = depths.w;
                     }
                 }
-              
-                return SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_PointClamp, uv + Square[closestNeighbor] * _MotionVectorTexture_TexelSize).xy;
+                else
+                {
+                    if (depths.y > depth)
+                    {
+                        depthUv  = 1;
+                        depth = depths.y;
+                    }
+                    
+                    if (depths.z > depth)
+                    {
+                        depthUv  = 2;
+                        depth = depths.z;
+                    }
+
+                    if (depths.w > depth)
+                    {
+                        depthUv  = 3;
+                        depth = depths.w;
+                    }
+                }
+
+                float2 downsampledTexelSize = _DownsampledCameraDepthTexture_TexelSize.xy;
+                float2 downsampledTopLeftCornerUv = uv - (downsampledTexelSize * 0.5);
+
+                float2 uvs[4] =
+                {
+                    downsampledTopLeftCornerUv + float2(0.0, downsampledTexelSize.y),
+                    downsampledTopLeftCornerUv + downsampledTexelSize.xy,
+                    downsampledTopLeftCornerUv + float2(downsampledTexelSize.x, 0.0),
+                    downsampledTopLeftCornerUv
+                };
+
+                return SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_PointClamp, uvs[depthUv]).xy;
             }
 
+            // Tests for depth rejection based on the difference between the current and previous frame depths. Values returned are in the [0, 1] range.
             float TestForDepthRejection(float2 uv, float2 prevUv)
             {
                 const float DepthDiffForFullRejection = 1.0;
@@ -126,9 +162,11 @@ Shader "Hidden/VolumetricFog"
                 return smoothstep(0.0, 1.0, rejection);
             }
 
+            // Tests for motion rejection based on the magnitude of the motion vector. Values returned are in the [0, 1] range.
             float TestForMotionRejection(float2 motion)
             {
-                const float MotionForFullRejection = 0.025;
+                // const float MotionForFullRejection = 0.025;
+                const float MotionForFullRejection = 0.0025;
 
                 float motionLength = length(motion);
                 float rejection = InverseLerp(0.0, MotionForFullRejection, motionLength);
@@ -159,16 +197,13 @@ Shader "Hidden/VolumetricFog"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                // TODO: this is not accurate. we are using full resolution motion vectors while we render at half or quarter resolution.
-                // Options: Do some kind of clever pick of the motion vectors like in depth aware upsample. Also, it should match the checkerboard min/max downsampled depth texture.
-                // Inside does use velocity of closest depth fragment within 3x3 region, but I believe their resolutions do match.
                 float2 uv = input.texcoord;
-                float2 motion = GetMotion(uv);
+                float2 motion = GetMotion(uv, input.positionCS.xy);
                 float2 prevUv = uv - motion;
                 
                 float4 currentFrame = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv);
 
-                 if (prevUv.x <= 0.0 || prevUv.x >= 1.0 || prevUv.y <= 0.0 || prevUv.y >= 1.0)
+                if (prevUv.x <= 0.0 || prevUv.x >= 1.0 || prevUv.y <= 0.0 || prevUv.y >= 1.0)
                     return currentFrame;
 
                 float rejectionDepth = TestForDepthRejection(uv, prevUv);

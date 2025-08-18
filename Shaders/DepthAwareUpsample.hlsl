@@ -3,7 +3,7 @@
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 #include "./DeclareDownsampledDepthTexture.hlsl"
-#include "./ProjectionUtils.hlsl"
+#include "./Utils.hlsl"
 
 // Upsamples the given texture using both the downsampled and full resolution depth information.
 float4 DepthAwareUpsample(float2 uv, TEXTURE2D_X(textureToUpsample))

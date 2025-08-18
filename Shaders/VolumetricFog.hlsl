@@ -18,7 +18,6 @@
 #endif
 #include "./DeclareDownsampledDepthTexture.hlsl"
 #include "./VolumetricShadows.hlsl"
-#include "./ProjectionUtils.hlsl"
 #include "./Utils.hlsl"
 
 int _FrameCount;

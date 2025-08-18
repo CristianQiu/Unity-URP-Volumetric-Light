@@ -15,6 +15,25 @@ float RemapSaturate(float origMin, float origMax, float destMin, float destMax, 
     return lerp(destMin, destMax, t);
 }
 
+// Returns the linear eye depth for orthographic projection.
+float LinearEyeDepthOrthographic(float rawDepth)
+{
+#if UNITY_REVERSED_Z
+    return lerp(_ProjectionParams.z, _ProjectionParams.y, rawDepth);
+#else
+    return lerp(_ProjectionParams.y, _ProjectionParams.z, rawDepth);
+#endif
+}
+
+// Returns the linear eye depth considering the camera projection type.
+float LinearEyeDepthConsiderProjection(float rawDepth)
+{
+    float perspectiveDepth = LinearEyeDepth(rawDepth, _ZBufferParams);
+    float orthographicDepth = LinearEyeDepthOrthographic(rawDepth);
+
+    return lerp(perspectiveDepth, orthographicDepth, unity_OrthoParams.w);
+}
+
 // From Next Generation Post Processing in Call of Duty: Advanced Warfare [Jimenez 2014]
 // http://advances.realtimerendering.com/s2014/index.html
 float IGN(float2 pixCoords, int frameCount)
