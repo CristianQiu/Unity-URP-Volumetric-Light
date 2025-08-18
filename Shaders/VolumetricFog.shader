@@ -92,7 +92,7 @@ Shader "Hidden/VolumetricFog"
             // Gets the motion vector at the given uv.
             float2 GetMotion(float2 uv)
             {
-                // return SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_PointClamp, uv).xy;
+                return SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_PointClamp, uv).xy;
 
                 int closestNeighbor = 0;
                 float firstDepth = SampleDownsampledSceneDepth(uv + (Square[0] * _DownsampledCameraDepthTexture_TexelSize.xy));
@@ -118,24 +118,11 @@ Shader "Hidden/VolumetricFog"
             {
                 const float DepthDiffForFullRejection = 1.0;
 
+                float currDepth = LinearEyeDepthConsiderProjection(SampleDownsampledSceneDepth(uv));
                 float prevDepth = LinearEyeDepthConsiderProjection(SamplePrevFrameDownsampledSceneDepth(prevUv));
-                float firstDepth = SampleDownsampledSceneDepth(uv + (Square[0] * _DownsampledCameraDepthTexture_TexelSize.xy));
-                float minDepthDiff = abs(LinearEyeDepthConsiderProjection(firstDepth) - prevDepth);
-                
-                UNITY_UNROLL
-                for (int i = 1; i < 9; ++i)
-                {
-                    float2 currUv = uv + Square[i] * _DownsampledCameraDepthTexture_TexelSize.xy;
-                    float currDepth = LinearEyeDepthConsiderProjection(SampleDownsampledSceneDepth(currUv));
-                    
-                    float depthDiff = abs(currDepth - prevDepth);
 
-                    if (depthDiff < minDepthDiff)
-                        minDepthDiff = depthDiff;
-                }
-
-                minDepthDiff = abs(prevDepth - LinearEyeDepthConsiderProjection(SampleDownsampledSceneDepth(uv)));
-                float rejection = InverseLerp(0.0, DepthDiffForFullRejection, minDepthDiff);
+                float depthDiff = abs(prevDepth - currDepth);
+                float rejection = InverseLerp(0.0, DepthDiffForFullRejection, depthDiff);
 
                 return smoothstep(0.0, 1.0, rejection);
             }
@@ -145,7 +132,6 @@ Shader "Hidden/VolumetricFog"
                 const float MotionForFullRejection = 0.025;
 
                 float motionLength = length(motion);
-
                 float rejection = InverseLerp(0.0, MotionForFullRejection, motionLength);
                 
                 return smoothstep(0.0, 1.0, rejection);
@@ -194,7 +180,7 @@ Shader "Hidden/VolumetricFog"
                 float4 history = SAMPLE_TEXTURE2D_X(_VolumetricFogHistoryTexture, sampler_PointClamp, prevUv);
                 float4 historyClamped = float4(DoNeighborhoodMinMaxClamp(uv, currentFrame.rgb, history.rgb), history.a);
 
-                float currentFrameWeight = clamp(rejection, .1, 1);
+                float currentFrameWeight = clamp(rejection, 0.1, 1);
 
                 return lerp(historyClamped, currentFrame, currentFrameWeight);
             }

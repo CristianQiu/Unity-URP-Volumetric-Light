@@ -240,7 +240,8 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
 
     offsetLength -= iniOffsetToNearPlane;
     float3 roNearPlane = ro + rd * iniOffsetToNearPlane;
-    float stepLength = (_Distance - iniOffsetToNearPlane) / (float)_MaxSteps;
+    //float stepLength = (_Distance - iniOffsetToNearPlane) / (float)_MaxSteps;
+float stepLength = min(_Distance - iniOffsetToNearPlane, offsetLength) / (float)_MaxSteps;
     float jitter = stepLength * IGN(positionCS, _FrameCount);
 
     float phaseMainLight = GetMainLightPhase(rdPhase);
@@ -270,7 +271,9 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
             continue;
 
         float stepAttenuation = exp(minusStepLengthTimesAbsortion * density);
-        transmittance *= stepAttenuation;
+        //transmittance *= stepAttenuation;
+
+float contrib = (1.0 - stepAttenuation) / max(density * _Absortion, 1e-5);
 
         float3 apvColor = GetStepAdaptiveProbeVolumeEvaluation(uv, currPosWS, density);
         float3 reflectionProbeColor = GetStepReflectionProbesEvaluation(uv, currPosWS, rd, density);
@@ -278,7 +281,11 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         float3 additionalLightsColor = GetStepAdditionalLightsColor(uv, currPosWS, rd, density);
         
         float3 stepColor = apvColor + reflectionProbeColor + mainLightColor + additionalLightsColor;
-        volumetricFogColor += (stepColor * (transmittance * stepLength));
+        //volumetricFogColor += (stepColor * (transmittance * stepLength));
+
+volumetricFogColor += (stepColor * (transmittance * contrib));
+transmittance *= stepAttenuation;
+
 
         // TODO: Break out when transmittance reaches low threshold and remap the transmittance when doing so.
         // It does not make sense right now because the fog does not properly support transparency, so having dense fog leads to issues.

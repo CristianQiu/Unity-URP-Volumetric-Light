@@ -1,16 +1,6 @@
 #ifndef UTILS_INCLUDED
 #define UTILS_INCLUDED
 
-// From Next Generation Post Processing in Call of Duty: Advanced Warfare [Jimenez 2014]
-// http://advances.realtimerendering.com/s2014/index.html
-float IGN(float2 pixCoords, int frameCount)
-{
-    const float3 magic = float3(0.06711056, 0.00583715, 52.9829189);
-    const float2 frameMagicScale = float2(5.588238, 5.588238);
-    pixCoords += frameCount * frameMagicScale;
-    return frac(magic.z * frac(dot(pixCoords, magic.xy)));
-}
-
 // Gets where the value lies within the range [a, b]. At 0, value is at a, at 1, value is at b.
 float InverseLerp(float a, float b, float value)
 {
@@ -23,6 +13,16 @@ float RemapSaturate(float origMin, float origMax, float destMin, float destMax, 
     float t = InverseLerp(origMin, origMax, origVal);
 
     return lerp(destMin, destMax, t);
+}
+
+// From Next Generation Post Processing in Call of Duty: Advanced Warfare [Jimenez 2014]
+// http://advances.realtimerendering.com/s2014/index.html
+float IGN(float2 pixCoords, int frameCount)
+{
+    const float3 magic = float3(0.06711056, 0.00583715, 52.9829189);
+    const float2 frameMagicScale = float2(5.588238, 5.588238);
+    pixCoords += frameCount * frameMagicScale;
+    return frac(magic.z * frac(dot(pixCoords, magic.xy)));
 }
 
 #endif

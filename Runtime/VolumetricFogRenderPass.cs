@@ -26,6 +26,20 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	}
 
 	/// <summary>
+	/// Structure to hold all the possible texture handles used by the pass.
+	/// </summary>
+	private struct TextureHandles
+	{
+		public TextureHandle downsampledCameraDepthTarget;
+		public TextureHandle prevFrameDownsampledCameraDepthTarget;
+		public TextureHandle volumetricFogRenderTarget;
+		public TextureHandle volumetricFogHistoryTarget;
+		public TextureHandle volumetricFogReprojectionTarget;
+		public TextureHandle volumetricFogBlurRenderTarget;
+		public TextureHandle volumetricFogUpsampleCompositionTarget;
+	}
+
+	/// <summary>
 	/// Holds the data needed by the execution of the volumetric fog render pass subpasses.
 	/// </summary>
 	private class PassData
@@ -153,17 +167,25 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		UniversalLightData lightData = frameData.Get<UniversalLightData>();
 		UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
 
-		CreateRenderGraphTextures(renderGraph, cameraData, out TextureHandle downsampledCameraDepthTarget, out TextureHandle prevFrameDownsampledCameraDepthTarget, out TextureHandle volumetricFogRenderTarget, out TextureHandle volumetricFogHistoryTarget, out TextureHandle volumetricFogBlurRenderTarget, out TextureHandle volumetricFogUpsampleCompositionTarget);
+		bool reprojectionEnabled = true;
+
+		TextureHandles texHandles = CreateRenderGraphTextures(renderGraph, cameraData, reprojectionEnabled);
+
+		if (!reprojectionEnabled)
+		{
+			prevFrameDownsampledCameraDepthRTHandle?.Release();
+			volumetricFogHistoryRTHandle?.Release();
+		}
 
 		using (IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass("Downsample Depth Pass", out PassData passData, downsampleDepthProfilingSampler))
 		{
 			passData.stage = PassStage.DownsampleDepth;
 			passData.source = resourceData.cameraDepthTexture;
-			passData.target = downsampledCameraDepthTarget;
+			passData.target = texHandles.downsampledCameraDepthTarget;
 			passData.material = downsampleDepthMaterial;
 			passData.materialPassIndex = downsampleDepthPassIndex;
 
-			builder.SetRenderAttachment(downsampledCameraDepthTarget, 0, AccessFlags.WriteAll);
+			builder.SetRenderAttachment(texHandles.downsampledCameraDepthTarget, 0, AccessFlags.WriteAll);
 			builder.UseTexture(resourceData.cameraDepthTexture);
 			builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
 		}
@@ -171,15 +193,15 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		using (IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass("Volumetric Fog Render Pass", out PassData passData, profilingSampler))
 		{
 			passData.stage = PassStage.VolumetricFogRender;
-			passData.source = downsampledCameraDepthTarget;
-			passData.target = volumetricFogRenderTarget;
+			passData.source = texHandles.downsampledCameraDepthTarget;
+			passData.target = texHandles.volumetricFogRenderTarget;
 			passData.material = volumetricFogMaterial;
 			passData.materialPassIndex = volumetricFogRenderPassIndex;
-			passData.downsampledCameraDepthTarget = downsampledCameraDepthTarget;
+			passData.downsampledCameraDepthTarget = texHandles.downsampledCameraDepthTarget;
 			passData.lightData = lightData;
 
-			builder.SetRenderAttachment(volumetricFogRenderTarget, 0, AccessFlags.WriteAll);
-			builder.UseTexture(downsampledCameraDepthTarget);
+			builder.SetRenderAttachment(texHandles.volumetricFogRenderTarget, 0, AccessFlags.WriteAll);
+			builder.UseTexture(texHandles.downsampledCameraDepthTarget);
 			if (resourceData.mainShadowsTexture.IsValid())
 				builder.UseTexture(resourceData.mainShadowsTexture);
 			if (resourceData.additionalShadowsTexture.IsValid())
@@ -187,42 +209,47 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
 		}
 
-		using (IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass("Volumetric Fog Reprojection Pass", out PassData passData, profilingSampler))
+		if (reprojectionEnabled)
 		{
-			passData.stage = PassStage.VolumetricFogReprojection;
-			passData.source = volumetricFogRenderTarget;
-			passData.target = volumetricFogBlurRenderTarget;
-			passData.material = volumetricFogMaterial;
-			passData.materialPassIndex = volumetricFogReprojectionPassIndex;
-			passData.volumetricFogHistoryTarget = volumetricFogHistoryTarget;
-			passData.prevFrameDownsampledCameraDepthTarget = prevFrameDownsampledCameraDepthTarget;
+			using (IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass("Volumetric Fog Reprojection Pass", out PassData passData, profilingSampler))
+			{
+				passData.stage = PassStage.VolumetricFogReprojection;
+				passData.source = texHandles.volumetricFogRenderTarget;
+				passData.target = texHandles.volumetricFogReprojectionTarget;
+				passData.material = volumetricFogMaterial;
+				passData.materialPassIndex = volumetricFogReprojectionPassIndex;
+				passData.volumetricFogHistoryTarget = texHandles.volumetricFogHistoryTarget;
+				passData.prevFrameDownsampledCameraDepthTarget = texHandles.prevFrameDownsampledCameraDepthTarget;
 
-			builder.SetRenderAttachment(volumetricFogBlurRenderTarget, 0, AccessFlags.WriteAll);
-			builder.UseTexture(volumetricFogRenderTarget);
-			builder.UseTexture(volumetricFogHistoryTarget);
-			builder.UseTexture(downsampledCameraDepthTarget);
-			builder.UseTexture(prevFrameDownsampledCameraDepthTarget);
-			if (resourceData.motionVectorColor.IsValid())
-				builder.UseTexture(resourceData.motionVectorColor);
-			if (resourceData.motionVectorDepth.IsValid())
-				builder.UseTexture(resourceData.motionVectorDepth);
-			builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
+				builder.SetRenderAttachment(texHandles.volumetricFogReprojectionTarget, 0, AccessFlags.WriteAll);
+				builder.UseTexture(texHandles.volumetricFogRenderTarget);
+				builder.UseTexture(texHandles.volumetricFogHistoryTarget);
+				builder.UseTexture(texHandles.downsampledCameraDepthTarget);
+				builder.UseTexture(texHandles.prevFrameDownsampledCameraDepthTarget);
+				if (resourceData.motionVectorColor.IsValid())
+					builder.UseTexture(resourceData.motionVectorColor);
+				if (resourceData.motionVectorDepth.IsValid())
+					builder.UseTexture(resourceData.motionVectorDepth);
+				builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
+			}
+
+			RenderGraphUtils.AddCopyPass(renderGraph, texHandles.downsampledCameraDepthTarget, texHandles.prevFrameDownsampledCameraDepthTarget, "Downsampled Depth Copy Pass");
+			RenderGraphUtils.AddCopyPass(renderGraph, texHandles.volumetricFogReprojectionTarget, texHandles.volumetricFogHistoryTarget, "Volumetric Fog History Copy Pass");
 		}
 
-		RenderGraphUtils.AddCopyPass(renderGraph, volumetricFogBlurRenderTarget, volumetricFogHistoryTarget, "Volumetric Fog History Copy Pass");
-		RenderGraphUtils.AddCopyPass(renderGraph, downsampledCameraDepthTarget, prevFrameDownsampledCameraDepthTarget, "Downsampled Depth Copy Pass");
+		TextureHandle lastFogRenderTarget = reprojectionEnabled ? texHandles.volumetricFogReprojectionTarget : texHandles.volumetricFogRenderTarget;
 
 		using (IUnsafeRenderGraphBuilder builder = renderGraph.AddUnsafePass("Volumetric Fog Blur Pass", out PassData passData, profilingSampler))
 		{
 			passData.stage = PassStage.VolumetricFogBlur;
-			passData.source = volumetricFogHistoryTarget;
-			passData.target = volumetricFogBlurRenderTarget;
+			passData.source = lastFogRenderTarget;
+			passData.target = texHandles.volumetricFogBlurRenderTarget;
 			passData.material = volumetricFogMaterial;
 			passData.materialPassIndex = volumetricFogHorizontalBlurPassIndex;
 			passData.materialAdditionalPassIndex = volumetricFogVerticalBlurPassIndex;
 
-			builder.UseTexture(volumetricFogHistoryTarget, AccessFlags.ReadWrite);
-			builder.UseTexture(volumetricFogBlurRenderTarget, AccessFlags.ReadWrite);
+			builder.UseTexture(lastFogRenderTarget, AccessFlags.ReadWrite);
+			builder.UseTexture(texHandles.volumetricFogBlurRenderTarget, AccessFlags.ReadWrite);
 			builder.SetRenderFunc((PassData data, UnsafeGraphContext context) => ExecuteUnsafeBlurPass(data, context));
 		}
 
@@ -230,20 +257,20 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		{
 			passData.stage = PassStage.VolumetricFogUpsampleComposition;
 			passData.source = resourceData.cameraColor;
-			passData.target = volumetricFogUpsampleCompositionTarget;
+			passData.target = texHandles.volumetricFogUpsampleCompositionTarget;
 			passData.material = volumetricFogMaterial;
 			passData.materialPassIndex = volumetricFogUpsampleCompositionPassIndex;
-			passData.volumetricFogRenderTarget = volumetricFogHistoryTarget;
+			passData.volumetricFogRenderTarget = lastFogRenderTarget;
 
-			builder.SetRenderAttachment(volumetricFogUpsampleCompositionTarget, 0, AccessFlags.WriteAll);
+			builder.SetRenderAttachment(texHandles.volumetricFogUpsampleCompositionTarget, 0, AccessFlags.WriteAll);
 			builder.UseTexture(resourceData.cameraDepthTexture);
-			builder.UseTexture(downsampledCameraDepthTarget);
-			builder.UseTexture(volumetricFogHistoryTarget);
+			builder.UseTexture(texHandles.downsampledCameraDepthTarget);
+			builder.UseTexture(lastFogRenderTarget);
 			builder.UseTexture(resourceData.cameraColor);
 			builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
 		}
 
-		resourceData.cameraColor = volumetricFogUpsampleCompositionTarget;
+		resourceData.cameraColor = texHandles.volumetricFogUpsampleCompositionTarget;
 	}
 
 	#endregion
@@ -443,13 +470,9 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// </summary>
 	/// <param name="renderGraph"></param>
 	/// <param name="cameraData"></param>
-	/// <param name="downsampledCameraDepthTarget"></param>
-	/// <param name="prevFrameDownsampledCameraDepthTarget"></param>
-	/// <param name="volumetricFogRenderTarget"></param>
-	/// <param name="volumetricFogHistoryTarget"></param>
-	/// <param name="volumetricFogBlurRenderTarget"></param>
-	/// <param name="volumetricFogUpsampleCompositionTarget"></param>
-	private void CreateRenderGraphTextures(RenderGraph renderGraph, UniversalCameraData cameraData, out TextureHandle downsampledCameraDepthTarget, out TextureHandle prevFrameDownsampledCameraDepthTarget, out TextureHandle volumetricFogRenderTarget, out TextureHandle volumetricFogHistoryTarget, out TextureHandle volumetricFogBlurRenderTarget, out TextureHandle volumetricFogUpsampleCompositionTarget)
+	/// <param name="reprojectionEnabled"></param>
+	/// <returns></returns>
+	private TextureHandles CreateRenderGraphTextures(RenderGraph renderGraph, UniversalCameraData cameraData, bool reprojectionEnabled)
 	{
 		// TODO: This pattern should not be used https://discussions.unity.com/t/introduction-of-render-graph-in-the-universal-render-pipeline-urp/930355/602
 		RenderTextureDescriptor cameraTargetDescriptor = cameraData.cameraTargetDescriptor;
@@ -463,20 +486,30 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		cameraTargetDescriptor.width /= downsampleFactor;
 		cameraTargetDescriptor.height /= downsampleFactor;
 		cameraTargetDescriptor.graphicsFormat = GraphicsFormat.R32_SFloat;
-		downsampledCameraDepthTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, DownsampledCameraDepthRTName, false);
-		RenderingUtils.ReAllocateHandleIfNeeded(ref prevFrameDownsampledCameraDepthRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: PrevFrameDownsampledCameraDepthRTName);
-		prevFrameDownsampledCameraDepthTarget = renderGraph.ImportTexture(prevFrameDownsampledCameraDepthRTHandle);
+		TextureHandles texHandles = new TextureHandles();
+		texHandles.downsampledCameraDepthTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, DownsampledCameraDepthRTName, false);
+		if (reprojectionEnabled)
+		{
+			RenderingUtils.ReAllocateHandleIfNeeded(ref prevFrameDownsampledCameraDepthRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: PrevFrameDownsampledCameraDepthRTName);
+			texHandles.prevFrameDownsampledCameraDepthTarget = renderGraph.ImportTexture(prevFrameDownsampledCameraDepthRTHandle);
+		}
 
 		cameraTargetDescriptor.colorFormat = RenderTextureFormat.ARGBHalf;
-		volumetricFogRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogRenderRTName, false);
-		RenderingUtils.ReAllocateHandleIfNeeded(ref volumetricFogHistoryRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogHistoryRTName);
-		volumetricFogHistoryTarget = renderGraph.ImportTexture(volumetricFogHistoryRTHandle);
-		volumetricFogBlurRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogBlurRTName, false);
+		texHandles.volumetricFogRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogRenderRTName, false);
+		if (reprojectionEnabled)
+		{
+			RenderingUtils.ReAllocateHandleIfNeeded(ref volumetricFogHistoryRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogHistoryRTName);
+			texHandles.volumetricFogHistoryTarget = renderGraph.ImportTexture(volumetricFogHistoryRTHandle);
+			texHandles.volumetricFogReprojectionTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, "", false);
+		}
+		texHandles.volumetricFogBlurRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogBlurRTName, false);
 
 		cameraTargetDescriptor.width = originalResolution.x;
 		cameraTargetDescriptor.height = originalResolution.y;
 		cameraTargetDescriptor.colorFormat = originalColorFormat;
-		volumetricFogUpsampleCompositionTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogUpsampleCompositionRTName, false);
+		texHandles.volumetricFogUpsampleCompositionTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogUpsampleCompositionRTName, false);
+
+		return texHandles;
 	}
 
 	/// <summary>
