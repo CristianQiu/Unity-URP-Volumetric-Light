@@ -68,6 +68,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private const string PrevFrameDownsampledCameraDepthRTName = "_PrevFrameDownsampledCameraDepth";
 	private const string VolumetricFogRenderRTName = "_VolumetricFog";
 	private const string VolumetricFogHistoryRTName = "_VolumetricFogHistory";
+	private const string VolumetricFogReprojectionRTName = "_VolumetricFogReprojection";
 	private const string VolumetricFogBlurRTName = "_VolumetricFogBlur";
 	private const string VolumetricFogUpsampleCompositionRTName = "_VolumetricFogUpsampleComposition";
 
@@ -167,7 +168,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		UniversalLightData lightData = frameData.Get<UniversalLightData>();
 		UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
 
-		bool reprojectionEnabled = true;
+		bool reprojectionEnabled = GetVolumetricFogVolumeComponent().reprojection.value;
 
 		TextureHandles texHandles = CreateRenderGraphTextures(renderGraph, cameraData, reprojectionEnabled);
 
@@ -500,7 +501,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		{
 			RenderingUtils.ReAllocateHandleIfNeeded(ref volumetricFogHistoryRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogHistoryRTName);
 			texHandles.volumetricFogHistoryTarget = renderGraph.ImportTexture(volumetricFogHistoryRTHandle);
-			texHandles.volumetricFogReprojectionTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, "", false);
+			texHandles.volumetricFogReprojectionTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogReprojectionRTName, false);
 		}
 		texHandles.volumetricFogBlurRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogBlurRTName, false);
 
