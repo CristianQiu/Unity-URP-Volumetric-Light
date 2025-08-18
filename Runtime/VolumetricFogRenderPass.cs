@@ -79,7 +79,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 	private static readonly int FrameCountId = Shader.PropertyToID("_FrameCount");
 	private static readonly int CustomAdditionalLightsCountId = Shader.PropertyToID("_CustomAdditionalLightsCount");
-	private static readonly int DistanceId = Shader.PropertyToID("_Distance");
+	private static readonly int MaxDistanceId = Shader.PropertyToID("_MaxDistance");
 	private static readonly int BaseHeightId = Shader.PropertyToID("_BaseHeight");
 	private static readonly int MaximumHeightId = Shader.PropertyToID("_MaximumHeight");
 	private static readonly int GroundHeightId = Shader.PropertyToID("_GroundHeight");
@@ -92,7 +92,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int NoiseFrequencyId = Shader.PropertyToID("_NoiseFrequency");
 	private static readonly int NoiseMinMaxId = Shader.PropertyToID("_NoiseMinMax");
 	private static readonly int NoiseVelocityId = Shader.PropertyToID("_NoiseVelocity");
-	private static readonly int MaxStepsId = Shader.PropertyToID("_MaxSteps");
+	private static readonly int StepsId = Shader.PropertyToID("_Steps");
 
 	private static readonly int AnisotropiesArrayId = Shader.PropertyToID("_Anisotropies");
 	private static readonly int ScatteringsArrayId = Shader.PropertyToID("_Scatterings");
@@ -168,7 +168,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		UniversalLightData lightData = frameData.Get<UniversalLightData>();
 		UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
 
-		bool reprojectionEnabled = GetVolumetricFogVolumeComponent().reprojection.value;
+		bool reprojectionEnabled = GetVolumetricFogVolumeComponent().reprojection.value && !cameraData.xr.enabled;
 
 		TextureHandles texHandles = CreateRenderGraphTextures(renderGraph, cameraData, reprojectionEnabled);
 
@@ -374,7 +374,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 		volumetricFogMaterial.SetInteger(FrameCountId, Time.renderedFrameCount % 64);
 		volumetricFogMaterial.SetInteger(CustomAdditionalLightsCountId, additionalLightsCount);
-		volumetricFogMaterial.SetFloat(DistanceId, fogVolume.distance.value);
+		volumetricFogMaterial.SetFloat(MaxDistanceId, fogVolume.maxDistance.value);
 		volumetricFogMaterial.SetFloat(BaseHeightId, fogVolume.baseHeight.value);
 		volumetricFogMaterial.SetFloat(MaximumHeightId, fogVolume.maximumHeight.value);
 		volumetricFogMaterial.SetFloat(GroundHeightId, enableGround ? fogVolume.groundHeight.value : float.MinValue);
@@ -387,7 +387,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		volumetricFogMaterial.SetFloat(NoiseFrequencyId, enableNoise ? (1.0f / fogVolume.noiseScale.value) : float.MaxValue);
 		volumetricFogMaterial.SetVector(NoiseMinMaxId, enableNoise ? new Vector2(fogVolume.noiseMinMax.value.x, fogVolume.noiseMinMax.value.y) : Vector2.zero);
 		volumetricFogMaterial.SetVector(NoiseVelocityId, enableNoise ? fogVolume.noiseVelocity.value : Vector3.zero);
-		volumetricFogMaterial.SetInteger(MaxStepsId, fogVolume.maxSteps.value);
+		volumetricFogMaterial.SetInteger(StepsId, fogVolume.steps.value);
 	}
 
 	/// <summary>

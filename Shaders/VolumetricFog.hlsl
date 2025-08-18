@@ -23,7 +23,7 @@
 
 int _FrameCount;
 uint _CustomAdditionalLightsCount;
-float _Distance;
+float _MaxDistance;
 float _BaseHeight;
 float _MaximumHeight;
 float _GroundHeight;
@@ -44,7 +44,7 @@ float _NoiseFrequency;
 float2 _NoiseMinMax;
 float3 _NoiseVelocity;
 #endif
-int _MaxSteps;
+int _Steps;
 
 float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
 float _Scatterings[MAX_VISIBLE_LIGHTS + 1];
@@ -240,8 +240,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
 
     offsetLength -= iniOffsetToNearPlane;
     float3 roNearPlane = ro + rd * iniOffsetToNearPlane;
-    //float stepLength = (_Distance - iniOffsetToNearPlane) / (float)_MaxSteps;
-float stepLength = min(_Distance - iniOffsetToNearPlane, offsetLength) / (float)_MaxSteps;
+    float stepLength = min(_MaxDistance - iniOffsetToNearPlane, offsetLength) / (float)_Steps;
     float jitter = stepLength * IGN(positionCS, _FrameCount);
 
     float phaseMainLight = GetMainLightPhase(rdPhase);
@@ -251,14 +250,10 @@ float stepLength = min(_Distance - iniOffsetToNearPlane, offsetLength) / (float)
     float transmittance = 1.0;
 
     UNITY_LOOP
-    for (int i = 0; i < _MaxSteps; ++i)
+    for (int i = 0; i < _Steps; ++i)
     {
         float dist = jitter + i * stepLength;
         
-        UNITY_BRANCH
-        if (dist >= offsetLength)
-            break;
-
         // We are making the space between the camera position and the near plane "non existant", as if fog did not exist there.
         // However, it removes a lot of noise when in closed environments with an attenuation that makes the scene darker
         // and certain combinations of field of view, raymarching resolution and camera near plane.
@@ -270,22 +265,18 @@ float stepLength = min(_Distance - iniOffsetToNearPlane, offsetLength) / (float)
         if (density <= 0.0)
             continue;
 
-        float stepAttenuation = exp(minusStepLengthTimesAbsortion * density);
-        //transmittance *= stepAttenuation;
-
-float contrib = (1.0 - stepAttenuation) / max(density * _Absortion, 1e-5);
-
         float3 apvColor = GetStepAdaptiveProbeVolumeEvaluation(uv, currPosWS, density);
         float3 reflectionProbeColor = GetStepReflectionProbesEvaluation(uv, currPosWS, rd, density);
         float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight, density);
         float3 additionalLightsColor = GetStepAdditionalLightsColor(uv, currPosWS, rd, density);
-        
+
         float3 stepColor = apvColor + reflectionProbeColor + mainLightColor + additionalLightsColor;
-        //volumetricFogColor += (stepColor * (transmittance * stepLength));
 
-volumetricFogColor += (stepColor * (transmittance * contrib));
-transmittance *= stepAttenuation;
+        float stepAttenuation = exp(minusStepLengthTimesAbsortion * density);
+        float transmittanceFactor = (1.0 - stepAttenuation) / max(density * _Absortion, 1e-5);        
 
+        volumetricFogColor += (stepColor * (transmittance * transmittanceFactor));
+        transmittance *= stepAttenuation;
 
         // TODO: Break out when transmittance reaches low threshold and remap the transmittance when doing so.
         // It does not make sense right now because the fog does not properly support transparency, so having dense fog leads to issues.

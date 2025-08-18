@@ -95,8 +95,7 @@ Shader "Hidden/VolumetricFog"
                 return SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_PointClamp, uv).xy;
 
                 int closestNeighbor = 0;
-                float firstDepth = SampleDownsampledSceneDepth(uv + (Square[0] * _DownsampledCameraDepthTexture_TexelSize.xy));
-                float closestDepth = firstDepth;
+                float closestDepth = SampleDownsampledSceneDepth(uv + (Square[0] * _DownsampledCameraDepthTexture_TexelSize.xy));
 
                 UNITY_UNROLL
                 for (int i = 1; i < 9; ++i)
@@ -176,11 +175,13 @@ Shader "Hidden/VolumetricFog"
                 float rejectionMotion = TestForMotionRejection(motion);
 
                 float rejection = rejectionDepth + rejectionMotion;
-
+                float currentFrameWeight = clamp(rejection, 0.1, 1.0);
+                
+                if (currentFrameWeight >= 1.0)
+                    return currentFrame;
+                
                 float4 history = SAMPLE_TEXTURE2D_X(_VolumetricFogHistoryTexture, sampler_PointClamp, prevUv);
                 float4 historyClamped = float4(DoNeighborhoodMinMaxClamp(uv, currentFrame.rgb, history.rgb), history.a);
-
-                float currentFrameWeight = clamp(rejection, 0.1, 1);
 
                 return lerp(historyClamped, currentFrame, currentFrameWeight);
             }

@@ -36,7 +36,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	private SerializedDataParameter noiseVelocity;
 
 	private SerializedDataParameter resolution;
-	private SerializedDataParameter maxSteps;
+	private SerializedDataParameter steps;
 	private SerializedDataParameter reprojection;
 	private SerializedDataParameter blurIterations;
 	private SerializedDataParameter enabled;
@@ -54,7 +54,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	{
 		PropertyFetcher<VolumetricFogVolumeComponent> pf = new PropertyFetcher<VolumetricFogVolumeComponent>(serializedObject);
 
-		distance = Unpack(pf.Find(x => x.distance));
+		distance = Unpack(pf.Find(x => x.maxDistance));
 		baseHeight = Unpack(pf.Find(x => x.baseHeight));
 		maximumHeight = Unpack(pf.Find(x => x.maximumHeight));
 		enableGround = Unpack(pf.Find(x => x.enableGround));
@@ -81,7 +81,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		noiseVelocity = Unpack(pf.Find(x => x.noiseVelocity));
 
 		resolution = Unpack(pf.Find(x => x.resolution));
-		maxSteps = Unpack(pf.Find(x => x.maxSteps));
+		steps = Unpack(pf.Find(x => x.steps));
 		reprojection = Unpack(pf.Find(x => x.reprojection));
 		blurIterations = Unpack(pf.Find(x => x.blurIterations));
 		enabled = Unpack(pf.Find(x => x.enabled));
@@ -144,7 +144,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		}
 
 		PropertyField(resolution);
-		PropertyField(maxSteps);
+		PropertyField(steps);
 		PropertyField(reprojection);
 		PropertyField(blurIterations);
 		PropertyField(enabled);

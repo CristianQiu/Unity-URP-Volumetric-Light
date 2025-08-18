@@ -14,7 +14,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 
 	[Header("Distances")]
 	[Tooltip("The maximum distance from the camera that the fog will be rendered up to.")]
-	public ClampedFloatParameter distance = new ClampedFloatParameter(64.0f, 0.0f, 512.0f);
+	public ClampedFloatParameter maxDistance = new ClampedFloatParameter(64.0f, 0.0f, 512.0f);
 	[Tooltip("The world height at which the fog will have the density specified in the volume.")]
 	public FloatParameter baseHeight = new FloatParameter(0.0f, true);
 	[Tooltip("The world height at which the fog will have no density at all.")]
@@ -44,7 +44,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("Higher positive values will make the fog affected by the main light to appear brighter when directly looking to it, while lower negative values will make the fog to appear brighter when looking away from it. The closer the value is closer to 1 or -1, the less the brightness will spread. Most times, positive values higher than 0 and lower than 1 should be used.")]
 	public ClampedFloatParameter anisotropy = new ClampedFloatParameter(0.4f, -1.0f, 1.0f);
 	[Tooltip("Higher values will make fog affected by the main light to appear brighter.")]
-	public ClampedFloatParameter scattering = new ClampedFloatParameter(0.15f, 0.0f, 1.0f);
+	public ClampedFloatParameter scattering = new ClampedFloatParameter(0.5f, 0.0f, 1.0f);
 	[Tooltip("A multiplier color to tint the main light fog.")]
 	public ColorParameter tint = new ColorParameter(Color.white, true, false, true);
 
@@ -68,7 +68,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("Resolution used to render the volumetric fog. At half resolution, 1/4 of the pixels are rendered. At quarter resolution, 1/16 of the pixels are rendered.")]
 	public VolumetricFogResolutionParameter resolution = new VolumetricFogResolutionParameter(VolumetricFogConstants.DefaultResolution);
 	[Tooltip("Raymarching steps. Greater values will increase the fog quality at the expense of performance.")]
-	public ClampedIntParameter maxSteps = new ClampedIntParameter(128, 8, 256);
+	public ClampedIntParameter steps = new ClampedIntParameter(32, 8, 256);
 	[Tooltip("EXPERIMENTAL. Reprojection uses information from previous frames to try to further smooth out the volumetric fog. It can cause ghosting under certain circumstances.")]
 	public BoolParameter reprojection = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("The number of times that the fog texture will be blurred. Higher values lead to softer volumetric god rays at the cost of some performance.")]
@@ -112,7 +112,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	/// <returns></returns>
 	public bool IsActive()
 	{
-		return enabled.value && distance.value > 0.0f && groundHeight.value < maximumHeight.value && density.value > 0.0f;
+		return enabled.value && maxDistance.value > 0.0f && groundHeight.value < maximumHeight.value && density.value > 0.0f;
 	}
 
 	#endregion
