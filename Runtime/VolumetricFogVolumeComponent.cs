@@ -68,7 +68,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("Resolution used to render the volumetric fog. At half resolution, 1/4 of the pixels are rendered. At quarter resolution, 1/16 of the pixels are rendered.")]
 	public VolumetricFogResolutionParameter resolution = new VolumetricFogResolutionParameter(VolumetricFogConstants.DefaultResolution);
 	[Tooltip("Raymarching steps. Greater values will increase the fog quality at the expense of performance.")]
-	public ClampedIntParameter steps = new ClampedIntParameter(32, 8, 256);
+	public ClampedIntParameter steps = new ClampedIntParameter(16, 4, 128);
 	[Tooltip("EXPERIMENTAL. Reprojection uses information from previous frames to try to further smooth out the volumetric fog. It can cause ghosting under certain circumstances.")]
 	public BoolParameter reprojection = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("The number of times that the fog texture will be blurred. Higher values lead to softer volumetric god rays at the cost of some performance.")]
