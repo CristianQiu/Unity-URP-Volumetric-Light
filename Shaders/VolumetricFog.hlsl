@@ -240,7 +240,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
 
     offsetLength -= iniOffsetToNearPlane;
     float3 roNearPlane = ro + rd * iniOffsetToNearPlane;
-    float stepLength = min(_MaxDistance - iniOffsetToNearPlane, offsetLength) / (float)_Steps;
+    float stepLength = min(max(_MaxDistance - iniOffsetToNearPlane, 0.0), offsetLength) / (float)_Steps;
     float jitter = stepLength * IGN(positionCS, _FrameCount);
 
     float phaseMainLight = GetMainLightPhase(rdPhase);
