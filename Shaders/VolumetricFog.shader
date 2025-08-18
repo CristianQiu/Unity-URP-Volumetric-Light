@@ -63,6 +63,7 @@ Shader "Hidden/VolumetricFog"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "./DeclareDownsampledDepthTexture.hlsl"
+            #include "./DeclarePrevFrameDownsampledDepthTexture.hlsl"
             #include "./ProjectionUtils.hlsl"
             #include "./Utils.hlsl"
 
@@ -82,7 +83,7 @@ Shader "Hidden/VolumetricFog"
                 float2(-1.0,  1.0), float2(0.0,  1.0), float2(1.0,  1.0)
             };
 
-             static const float2 Square[] = {
+            static const float2 Square[] = {
                 float2(-1.0, -1.0), float2(0.0, -1.0), float2(1.0, -1.0),
                 float2(-1.0,  0.0), float2(0.0,  0.0), float2(1.0,  0.0),
                 float2(-1.0,  1.0), float2(0.0,  1.0), float2(1.0,  1.0)
@@ -91,38 +92,75 @@ Shader "Hidden/VolumetricFog"
             // Gets the motion vector at the given uv.
             float2 GetMotion(float2 uv)
             {
-                return SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_PointClamp, uv).xy;
+                // return SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_PointClamp, uv).xy;
 
-                // float closestDepth = 10000.0;
-                // int closestNeighbor = -1;
+                int closestNeighbor = 0;
+                float firstDepth = SampleDownsampledSceneDepth(uv + (Square[0] * _DownsampledCameraDepthTexture_TexelSize.xy));
+                float closestDepth = firstDepth;
 
-                // for (int i = 0; i < 9; ++i)
-                // {
-                //     float2 uvOffset = Square[i] * _DownsampledCameraDepthTexture_TexelSize.xy;
-                //     float neighborDepth = SampleDownsampledSceneDepth(uv + uvOffset);
+                UNITY_UNROLL
+                for (int i = 1; i < 9; ++i)
+                {
+                    float2 currUv = uv + Square[i] * _DownsampledCameraDepthTexture_TexelSize.xy;
+                    float currDepth = SampleDownsampledSceneDepth(currUv);
 
-                //     if(neighborDepth < closestDepth)
-                //     {
-                //         closestDepth = neighborDepth;
-                //         closestNeighbor = i;
-                //     }
-                // }
+                    if (currDepth < closestDepth)
+                    {
+                        closestDepth = currDepth;
+                        closestNeighbor = i;
+                    }
+                }
               
-                //return SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_PointClamp, uv + Square[closestNeighbor] * _MotionVectorTexture_TexelSize).xy;
+                return SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_PointClamp, uv + Square[closestNeighbor] * _MotionVectorTexture_TexelSize).xy;
             }
 
-            // Clamps the given history sample to the neighborhood of the current texel and returns it.
+            float TestForDepthRejection(float2 uv, float2 prevUv)
+            {
+                const float DepthDiffForFullRejection = 1.0;
+
+                float prevDepth = LinearEyeDepthConsiderProjection(SamplePrevFrameDownsampledSceneDepth(prevUv));
+                float firstDepth = SampleDownsampledSceneDepth(uv + (Square[0] * _DownsampledCameraDepthTexture_TexelSize.xy));
+                float minDepthDiff = abs(LinearEyeDepthConsiderProjection(firstDepth) - prevDepth);
+                
+                UNITY_UNROLL
+                for (int i = 1; i < 9; ++i)
+                {
+                    float2 currUv = uv + Square[i] * _DownsampledCameraDepthTexture_TexelSize.xy;
+                    float currDepth = LinearEyeDepthConsiderProjection(SampleDownsampledSceneDepth(currUv));
+                    
+                    float depthDiff = abs(currDepth - prevDepth);
+
+                    if (depthDiff < minDepthDiff)
+                        minDepthDiff = depthDiff;
+                }
+
+                minDepthDiff = abs(prevDepth - LinearEyeDepthConsiderProjection(SampleDownsampledSceneDepth(uv)));
+                float rejection = InverseLerp(0.0, DepthDiffForFullRejection, minDepthDiff);
+
+                return smoothstep(0.0, 1.0, rejection);
+            }
+
+            float TestForMotionRejection(float2 motion)
+            {
+                const float MotionForFullRejection = 0.025;
+
+                float motionLength = length(motion);
+
+                float rejection = InverseLerp(0.0, MotionForFullRejection, motionLength);
+                
+                return smoothstep(0.0, 1.0, rejection);
+            }
+
+            // Clamps the given history sample to the neighborhood of the current frame center texel and returns it.
             float3 DoNeighborhoodMinMaxClamp(float2 uv, float3 currentFrameSampleRGB, float3 historyRGB)
             {
                 float3 minSample = currentFrameSampleRGB;
                 float3 maxSample = currentFrameSampleRGB;
 
+                UNITY_UNROLL
                 for (int i = 0; i < 8; ++i)
                 {
                     float2 neighborUv = uv + Neighborhood[i] * _BlitTexture_TexelSize.xy;
-                    if (neighborUv.x <= 0.0 || neighborUv.x >= 1.0 || neighborUv.y <= 0.0 || neighborUv.y >= 1.0)
-                        continue;
-
                     float4 neighborSample = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, neighborUv);
 
                     minSample = min(minSample, neighborSample);
@@ -130,32 +168,6 @@ Shader "Hidden/VolumetricFog"
                 }
 
                 return clamp(historyRGB, minSample, maxSample);
-            }
-
-            // Does the history rejection test. Returns a value between 0 and 2. 0 indicates no rejection at all, 1 indicates full rejection., and 2 indicates that the history sample is not valid in any way.
-            float TestForRejection(float2 uv, float2 prevUv, float2 motion)
-            {
-                const float MotionForFullRejection = 0.025;
-
-                float motionLength = length(motion);
-
-                if (prevUv.x <= 0.0 || prevUv.x >= 1.0 || prevUv.y <= 0.0 || prevUv.y >= 1.0)
-                    return 2.0;
-
-                float t = InverseLerp(motionLength, 0.0, MotionForFullRejection);
-
-                // this immproves it a lot under extreme conditions! gets rid of hard stepped vignette when moving the cam fast through fog!
-                return smoothstep(0.0, 1.0, t);
-
-                // float depth = LinearEyeDepthConsiderProjection(SampleDownsampledSceneDepth(uv));
-                // float prevDepth = LinearEyeDepthConsiderProjection(SampleDownsampledSceneDepth(prevUv));
-
-                // const float DepthThreshold = 40000000;
-
-                // if (abs(depth - prevDepth) >= DepthThreshold)
-                //     return 1.0;
-
-                // return 0.0;
             }
 
             float4 Frag(Varyings input) : SV_Target
@@ -168,17 +180,23 @@ Shader "Hidden/VolumetricFog"
                 float2 uv = input.texcoord;
                 float2 motion = GetMotion(uv);
                 float2 prevUv = uv - motion;
+                
                 float4 currentFrame = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv);
 
-                float rejection = TestForRejection(uv, prevUv, motion);
-                if (rejection > 1.0)
+                 if (prevUv.x <= 0.0 || prevUv.x >= 1.0 || prevUv.y <= 0.0 || prevUv.y >= 1.0)
                     return currentFrame;
 
+                float rejectionDepth = TestForDepthRejection(uv, prevUv);
+                float rejectionMotion = TestForMotionRejection(motion);
+
+                float rejection = rejectionDepth + rejectionMotion;
+
                 float4 history = SAMPLE_TEXTURE2D_X(_VolumetricFogHistoryTexture, sampler_PointClamp, prevUv);
-                // TODO: what transmittance value should we use? should it be affected by the min/max clamping?
                 float4 historyClamped = float4(DoNeighborhoodMinMaxClamp(uv, currentFrame.rgb, history.rgb), history.a);
 
-                return lerp(historyClamped, currentFrame, 0.1);
+                float currentFrameWeight = clamp(rejection, .1, 1);
+
+                return lerp(historyClamped, currentFrame, currentFrameWeight);
             }
 
             ENDHLSL

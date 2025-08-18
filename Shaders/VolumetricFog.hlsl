@@ -120,7 +120,7 @@ float GetNoise(float3 posWS)
 #if _NOISE
     float3 uvw = (posWS * _NoiseFrequency) + (_Time.y * _NoiseVelocity);
     float noise = SAMPLE_TEXTURE3D_LOD(_NoiseTexture, sampler_LinearRepeat, uvw, 0).r;
-    noise = RemapSaturate(noise, 0.0, 1.0, _NoiseMinMax.x, _NoiseMinMax.y);
+    noise = RemapSaturate(0.0, 1.0, _NoiseMinMax.x, _NoiseMinMax.y, noise);
     return noise;
 #else
     return 1.0;
@@ -241,7 +241,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
     offsetLength -= iniOffsetToNearPlane;
     float3 roNearPlane = ro + rd * iniOffsetToNearPlane;
     float stepLength = (_Distance - iniOffsetToNearPlane) / (float)_MaxSteps;
-    float jitter = stepLength * InterleavedGradientNoise(positionCS, _FrameCount);
+    float jitter = stepLength * IGN(positionCS, _FrameCount);
 
     float phaseMainLight = GetMainLightPhase(rdPhase);
     float minusStepLengthTimesAbsortion = -stepLength * _Absortion;

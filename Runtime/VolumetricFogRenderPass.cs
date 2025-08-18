@@ -40,6 +40,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		public int materialAdditionalPassIndex;
 
 		public TextureHandle downsampledCameraDepthTarget;
+		public TextureHandle prevFrameDownsampledCameraDepthTarget;
 		public TextureHandle volumetricFogRenderTarget;
 		public TextureHandle volumetricFogHistoryTarget;
 		public UniversalLightData lightData;
@@ -50,12 +51,14 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	#region Private Attributes
 
 	private const string DownsampledCameraDepthRTName = "_DownsampledCameraDepth";
+	private const string PrevFrameDownsampledCameraDepthRTName = "_PrevFrameDownsampledCameraDepth";
 	private const string VolumetricFogRenderRTName = "_VolumetricFog";
 	private const string VolumetricFogHistoryRTName = "_VolumetricFogHistory";
 	private const string VolumetricFogBlurRTName = "_VolumetricFogBlur";
 	private const string VolumetricFogUpsampleCompositionRTName = "_VolumetricFogUpsampleComposition";
 
 	private static readonly int DownsampledCameraDepthTextureId = Shader.PropertyToID("_DownsampledCameraDepthTexture");
+	private static readonly int PrevFrameDownsampledCameraDepthTextureId = Shader.PropertyToID("_PrevFrameDownsampledCameraDepthTexture");
 	private static readonly int VolumetricFogTextureId = Shader.PropertyToID("_VolumetricFogTexture");
 	private static readonly int VolumetricFogHistoryTextureId = Shader.PropertyToID("_VolumetricFogHistoryTexture");
 
@@ -95,6 +98,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private Material volumetricFogMaterial;
 
 	private RTHandle volumetricFogHistoryRTHandle;
+	private RTHandle prevFrameDownsampledCameraDepthRTHandle;
 
 	private ProfilingSampler downsampleDepthProfilingSampler;
 
@@ -149,7 +153,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		UniversalLightData lightData = frameData.Get<UniversalLightData>();
 		UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
 
-		CreateRenderGraphTextures(renderGraph, cameraData, out TextureHandle downsampledCameraDepthTarget, out TextureHandle volumetricFogRenderTarget, out TextureHandle volumetricFogHistoryTarget, out TextureHandle volumetricFogBlurRenderTarget, out TextureHandle volumetricFogUpsampleCompositionTarget);
+		CreateRenderGraphTextures(renderGraph, cameraData, out TextureHandle downsampledCameraDepthTarget, out TextureHandle prevFrameDownsampledCameraDepthTarget, out TextureHandle volumetricFogRenderTarget, out TextureHandle volumetricFogHistoryTarget, out TextureHandle volumetricFogBlurRenderTarget, out TextureHandle volumetricFogUpsampleCompositionTarget);
 
 		using (IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass("Downsample Depth Pass", out PassData passData, downsampleDepthProfilingSampler))
 		{
@@ -191,11 +195,13 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			passData.material = volumetricFogMaterial;
 			passData.materialPassIndex = volumetricFogReprojectionPassIndex;
 			passData.volumetricFogHistoryTarget = volumetricFogHistoryTarget;
+			passData.prevFrameDownsampledCameraDepthTarget = prevFrameDownsampledCameraDepthTarget;
 
 			builder.SetRenderAttachment(volumetricFogBlurRenderTarget, 0, AccessFlags.WriteAll);
 			builder.UseTexture(volumetricFogRenderTarget);
 			builder.UseTexture(volumetricFogHistoryTarget);
 			builder.UseTexture(downsampledCameraDepthTarget);
+			builder.UseTexture(prevFrameDownsampledCameraDepthTarget);
 			if (resourceData.motionVectorColor.IsValid())
 				builder.UseTexture(resourceData.motionVectorColor);
 			if (resourceData.motionVectorDepth.IsValid())
@@ -204,6 +210,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		}
 
 		RenderGraphUtils.AddCopyPass(renderGraph, volumetricFogBlurRenderTarget, volumetricFogHistoryTarget, "Volumetric Fog History Copy Pass");
+		RenderGraphUtils.AddCopyPass(renderGraph, downsampledCameraDepthTarget, prevFrameDownsampledCameraDepthTarget, "Downsampled Depth Copy Pass");
 
 		using (IUnsafeRenderGraphBuilder builder = renderGraph.AddUnsafePass("Volumetric Fog Blur Pass", out PassData passData, profilingSampler))
 		{
@@ -260,6 +267,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		else if (stage == PassStage.VolumetricFogReprojection)
 		{
 			passData.material.SetTexture(VolumetricFogHistoryTextureId, passData.volumetricFogHistoryTarget);
+			passData.material.SetTexture(PrevFrameDownsampledCameraDepthTextureId, passData.prevFrameDownsampledCameraDepthTarget);
 		}
 		else if (stage == PassStage.VolumetricFogUpsampleComposition)
 		{
@@ -278,7 +286,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	{
 		CommandBuffer unsafeCmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
 
-		// TODO: Quarter resolution should use a less extended kernel, or less blur iterations.
 		int blurIterations = GetVolumetricFogVolumeComponent().blurIterations.value;
 
 		for (int i = 0; i < blurIterations; ++i)
@@ -428,6 +435,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	public void Dispose()
 	{
 		volumetricFogHistoryRTHandle?.Release();
+		prevFrameDownsampledCameraDepthRTHandle?.Release();
 	}
 
 	/// <summary>
@@ -436,11 +444,12 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// <param name="renderGraph"></param>
 	/// <param name="cameraData"></param>
 	/// <param name="downsampledCameraDepthTarget"></param>
+	/// <param name="prevFrameDownsampledCameraDepthTarget"></param>
 	/// <param name="volumetricFogRenderTarget"></param>
 	/// <param name="volumetricFogHistoryTarget"></param>
 	/// <param name="volumetricFogBlurRenderTarget"></param>
 	/// <param name="volumetricFogUpsampleCompositionTarget"></param>
-	private void CreateRenderGraphTextures(RenderGraph renderGraph, UniversalCameraData cameraData, out TextureHandle downsampledCameraDepthTarget, out TextureHandle volumetricFogRenderTarget, out TextureHandle volumetricFogHistoryTarget, out TextureHandle volumetricFogBlurRenderTarget, out TextureHandle volumetricFogUpsampleCompositionTarget)
+	private void CreateRenderGraphTextures(RenderGraph renderGraph, UniversalCameraData cameraData, out TextureHandle downsampledCameraDepthTarget, out TextureHandle prevFrameDownsampledCameraDepthTarget, out TextureHandle volumetricFogRenderTarget, out TextureHandle volumetricFogHistoryTarget, out TextureHandle volumetricFogBlurRenderTarget, out TextureHandle volumetricFogUpsampleCompositionTarget)
 	{
 		// TODO: This pattern should not be used https://discussions.unity.com/t/introduction-of-render-graph-in-the-universal-render-pipeline-urp/930355/602
 		RenderTextureDescriptor cameraTargetDescriptor = cameraData.cameraTargetDescriptor;
@@ -449,18 +458,19 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		RenderTextureFormat originalColorFormat = cameraTargetDescriptor.colorFormat;
 		Vector2Int originalResolution = new Vector2Int(cameraTargetDescriptor.width, cameraTargetDescriptor.height);
 
-		// TODO: Would quarter resolution benefit from downsampling first to half resolution, and then to quarter resolution?
 		int downsampleFactor = (int)GetVolumetricFogVolumeComponent().resolution.value;
 
 		cameraTargetDescriptor.width /= downsampleFactor;
 		cameraTargetDescriptor.height /= downsampleFactor;
 		cameraTargetDescriptor.graphicsFormat = GraphicsFormat.R32_SFloat;
 		downsampledCameraDepthTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, DownsampledCameraDepthRTName, false);
+		RenderingUtils.ReAllocateHandleIfNeeded(ref prevFrameDownsampledCameraDepthRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: PrevFrameDownsampledCameraDepthRTName);
+		prevFrameDownsampledCameraDepthTarget = renderGraph.ImportTexture(prevFrameDownsampledCameraDepthRTHandle);
 
 		cameraTargetDescriptor.colorFormat = RenderTextureFormat.ARGBHalf;
 		volumetricFogRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogRenderRTName, false);
-		Debug.Log(RenderingUtils.ReAllocateHandleIfNeeded(ref volumetricFogHistoryRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogHistoryRTName));
-		volumetricFogHistoryTarget = renderGraph.ImportTexture(volumetricFogHistoryRTHandle, new ImportResourceParams { clearColor = Color.black, clearOnFirstUse = false });
+		RenderingUtils.ReAllocateHandleIfNeeded(ref volumetricFogHistoryRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogHistoryRTName);
+		volumetricFogHistoryTarget = renderGraph.ImportTexture(volumetricFogHistoryRTHandle);
 		volumetricFogBlurRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogBlurRTName, false);
 
 		cameraTargetDescriptor.width = originalResolution.x;
