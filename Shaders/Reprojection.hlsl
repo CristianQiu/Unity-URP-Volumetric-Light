@@ -114,7 +114,7 @@ float3 NeigborhoodClamp(float2 uv, float3 currentFrameSampleRGB, float3 historyR
     for (int i = 0; i < 8; ++i)
     {
         float2 neighborUv = uv + Neighborhood[i] * _BlitTexture_TexelSize.xy;
-        float4 neighborSample = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, neighborUv);
+        float3 neighborSample = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, neighborUv).rgb;
 
         minSample = min(minSample, neighborSample);
         maxSample = max(maxSample, neighborSample);
