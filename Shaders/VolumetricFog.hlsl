@@ -20,6 +20,8 @@
 #include "./VolumetricShadows.hlsl"
 #include "./Utils.hlsl"
 
+#define FOG_HEIGHT_FALLOFF 10.0
+
 int _FrameCount;
 uint _CustomAdditionalLightsCount;
 float _Distance;
@@ -130,11 +132,18 @@ float GetNoise(float3 posWS)
 // Gets the fog density at the given world height.
 float GetFogDensity(float3 posWS)
 {
-    float t = saturate((posWS.y - _BaseHeight) / (_MaximumHeight - _BaseHeight));
-    t = 1.0 - t;
-    t = posWS.y < _GroundHeight ? 0.0 : t;
+    if (posWS.y < _GroundHeight || posWS.y > _MaximumHeight)
+        return 0.0;
+    
+    float range = abs(_MaximumHeight - _BaseHeight);
 
-    return _Density * t * GetNoise(posWS);
+    float topFactor = exp(-range / FOG_HEIGHT_FALLOFF);
+    float relativeExp = exp(-(posWS.y - _BaseHeight) / FOG_HEIGHT_FALLOFF);
+    float normalizedDensity = (relativeExp - topFactor) / (1.0 - topFactor);
+
+    float fogDensity = saturate(normalizedDensity);
+
+    return fogDensity * _Density * GetNoise(posWS);
 }
 
 // Gets the GI evaluation from the adaptive probe volume at one raymarch step.
