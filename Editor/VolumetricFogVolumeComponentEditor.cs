@@ -12,16 +12,15 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	private SerializedDataParameter distance;
 	private SerializedDataParameter baseHeight;
 	private SerializedDataParameter maximumHeight;
-
 	private SerializedDataParameter enableGround;
 	private SerializedDataParameter groundHeight;
 
 	private SerializedDataParameter density;
 	private SerializedDataParameter attenuationDistance;
-#if UNITY_2023_1_OR_NEWER
 	private SerializedDataParameter enableAPVContribution;
 	private SerializedDataParameter APVContributionWeight;
-#endif
+	private SerializedDataParameter enableReflectionProbesContribution;
+	private SerializedDataParameter reflectionProbesContributionWeight;
 
 	private SerializedDataParameter enableMainLightContribution;
 	private SerializedDataParameter anisotropy;
@@ -29,17 +28,20 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	private SerializedDataParameter tint;
 
 	private SerializedDataParameter enableAdditionalLightsContribution;
-	
+
 	private SerializedDataParameter enableNoise;
 	private SerializedDataParameter noiseTexture;
-	private SerializedDataParameter noiseStrength;
-	private SerializedDataParameter noiseSize;
-	private SerializedDataParameter noiseSpeeds;
+	private SerializedDataParameter noiseScale;
+	private SerializedDataParameter noiseMinMax;
+	private SerializedDataParameter noiseVelocity;
 
-	private SerializedDataParameter maxSteps;
+	private SerializedDataParameter resolution;
+	private SerializedDataParameter maximumSteps;
+	private SerializedDataParameter minimumStepSize;
+	private SerializedDataParameter reprojection;
 	private SerializedDataParameter blurIterations;
 	private SerializedDataParameter enabled;
-	
+
 	private SerializedDataParameter renderPassEvent;
 
 	#endregion
@@ -56,16 +58,15 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		distance = Unpack(pf.Find(x => x.distance));
 		baseHeight = Unpack(pf.Find(x => x.baseHeight));
 		maximumHeight = Unpack(pf.Find(x => x.maximumHeight));
-
 		enableGround = Unpack(pf.Find(x => x.enableGround));
 		groundHeight = Unpack(pf.Find(x => x.groundHeight));
 
 		density = Unpack(pf.Find(x => x.density));
 		attenuationDistance = Unpack(pf.Find(x => x.attenuationDistance));
-#if UNITY_2023_1_OR_NEWER
 		enableAPVContribution = Unpack(pf.Find(x => x.enableAPVContribution));
 		APVContributionWeight = Unpack(pf.Find(x => x.APVContributionWeight));
-#endif
+		enableReflectionProbesContribution = Unpack(pf.Find(x => x.enableReflectionProbesContribution));
+		reflectionProbesContributionWeight = Unpack(pf.Find(x => x.reflectionProbesContributionWeight));
 
 		enableMainLightContribution = Unpack(pf.Find(x => x.enableMainLightContribution));
 		anisotropy = Unpack(pf.Find(x => x.anisotropy));
@@ -76,14 +77,17 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
 		enableNoise = Unpack(pf.Find(x => x.enableNoise));
 		noiseTexture = Unpack(pf.Find(x => x.noiseTexture));
-		noiseStrength = Unpack(pf.Find(x => x.noiseStrength));
-		noiseSize = Unpack(pf.Find(x => x.noiseSize));
-		noiseSpeeds = Unpack(pf.Find(x => x.noiseSpeeds));
+		noiseScale = Unpack(pf.Find(x => x.noiseScale));
+		noiseMinMax = Unpack(pf.Find(x => x.noiseMinMax));
+		noiseVelocity = Unpack(pf.Find(x => x.noiseVelocity));
 
-		maxSteps = Unpack(pf.Find(x => x.maxSteps));
+		resolution = Unpack(pf.Find(x => x.resolution));
+		maximumSteps = Unpack(pf.Find(x => x.maximumSteps));
+		minimumStepSize = Unpack(pf.Find(x => x.minimumStepSize));
+		reprojection = Unpack(pf.Find(x => x.reprojection_Experimental));
 		blurIterations = Unpack(pf.Find(x => x.blurIterations));
 		enabled = Unpack(pf.Find(x => x.enabled));
-		
+
 		renderPassEvent = Unpack(pf.Find(x => x.renderPassEvent));
 	}
 
@@ -101,26 +105,26 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		}
 
 		bool enabledGround = enableGround.overrideState.boolValue && enableGround.value.boolValue;
-		bool enabledMainLightContribution = enableMainLightContribution.overrideState.boolValue && enableMainLightContribution.value.boolValue;
-		bool enabledAdditionalLightsContribution = enableAdditionalLightsContribution.overrideState.boolValue && enableAdditionalLightsContribution.value.boolValue;
+		bool enabledAPVContribution = enableAPVContribution.overrideState.boolValue && enableAPVContribution.value.boolValue;
+		bool enabledReflectionProbesContribution = enableReflectionProbesContribution.overrideState.boolValue && enableReflectionProbesContribution.value.boolValue;
 		bool enabledNoise = enableNoise.overrideState.boolValue && enableNoise.value.boolValue;
+		bool enabledMainLightContribution = enableMainLightContribution.overrideState.boolValue && enableMainLightContribution.value.boolValue;
 
 		PropertyField(distance);
 		PropertyField(baseHeight);
 		PropertyField(maximumHeight);
-
 		PropertyField(enableGround);
 		if (enabledGround)
 			PropertyField(groundHeight);
 
 		PropertyField(density);
 		PropertyField(attenuationDistance);
-#if UNITY_2023_1_OR_NEWER
-		bool enabledAPVContribution = enableAPVContribution.overrideState.boolValue && enableAPVContribution.value.boolValue;
 		PropertyField(enableAPVContribution);
 		if (enabledAPVContribution)
 			PropertyField(APVContributionWeight);
-#endif
+		PropertyField(enableReflectionProbesContribution);
+		if (enabledReflectionProbesContribution)
+			PropertyField(reflectionProbesContributionWeight);
 
 		PropertyField(enableMainLightContribution);
 		if (enabledMainLightContribution)
@@ -136,15 +140,18 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		if (enabledNoise)
 		{
 			PropertyField(noiseTexture);
-			PropertyField(noiseStrength);
-			PropertyField(noiseSize);
-			PropertyField(noiseSpeeds);
+			PropertyField(noiseScale);
+			PropertyField(noiseMinMax);
+			PropertyField(noiseVelocity);
 		}
 
-		PropertyField(maxSteps);
+		PropertyField(resolution);
+		PropertyField(maximumSteps);
+		PropertyField(minimumStepSize);
+		PropertyField(reprojection);
 		PropertyField(blurIterations);
 		PropertyField(enabled);
-		
+
 		PropertyField(renderPassEvent);
 	}
 

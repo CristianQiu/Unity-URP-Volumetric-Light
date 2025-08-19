@@ -3,7 +3,7 @@ using UnityEngine.Rendering.Universal;
 
 /// <summary>
 /// This is a component that can be added to additional lights to set the parameters that will
-/// affect how this light is considered for the volumetric fog effect.
+/// affect how this light is considered for the volumetric fog.
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Light), typeof(UniversalAdditionalLightData))]

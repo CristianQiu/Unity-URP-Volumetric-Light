@@ -2,7 +2,7 @@
 #define DEPTH_AWARE_GAUSSIAN_BLUR_INCLUDED
 
 #include "./DeclareDownsampledDepthTexture.hlsl"
-#include "./ProjectionUtils.hlsl"
+#include "./Utils.hlsl"
 
 #define KERNEL_RADIUS 4
 #define BLUR_DEPTH_FALLOFF 0.5

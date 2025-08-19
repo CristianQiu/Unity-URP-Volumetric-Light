@@ -8,14 +8,17 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Random.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/VolumeRendering.hlsl"
-#if UNITY_VERSION >= 202310 && _APV_CONTRIBUTION_ENABLED
+#if _APV_CONTRIBUTION
     #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
         #include "Packages/com.unity.render-pipelines.core/Runtime/Lighting/ProbeVolume/ProbeVolume.hlsl"
     #endif
 #endif
+#if _CLUSTER_LIGHT_LOOP && _REFLECTION_PROBES_CONTRIBUTION
+    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/GlobalIllumination.hlsl"
+#endif
 #include "./DeclareDownsampledDepthTexture.hlsl"
 #include "./VolumetricShadows.hlsl"
-#include "./ProjectionUtils.hlsl"
+#include "./Utils.hlsl"
 
 int _FrameCount;
 uint _CustomAdditionalLightsCount;
@@ -25,13 +28,23 @@ float _MaximumHeight;
 float _GroundHeight;
 float _Density;
 float _Absortion;
+#if _APV_CONTRIBUTION
+    #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
 float _APVContributionWeight;
+    #endif
+#endif
+#if _CLUSTER_LIGHT_LOOP && _REFLECTION_PROBES_CONTRIBUTION
+float _ReflectionProbesContributionWeight;
+#endif
 float3 _Tint;
+#if _NOISE
 TEXTURE3D(_NoiseTexture);
-float _NoiseStrength;
-float _NoiseSize;
-float3 _NoiseSpeeds;
-int _MaxSteps;
+float _NoiseFrequency;
+float2 _NoiseMinMax;
+float3 _NoiseVelocity;
+#endif
+int _MaximumSteps;
+float _MinimumStepSize;
 
 float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
 float _Scatterings[MAX_VISIBLE_LIGHTS + 1];
@@ -94,45 +107,24 @@ void CalculateRaymarchingParams(float2 uv, out float3 ro, out float3 rd, out flo
 // Gets the main light phase function.
 float GetMainLightPhase(float3 rd)
 {
-#if _MAIN_LIGHT_CONTRIBUTION_DISABLED
-    return 0.0;
-#else
+#if _MAIN_LIGHT_CONTRIBUTION
     return CornetteShanksPhaseFunction(_Anisotropies[_CustomAdditionalLightsCount], dot(rd, GetMainLight().direction));
+#else
+    return 0.0;
 #endif
 }
 
-// Gets noise at the given world position.
-float Noise(float3 posWS)
+// Gets the noise value based on the world position.
+float GetNoise(float3 posWS)
 {
-    float3 uvw = (posWS + _Time.y * _NoiseSpeeds) / _NoiseSize;
-    float4 noiseSample = SAMPLE_TEXTURE3D_LOD(_NoiseTexture, sampler_LinearRepeat, uvw, 0);
-    
-    // noise goes in ascending frequency from r, to g, to b, to a, though b and a are pretty similar. Values go from 0 to 1.0 per channel.
-    float noise = noiseSample.r * 0.533 + noiseSample.g * 0.266 + noiseSample.b * 0.133 + noiseSample.a * 0.0666;
-    
-//float noise = saturate(dot(noiseTex, _VFogNoiseWeights));
-//noise = remap(0, 1, _VFogMinMaxNoise.x, _VFogMinMaxNoise.y, noise);
-//return smoothstep(0, 1, noise);
-    
-    return noise * _NoiseStrength;
-}
-
-// TODO: using a distortion texture to distort the noise becomes very expensive.
-//float DistortionNoise(float3 posWS)
-//{
-//    float3 uvw = (posWS + _Time.y * _DistortionSpeeds) / _DistortionSize;
-//    float3 distortionNoiseSample = SAMPLE_TEXTURE3D_LOD(_DistortionTexture, sampler_LinearRepeat, uvw, 0).rgb;
-    
-//    distortionNoiseSample = distortionNoiseSample * 0.5 - 1.0;
-    
-//    return distortionNoiseSample * _DistortionStrength;
-//}
-
-float RemapSaturate(float origVal, float origMin, float origMax, float destMin, float destMax)
-{
-    float t = saturate((origVal - origMin) / (origMax - origMin));
-
-    return lerp(destMin, destMax, t);
+#if _NOISE
+    float3 uvw = (posWS * _NoiseFrequency) + (_Time.y * _NoiseVelocity);
+    float noise = SAMPLE_TEXTURE3D_LOD(_NoiseTexture, sampler_LinearRepeat, uvw, 0).r;
+    noise = RemapSaturate(0.0, 1.0, _NoiseMinMax.x, _NoiseMinMax.y, noise);
+    return noise;
+#else
+    return 1.0;
+#endif
 }
 
 // Gets the fog density at the given world height.
@@ -140,31 +132,19 @@ float GetFogDensity(float3 posWS)
 {
     float t = saturate((posWS.y - _BaseHeight) / (_MaximumHeight - _BaseHeight));
     t = 1.0 - t;
-    t = lerp(t, 0.0, posWS.y < _GroundHeight);
+    t = posWS.y < _GroundHeight ? 0.0 : t;
 
-    float d = _Density;
-    
-#if _NOISE
-    if (d > 0.0)
-    {
-        float noise = Noise(posWS);
-        noise = RemapSaturate(noise, 0.0, _NoiseStrength, 0.0, .5);
-        
-        d = _Density * noise;
-    }
-#endif
-    
-    return d * t;
+    return _Density * t * GetNoise(posWS);
 }
 
 // Gets the GI evaluation from the adaptive probe volume at one raymarch step.
-float3 GetStepAdaptiveProbeVolumeEvaluation(float2 pixCoord, float3 posWS, float density)
+float3 GetStepAdaptiveProbeVolumeEvaluation(float2 uv, float3 posWS, float density)
 {
     float3 apvDiffuseGI = float3(0.0, 0.0, 0.0);
     
-#if UNITY_VERSION >= 202310 && _APV_CONTRIBUTION_ENABLED
+#if _APV_CONTRIBUTION
     #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
-        EvaluateAdaptiveProbeVolume(posWS, pixCoord, apvDiffuseGI);
+        EvaluateAdaptiveProbeVolume(posWS, uv * _ScreenSize.xy, apvDiffuseGI);
         apvDiffuseGI = apvDiffuseGI * _APVContributionWeight * density;
     #endif
 #endif
@@ -172,12 +152,20 @@ float3 GetStepAdaptiveProbeVolumeEvaluation(float2 pixCoord, float3 posWS, float
     return apvDiffuseGI;
 }
 
+// Gets the reflection probe evaluation at one raymarch step.
+float3 GetStepReflectionProbesEvaluation(float2 uv, float3 currPosWS, float3 rd, float density)
+{
+#if _CLUSTER_LIGHT_LOOP && _REFLECTION_PROBES_CONTRIBUTION
+    return CalculateIrradianceFromReflectionProbes(rd, currPosWS, 1.0, uv) * _ReflectionProbesContributionWeight * density;
+#else
+    return float3(0.0, 0.0, 0.0);
+#endif
+}
+
 // Gets the main light color at one raymarch step.
 float3 GetStepMainLightColor(float3 currPosWS, float phaseMainLight, float density)
 {
-#if _MAIN_LIGHT_CONTRIBUTION_DISABLED
-    return float3(0.0, 0.0, 0.0);
-#endif
+#if _MAIN_LIGHT_CONTRIBUTION
     Light mainLight = GetMainLight();
     float4 shadowCoord = TransformWorldToShadowCoord(currPosWS);
     mainLight.shadowAttenuation = VolumetricMainLightRealtimeShadow(shadowCoord);
@@ -185,23 +173,22 @@ float3 GetStepMainLightColor(float3 currPosWS, float phaseMainLight, float densi
     mainLight.color *= SampleMainLightCookie(currPosWS);
 #endif
     return (mainLight.color * _Tint) * (mainLight.shadowAttenuation * phaseMainLight * density * _Scatterings[_CustomAdditionalLightsCount]);
+#else
+    return float3(0.0, 0.0, 0.0);
+#endif
 }
 
 // Gets the accumulated color from additional lights at one raymarch step.
 float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, float density)
 {
-#if _ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED
-    return float3(0.0, 0.0, 0.0);
-#endif
-#if _FORWARD_PLUS
-    // Forward+ rendering path needs this data before the light loop.
+#if _ADDITIONAL_LIGHTS_CONTRIBUTION
+#if _CLUSTER_LIGHT_LOOP
     InputData inputData = (InputData)0;
     inputData.normalizedScreenSpaceUV = uv;
     inputData.positionWS = currPosWS;
 #endif
     float3 additionalLightsColor = float3(0.0, 0.0, 0.0);
                 
-    // Loop differently through lights in Forward+ while considering Forward and Deferred too.
     LIGHT_LOOP_BEGIN(_CustomAdditionalLightsCount)
         UNITY_BRANCH
         if (_Scatterings[lightIndex] <= 0.0)
@@ -235,13 +222,14 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, floa
     LIGHT_LOOP_END
 
     return additionalLightsColor;
+#else
+    return float3(0.0, 0.0, 0.0);
+#endif
 }
 
 // Calculates the volumetric fog. Returns the color in the RGB channels and transmittance in alpha.
 float4 VolumetricFog(float2 uv, float2 positionCS)
 {
-    float2 pixCoord = uv * _ScreenSize.xy;
-    
     float3 ro;
     float3 rd;
     float iniOffsetToNearPlane;
@@ -250,26 +238,29 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
 
     CalculateRaymarchingParams(uv, ro, rd, iniOffsetToNearPlane, offsetLength, rdPhase);
 
-    offsetLength -= iniOffsetToNearPlane;
     float3 roNearPlane = ro + rd * iniOffsetToNearPlane;
-    float stepLength = (_Distance - iniOffsetToNearPlane) / (float)_MaxSteps;
-    
-    float jitter = stepLength * InterleavedGradientNoise(positionCS, _FrameCount);
+    offsetLength -= iniOffsetToNearPlane;
+
+    // Clamp the step length and recalculate the steps, because we do not want to step hundred of times when a column is just a few centimeters away in the depth buffer.
+    float stepSize = min(max(_Distance - iniOffsetToNearPlane, 0.0), offsetLength) / (float)_MaximumSteps;
+    stepSize = max(stepSize, _MinimumStepSize);
+    int actualSteps = (int)ceil(offsetLength / stepSize);
+    float jitter = stepSize * IGN(positionCS, _FrameCount);
 
     float phaseMainLight = GetMainLightPhase(rdPhase);
-    float minusStepLengthTimesAbsortion = -stepLength * _Absortion;
+    float minusStepSizeTimesAbsortion = -stepSize * _Absortion;
                 
     float3 volumetricFogColor = float3(0.0, 0.0, 0.0);
     float transmittance = 1.0;
 
     UNITY_LOOP
-    for (int i = 0; i < _MaxSteps; ++i)
+    for (int i = 0; i < actualSteps; ++i)
     {
-        float dist = jitter + i * stepLength;
-        
+        float dist = jitter + i * stepSize;
+
         UNITY_BRANCH
         if (dist >= offsetLength)
-            break;
+            break;        
 
         // We are making the space between the camera position and the near plane "non existant", as if fog did not exist there.
         // However, it removes a lot of noise when in closed environments with an attenuation that makes the scene darker
@@ -282,17 +273,19 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         if (density <= 0.0)
             continue;
 
-        float stepAttenuation = exp(minusStepLengthTimesAbsortion * density);
-        transmittance *= stepAttenuation;
-
-        float3 apvColor = GetStepAdaptiveProbeVolumeEvaluation(pixCoord, currPosWS, density);
+        float3 apvColor = GetStepAdaptiveProbeVolumeEvaluation(uv, currPosWS, density);
+        float3 reflectionProbeColor = GetStepReflectionProbesEvaluation(uv, currPosWS, rd, density);
         float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight, density);
         float3 additionalLightsColor = GetStepAdditionalLightsColor(uv, currPosWS, rd, density);
-        
-        // TODO: Additional contributions? Reflection probes, etc...
-        float3 stepColor = apvColor + mainLightColor + additionalLightsColor;
-        volumetricFogColor += (stepColor * (transmittance * stepLength));
-        
+
+        float3 stepColor = apvColor + reflectionProbeColor + mainLightColor + additionalLightsColor;
+
+        float stepAttenuation = exp(minusStepSizeTimesAbsortion * density);
+        float transmittanceFactor = (1.0 - stepAttenuation) / max(density * _Absortion, 1e-5);        
+
+        volumetricFogColor += (stepColor * (transmittance * transmittanceFactor));
+        transmittance *= stepAttenuation;
+
         // TODO: Break out when transmittance reaches low threshold and remap the transmittance when doing so.
         // It does not make sense right now because the fog does not properly support transparency, so having dense fog leads to issues.
     }
