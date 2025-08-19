@@ -1,14 +1,14 @@
 # Requirements
 
-Unity 2022.3, 2023.1, 2023.2, 6000.0 or 6000.1 along with its corresponding URP version.
+Unity 6.1 or above, along with its corresponding URP version and render graph.
 
 # Features
 
-* Render graph and compatibility mode support for Unity 6 and above.
+* Supports render graph.
 * Support for the main light, spot lights and point lights.
 * Shadows and light cookies support for the lights described above.
 * Realtime and mixed lights support.
-* APV support for Unity 2023.1+.
+* APV and reflection probes sampling support.
 * Perspective and orthographic projection support.
 * Single pass VR rendering support. This is verified by users, since I do not work on VR.
 * Seamlessly integrated into URP volume system.
@@ -40,14 +40,14 @@ Then you can proceed to install this package:
 
 # Known limitations
 
+* Shader model 4.5+ is required.
 * Multipass VR rendering is not supported.
-* WebGL is not supported. See https://github.com/CristianQiu/Unity-URP-Volumetric-Light/issues/7.
-* Not tested on consoles spectrum (Playstation, Xbox, Switch) but very likely to work. PS5 has been verified by users (v0.5.6).
+* Not tested on consoles spectrum (Playstation, Xbox, Switch) but very likely to work. PS5 has been verified by users as of v0.5.6.
 * Transparent objects are not blended correctly with fog.
 * Fully baked lights are not supported.
 * Fog is only rendered up to a certain distance from the camera.
 * It may be possible to notice more noise in some light regions at certain view angles.
-* When using forward or deferred rendering path, performance can be heavily affected when adding multiple additional lights. Forward+ or Deferred+ is highly recommended for best performance when support for additional lights is needed.
+* When using forward or deferred rendering path, performance can be heavily affected when adding multiple additional lights. Using Forward+ or Deferred+ is highly recommended for best performance when support for additional lights is needed.
 
 # Known Bugs
 
@@ -56,12 +56,11 @@ Then you can proceed to install this package:
 # TODO
 
 There are a few things that I would like to add at some point, as I like coming back to this project from time to time in my spare time.
-Some of which are (in no particular order):
+Some of which are:
 
-* WebGL support.
-* Further improvements on performance and quality: quarter resolution rendering, reprojection, better transparency support...
-* New features: density volumes, noise, self shadowing...
-* And of course... bug fixing! Do not hesitate to open issues for anything that you find unexpected or buggy.
+* Further improvements on reprojection and transparency support.
+* New features: density volumes and self shadowing.
+* Bug fixing: Do not hesitate to open issues for anything that you find unexpected or buggy.
 
 # Preview
 
