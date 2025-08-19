@@ -242,7 +242,8 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
     offsetLength -= iniOffsetToNearPlane;
 
     // Clamp the step length and recalculate the steps, because we do not want to step hundred of times when a column is just a few centimeters away in the depth buffer.
-    float stepSize = min(max(_Distance - iniOffsetToNearPlane, 0.0), offsetLength) / (float)_MaximumSteps;
+    offsetLength = min(max(_Distance - iniOffsetToNearPlane, 0.0), offsetLength);
+    float stepSize = offsetLength / (float)_MaximumSteps;
     stepSize = max(stepSize, _MinimumStepSize);
     int actualSteps = (int)ceil(offsetLength / stepSize);
     float jitter = stepSize * IGN(positionCS, _FrameCount);
