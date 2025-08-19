@@ -1,13 +1,15 @@
 # Requirements
 
-Unity 6.1 or above, along with its corresponding URP version and render graph.
+* Unity 6.1 or above.
+* URP.
+* Render graph.
+* Shader model 4.5 or above.
 
 # Features
 
-* Supports render graph.
 * Support for the main light, spot lights and point lights.
 * Shadows and light cookies support for the lights described above.
-* Realtime and mixed lights support.
+* Realtime and mixed lights.
 * APV and reflection probes sampling support.
 * Perspective and orthographic projection support.
 * Single pass VR rendering support. This is verified by users, since I do not work on VR.
@@ -17,7 +19,7 @@ Unity 6.1 or above, along with its corresponding URP version and render graph.
 
 # Installation
 
-The recommended way to install the package is through the package manager in Unity (UPM).
+The recommended way to install the package is through the package manager in Unity.
 Before installing, make sure that URP is installed and correctly set up in your project.
 Then you can proceed to install this package:
 
@@ -40,7 +42,6 @@ Then you can proceed to install this package:
 
 # Known limitations
 
-* Shader model 4.5+ is required.
 * Multipass VR rendering is not supported.
 * Not tested on consoles spectrum (Playstation, Xbox, Switch) but very likely to work. PS5 has been verified by users as of v0.5.6.
 * Transparent objects are not blended correctly with fog.
@@ -58,7 +59,7 @@ Then you can proceed to install this package:
 There are a few things that I would like to add at some point, as I like coming back to this project from time to time in my spare time.
 Some of which are:
 
-* Further improvements on reprojection and transparency support.
+* Further improvements on reprojection and enhanced transparency support.
 * New features: density volumes and self shadowing.
 * Bug fixing: Do not hesitate to open issues for anything that you find unexpected or buggy.
 
