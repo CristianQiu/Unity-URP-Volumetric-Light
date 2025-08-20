@@ -1,6 +1,9 @@
 #ifndef UTILS_INCLUDED
 #define UTILS_INCLUDED
 
+static const float FLOAT_EPSILON = 0.00000001f;
+static const float FLOAT_GREATER_EPSILON = 0.0001f;
+
 // Gets where the value lies within the range [a, b]. At 0, value is at a, at 1, value is at b.
 float InverseLerp(float a, float b, float value)
 {

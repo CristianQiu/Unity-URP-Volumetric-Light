@@ -216,9 +216,9 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd)
         float3 distToPos = additionalLightPos.xyz - currPosWS;
         float distToPosMagnitudeSq = dot(distToPos, distToPos);
 
+        // Ease out towards the origin of the light to minimize potential seams, specially when the remapping starts taking over.
         float t = InverseLerp(0.0, _RadiiSq[lightIndex], distToPosMagnitudeSq);
-        float oneMinusT = 1.0 - t;
-        float newScattering = 1.0 - pow(oneMinusT, 8.0);
+        float newScattering = 1.0 - pow(1.0 - t, 8.0);
         
         // If directional lights are also considered as additional lights when more than 1 is used, ignore the previous code when it is a directional light.
         // They store direction in additionalLightPos.xyz and have .w set to 0, while point and spotlights have it set to 1.
@@ -226,7 +226,7 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd)
         newScattering *= _Scatterings[lightIndex];
     
         float phase = CornetteShanksPhaseFunction(_Anisotropies[lightIndex], dot(rd, additionalLight.direction));
-        additionalLightsColor += (additionalLight.color * (additionalLight.shadowAttenuation * (additionalLight.distanceAttenuation) * phase * newScattering));
+        additionalLightsColor += (additionalLight.color * (additionalLight.shadowAttenuation * additionalLight.distanceAttenuation * phase * newScattering));
     LIGHT_LOOP_END
 
     return additionalLightsColor;
@@ -249,8 +249,9 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
     float3 roNearPlane = ro + rd * iniOffsetToNearPlane;
 
     // Clamp the length we raymarch to be in between camera near plane and the minimum of depth buffer or _Distance.
-    // Then recalculate the steps to be clamped to a minimum step size, because we do not want to step hundred of times when a column is just a few centimeters away in the depth buffer.
     offsetLength = min(max(_Distance - iniOffsetToNearPlane, 0.0), offsetLength - iniOffsetToNearPlane);
+
+    // Then recalculate the steps to be clamped to a minimum step size, because we do not want to step hundred of times when a column is just a few centimeters away in the depth buffer.
     float stepSize = offsetLength / (float)_MaximumSteps;
     stepSize = max(stepSize, _MinimumStepSize);
     int actualSteps = (int)ceil(offsetLength / stepSize);
@@ -263,7 +264,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
                 
     float3 volumetricFogColor = float3(0.0, 0.0, 0.0);
     float transmittance = 1.0;
-    //float3 environmentColor = _GlossyEnvironmentColor.rgb;
+    float3 environmentColor = _GlossyEnvironmentColor.rgb;
 
     UNITY_LOOP
     for (int i = 0; i < actualSteps; ++i)
@@ -281,17 +282,20 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
                     
         UNITY_BRANCH
         if (density <= 0.0)
+        {
+            dist += stepSize;
             continue;
+        }
 
         float3 apvColor = GetStepAdaptiveProbeVolumeEvaluation(uv, currPosWS);
         float3 reflectionProbesColor = GetStepReflectionProbesEvaluation(uv, currPosWS, rd);
         float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight);
         float3 additionalLightsColor = GetStepAdditionalLightsColor(uv, currPosWS, rd);
 
-        float3 stepColor = (apvColor + reflectionProbesColor + mainLightColor + additionalLightsColor) * density;
+        float3 stepColor = (apvColor + reflectionProbesColor + mainLightColor + additionalLightsColor + environmentColor) * density;
 
         float stepAttenuation = exp(minusStepSizeTimesAbsortion * density);
-        float transmittanceFactor = (1.0 - stepAttenuation) / max(density * _Absortion, 1e-5);        
+        float transmittanceFactor = (1.0 - stepAttenuation) / max(density * _Absortion, FLOAT_GREATER_EPSILON);
 
         volumetricFogColor += (stepColor * (transmittance * transmittanceFactor));
         transmittance *= stepAttenuation;

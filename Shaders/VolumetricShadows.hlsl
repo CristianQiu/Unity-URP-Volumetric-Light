@@ -2,12 +2,13 @@
 #define VOLUMETRIC_SHADOWS_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+#include "./Utils.hlsl"
 
 // Copied and modified from SampleShadowmap from Shadows.hlsl. 
 real VolumetricSampleShadowmap(TEXTURE2D_SHADOW_PARAM(ShadowMap, sampler_ShadowMap), float4 shadowCoord, ShadowSamplingData samplingData, half4 shadowParams, bool isPerspectiveProjection = true)
 {
     if (isPerspectiveProjection)
-        shadowCoord.xyz /= max(0.00001, shadowCoord.w);
+        shadowCoord.xyz /= max(FLOAT_GREATER_EPSILON, shadowCoord.w);
 
     real attenuation = real(SAMPLE_TEXTURE2D_SHADOW(ShadowMap, sampler_ShadowMap, shadowCoord.xyz));
     real shadowStrength = shadowParams.x;
