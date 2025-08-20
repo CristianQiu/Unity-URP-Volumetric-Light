@@ -71,8 +71,8 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	public ClampedIntParameter maximumSteps = new ClampedIntParameter(16, 4, 128);
 	[Tooltip("This value is used to clamp and modify the maximum steps under certain circumstances. It helps to further tune down the maximum steps when there is no need for so many steps depending on the view. Lower values will decrease performance while enhancing quality. Greater values will do the opposite.")]
 	public ClampedFloatParameter minimumStepSize = new ClampedFloatParameter(0.25f, 0.2f, 2.0f);
-	[Tooltip("EXPERIMENTAL. Reprojection uses information from previous frames to make the fog more stable, but can cause ghosting under certain circumstances. Unity's motion vectors are rendered when this option is enabled.")]
-	public BoolParameter reprojection_Experimental = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
+	[Tooltip("Reprojection uses information from previous frames to make the fog more stable, but can cause ghosting under certain circumstances. Unity's motion vectors are rendered when this option is enabled.")]
+	public BoolParameter reprojection = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("The number of times that the fog texture will be blurred. Higher values lead to softer volumetric god rays at the cost of some performance.")]
 	public ClampedIntParameter blurIterations = new ClampedIntParameter(2, 1, 4);
 	[Tooltip("Disabling this will completely remove any feature from the volumetric fog from being rendered at all.")]

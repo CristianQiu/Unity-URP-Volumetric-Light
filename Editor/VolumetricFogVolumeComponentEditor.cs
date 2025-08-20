@@ -84,7 +84,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		resolution = Unpack(pf.Find(x => x.resolution));
 		maximumSteps = Unpack(pf.Find(x => x.maximumSteps));
 		minimumStepSize = Unpack(pf.Find(x => x.minimumStepSize));
-		reprojection = Unpack(pf.Find(x => x.reprojection_Experimental));
+		reprojection = Unpack(pf.Find(x => x.reprojection));
 		blurIterations = Unpack(pf.Find(x => x.blurIterations));
 		enabled = Unpack(pf.Find(x => x.enabled));
 

@@ -455,7 +455,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	public void ConfigurePassForTick()
 	{
 		renderPassEvent = (RenderPassEvent)GetVolumetricFogVolumeComponent().renderPassEvent.value;
-		isReprojectionEnabledForTick = GetVolumetricFogVolumeComponent().reprojection_Experimental.value;
+		isReprojectionEnabledForTick = GetVolumetricFogVolumeComponent().reprojection.value;
 
 		ScriptableRenderPassInput passInputs = isReprojectionEnabledForTick ? (ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Motion) : ScriptableRenderPassInput.Depth;
 		ConfigureInput(passInputs);

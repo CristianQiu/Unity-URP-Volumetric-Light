@@ -13,7 +13,7 @@ This update may NOT be compatible with your project or could require re-tweaking
 * Added option to render either at half, or quarter resolution. Quarter resolution works extremely well on 4k resolution and/or when additional features (noise, apv, etc) are needed.
 * Added option to sample a 3D noise texture to add variation to fog. A texture is included in the package, you can find it in 'Packages->URP Volumetric Fog->Textures->Noise'
 * Added option for reflection probes sampling option. This option requires Forward+ or Deferred+ rendering path and it is currently ignored otherwise.
-* Added reprojection as an experimental feature. Reprojection requires Unity's motion vectors (they are added automatically when reprojection is enabled) to be rendered and considers the option set in the volume for motion blur, where "camera" or "camera + object" motion vectors can be output.
+* Added reprojection. Reprojection requires Unity's motion vectors (they are added automatically when reprojection is enabled) to be rendered and considers the option set in the volume for motion blur, where "camera" or "camera + object" motion vectors can be output.
 * All new additions to the volume have tooltips that you can read, just like the existing parameters.
 * Changed the falloff going from the base height to the maximum height of the fog to be more appealing.
 
