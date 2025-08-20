@@ -138,7 +138,7 @@ float GetFogDensity(float3 posWS)
     float range = abs(_MaximumHeight - _BaseHeight);
     float topFactor = exp(-range / FOG_HEIGHT_FALLOFF);
     float relativeExp = exp(-(posWS.y - _BaseHeight) / FOG_HEIGHT_FALLOFF);
-    float normalizedDensity = saturate((relativeExp - topFactor) / (1.0 - topFactor));
+    float normalizedDensity = InverseLerp(topFactor, 1.0, relativeExp);
 
     return normalizedDensity * _Density * GetNoise(posWS);
 }
