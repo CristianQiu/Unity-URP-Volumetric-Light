@@ -114,7 +114,9 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	/// <returns></returns>
 	public bool IsActive()
 	{
-		return enabled.value && distance.value > 0.0f && groundHeight.value < maximumHeight.value && density.value > 0.0f;
+		bool groundIsOverMaxHeight = enableGround.value && groundHeight.value >= maximumHeight.value;
+
+		return enabled.value && distance.value > 0.0f && density.value > 0.0f && !groundIsOverMaxHeight;
 	}
 
 	#endregion
