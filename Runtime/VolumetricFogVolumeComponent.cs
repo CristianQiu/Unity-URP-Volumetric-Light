@@ -60,7 +60,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("The size of noise. Lower values mean higher frequency noise.")]
 	public FloatParameter noiseScale = new FloatParameter(5f);
 	[Tooltip("These values alter how the noise carves into the uniform fog. Decrease the minimum value to accentuate holes and increase the maximum value to keep the high values of noise closer or above to the original uniform fog density value.")]
-	public FloatRangeParameter noiseMinMax = new FloatRangeParameter(new Vector2(0.0f, 1.0f), -2.5f, 2.5f);
+	public FloatRangeParameter noiseMinMax = new FloatRangeParameter(new Vector2(0.0f, 1.0f), -1.0f, 1.0f);
 	[Tooltip("The speed of noise in each axii.")]
 	public Vector3Parameter noiseVelocity = new Vector3Parameter(new Vector3(0.05f, 0.1f, 0.075f));
 
