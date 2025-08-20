@@ -245,14 +245,16 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
     CalculateRaymarchingParams(uv, ro, rd, iniOffsetToNearPlane, offsetLength, rdPhase);
 
     float3 roNearPlane = ro + rd * iniOffsetToNearPlane;
-    offsetLength -= iniOffsetToNearPlane;
 
-    // Clamp the step length and recalculate the steps, because we do not want to step hundred of times when a column is just a few centimeters away in the depth buffer.
-    offsetLength = min(max(_Distance - iniOffsetToNearPlane, 0.0), offsetLength);
+    // Clamp the length we raymarch to be in between camera near plane and the minimum of depth buffer or _Distance.
+    // Then recalculate the steps to be clamped to a minimum step size, because we do not want to step hundred of times when a column is just a few centimeters away in the depth buffer.
+    offsetLength = min(max(_Distance - iniOffsetToNearPlane, 0.0), offsetLength - iniOffsetToNearPlane);
     float stepSize = offsetLength / (float)_MaximumSteps;
     stepSize = max(stepSize, _MinimumStepSize);
     int actualSteps = (int)ceil(offsetLength / stepSize);
-    float jitter = stepSize * IGN(positionCS, _FrameCount);
+
+    // Calculate the distance to start at, with some jitter.
+    float dist = stepSize * IGN(positionCS, _FrameCount);
 
     float phaseMainLight = GetMainLightPhase(rdPhase);
     float minusStepSizeTimesAbsortion = -stepSize * _Absortion;
@@ -263,8 +265,6 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
     UNITY_LOOP
     for (int i = 0; i < actualSteps; ++i)
     {
-        float dist = jitter + i * stepSize;
-
         UNITY_BRANCH
         if (dist >= offsetLength)
             break;        
@@ -292,6 +292,8 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
 
         volumetricFogColor += (stepColor * (transmittance * transmittanceFactor));
         transmittance *= stepAttenuation;
+
+        dist += stepSize;
 
         // TODO: Break out when transmittance reaches low threshold and remap the transmittance when doing so.
         // It does not make sense right now because the fog does not properly support transparency, so having dense fog leads to issues.
