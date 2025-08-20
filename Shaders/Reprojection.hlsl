@@ -18,12 +18,14 @@ static const float2 Neighborhood[] = {
     float2(-1.0,  1.0), float2(0.0,  1.0), float2(1.0,  1.0)
 };
 
-// Gets the motion vector at the given uv by downsampling the motion texture following the checkerboard pattern that is used to downsample the depth texture.
-float2 GetMotion(float2 uv, float2 positionCS)
+// Samples motion vectors for the given UV coordinates. Since we are using the motion to work with the downsampled depth texture, we need to sample the motion vectors following the same checkerboard pattern as the depth texture.
+float2 GetMotion(float2 uv)
 {
     float4 depths = GATHER_RED_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, uv);
                 
-    int checkerboard = uint(positionCS.x + positionCS.y) & 1;
+    // TODO: equivalent to positionCS * 2 at half resolution. This is more expensive but we would need to pass in the downsample factor.
+    uint2 positionCSxy = uint2(round(uv * _CameraDepthTexture_TexelSize.zw));
+    int checkerboard = uint(positionCSxy.x + positionCSxy.y) & 1;
                 
     int depthUv = 0;
     float depth = depths.x;
@@ -124,9 +126,9 @@ float3 NeigborhoodClamp(float2 uv, float3 currentFrameSampleRGB, float3 historyR
 }
 
 // Reprojects information from the history texture to the current frame texture using motion and depth information.
-float4 Reproject(float2 uv, float2 positionCSxy, TEXTURE2D_X(_CurrentFrameTexture), TEXTURE2D_X(_HistoryTexture))
+float4 Reproject(float2 uv, TEXTURE2D_X(_CurrentFrameTexture), TEXTURE2D_X(_HistoryTexture))
 {
-    float2 motion = GetMotion(uv, positionCSxy);
+    float2 motion = GetMotion(uv);
     float2 prevUv = uv - motion;
                 
     float4 currentFrame = SAMPLE_TEXTURE2D_X(_CurrentFrameTexture, sampler_PointClamp, uv);

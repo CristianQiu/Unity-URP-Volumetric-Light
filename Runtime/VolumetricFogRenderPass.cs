@@ -434,13 +434,14 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 				Scatterings[additionalLightIndex] = scattering;
 				RadiiSq[additionalLightIndex++] = radius * radius;
 			}
+
+			volumetricFogMaterial.SetFloatArray(RadiiSqArrayId, RadiiSq);
 		}
 
 		if (enableMainLightContribution || enableAdditionalLightsContribution)
 		{
 			volumetricFogMaterial.SetFloatArray(AnisotropiesArrayId, Anisotropies);
 			volumetricFogMaterial.SetFloatArray(ScatteringsArrayId, Scatterings);
-			volumetricFogMaterial.SetFloatArray(RadiiSqArrayId, RadiiSq);
 		}
 	}
 

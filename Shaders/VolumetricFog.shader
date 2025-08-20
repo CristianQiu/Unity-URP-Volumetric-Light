@@ -75,7 +75,7 @@ Shader "Hidden/VolumetricFog"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                return Reproject(input.texcoord, input.positionCS.xy, _BlitTexture, _VolumetricFogHistoryTexture);
+                return Reproject(input.texcoord, _BlitTexture, _VolumetricFogHistoryTexture);
             }
 
             ENDHLSL
