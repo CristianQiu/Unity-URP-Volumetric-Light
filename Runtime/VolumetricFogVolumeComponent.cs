@@ -32,7 +32,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("Higher positive values will make the fog affected by the main light to appear brighter when directly looking to it, while lower negative values will make the fog to appear brighter when looking away from it. The closer the value is closer to 1 or -1, the less the brightness will spread. Most times, positive values higher than 0 and lower than 1 should be used.")]
 	public ClampedFloatParameter mainLightAnisotropy = new ClampedFloatParameter(0.4f, -1.0f, 1.0f);
 	[Tooltip("Higher values will make fog affected by the main light to appear brighter.")]
-	public ClampedFloatParameter mainLightScattering = new ClampedFloatParameter(0.75f, 0.0f, 1.0f);
+	public ClampedFloatParameter mainLightScattering = new ClampedFloatParameter(0.75f, 0.0f, 16.0f);
 	[Tooltip("A multiplier color to tint the main light fog.")]
 	public ColorParameter mainLightTint = new ColorParameter(Color.white, true, false, true);
 	[Tooltip("Disabling this will avoid computing additional lights contribution to fog.")]
@@ -62,7 +62,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("The size of distortion. Lower values mean higher frequency noise.")]
 	public FloatParameter distortionScale = new FloatParameter(5.0f);
 	[Tooltip("The intensity of distortion in each axii.")]
-	public Vector3Parameter distortionIntensity = new Vector3Parameter(new Vector3(0.5f, 0.5f, 0.5f));
+	public Vector3Parameter distortionIntensity = new Vector3Parameter(new Vector3(1.0f, 1.0f, 1.0f));
 	[Tooltip("The velocity of distortion in each axii.")]
 	public Vector3Parameter distortionVelocity = new Vector3Parameter(new Vector3(-0.02f, 0.01f, 0.015f));
 
@@ -102,6 +102,8 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 
 		noiseScale.value = Mathf.Max(0.0f, noiseScale.value);
 		distortionScale.value = Mathf.Max(0.0f, distortionScale.value);
+
+		LoadNoiseTextures();
 	}
 
 	#endregion
@@ -115,6 +117,33 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	public bool IsActive()
 	{
 		return enabled.value && distance.value > 0.0f && groundHeight.value < maximumHeight.value && density.value > 0.0f;
+	}
+
+	#endregion
+
+	#region Methods
+
+	/// <summary>
+	/// Loads the default noise and distortion textures if they are not set in the inspector.
+	/// </summary>
+	private void LoadNoiseTextures()
+	{
+#if UNITY_EDITOR
+		// TODO: We are including about 30MB in the build with these textures, besides, the distortion texture does not need the alpha channel.
+		if (noiseMode.value == VolumetricFogNoiseMode.Noise3DTexture || noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures)
+		{
+			if (noiseTexture.value == null)
+				noiseTexture.value = Resources.Load<Texture3D>("Textures/Noise_128x128x128_R32_SFloat");
+
+			if (distortionTexture.value == null && noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures)
+				distortionTexture.value = Resources.Load<Texture3D>("Textures/Distortion_128x128x128_RGBA32_SFloat");
+		}
+		else
+		{
+			noiseTexture.value = null;
+			distortionTexture.value = null;
+		}
+#endif
 	}
 
 	#endregion

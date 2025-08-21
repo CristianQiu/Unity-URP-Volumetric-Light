@@ -22,20 +22,20 @@
 
 #define FOG_HEIGHT_FALLOFF 10.0
 
-    int _FrameCount;
-    uint _CustomAdditionalLightsCount;
-    float _Distance;
-    float _BaseHeight;
-    float _MaximumHeight;
-    float _GroundHeight;
-    float _Density;
-    float _Absortion;
-    float3 _MainLightTint;
+int _FrameCount;
+uint _CustomAdditionalLightsCount;
+float _Distance;
+float _BaseHeight;
+float _MaximumHeight;
+float _GroundHeight;
+float _Density;
+float _Absortion;
+float3 _MainLightTint;
 #if _APV_CONTRIBUTION
-#if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
-    float _APVContributionWeight;
+    #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
+        float _APVContributionWeight;
 #endif
-#endif
+    #endif
 #if _CLUSTER_LIGHT_LOOP && _REFLECTION_PROBES_CONTRIBUTION
     float _ReflectionProbesContributionWeight;
 #endif
@@ -51,12 +51,12 @@
     float3 _DistortionIntensity;
     float3 _DistortionVelocity;
 #endif
-    int _MaximumSteps;
-    float _MinimumStepSize;
+int _MaximumSteps;
+float _MinimumStepSize;
 
-    float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
-    float _Scatterings[MAX_VISIBLE_LIGHTS + 1];
-    float _RadiiSq[MAX_VISIBLE_LIGHTS];
+float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
+float _Scatterings[MAX_VISIBLE_LIGHTS + 1];
+float _RadiiSq[MAX_VISIBLE_LIGHTS];
 
 // Computes the ray origin, direction, and returns the reconstructed world position for orthographic projection.
 float3 ComputeOrthographicParams(float2 uv, float depth, out float3 ro, out float3 rd)
@@ -127,6 +127,15 @@ float GetNoise(float3 posWS)
 {
     float3 distortion = float3(0.0, 0.0, 0.0);
 
+#if _NOISE
+    float noiseHeightFadeStartT = 0.0;
+    float noiseHeightFadedT = 0.25;
+
+    float noiseHeightFadeStart = lerp(_BaseHeight, _MaximumHeight, noiseHeightFadeStartT);
+    float heightNoiseFullFaded = lerp(_BaseHeight, _MaximumHeight, noiseHeightFadedT);
+    float noiseFade = InverseLerp(heightNoiseFullFaded, noiseHeightFadeStart, posWS.y);
+#endif
+
 #if _NOISE_DISTORTION
     float3 uvwDistortion = (posWS * _DistortionFrequency) + (_Time.y * _DistortionVelocity);
     distortion = SAMPLE_TEXTURE3D_LOD(_DistortionTexture, sampler_LinearRepeat, uvwDistortion, 0).rgb;
@@ -136,10 +145,10 @@ float GetNoise(float3 posWS)
     float3 uvwNoise = (posWS * _NoiseFrequency) + (_Time.y * _NoiseVelocity) + distortion;
     float noise = SAMPLE_TEXTURE3D_LOD(_NoiseTexture, sampler_LinearRepeat, uvwNoise, 0).r;
     noise = RemapSaturate(0.0, 1.0, _NoiseMinMax.x, _NoiseMinMax.y, noise);
-    return noise;
-#else
-    return 1.0;
+    return lerp(1.0, noise, saturate(noiseFade));
 #endif
+ 
+    return 1.0;
 }
 
 // Gets the fog density at the given world height.
@@ -153,7 +162,7 @@ float GetFogDensity(float3 posWS)
     float relativeExp = exp(-(posWS.y - _BaseHeight) / FOG_HEIGHT_FALLOFF);
     float normalizedDensity = InverseLerp(topFactor, 1.0, relativeExp);
 
-    return normalizedDensity * _Density * GetNoise(posWS);
+    return normalizedDensity * GetNoise(posWS) * _Density;
 }
 
 // Gets the GI evaluation from the adaptive probe volume at one raymarch step.
@@ -176,9 +185,8 @@ float3 GetStepReflectionProbesEvaluation(float2 uv, float3 currPosWS, float3 rd)
 {
 #if _CLUSTER_LIGHT_LOOP && _REFLECTION_PROBES_CONTRIBUTION
     return CalculateIrradianceFromReflectionProbes(rd, currPosWS, 1.0, uv) * _ReflectionProbesContributionWeight;
-#else
-    return float3(0.0, 0.0, 0.0);
 #endif
+    return float3(0.0, 0.0, 0.0);
 }
 
 // Gets the main light color at one raymarch step.
@@ -192,9 +200,8 @@ float3 GetStepMainLightColor(float3 currPosWS, float phaseMainLight)
     mainLight.color *= SampleMainLightCookie(currPosWS);
 #endif
     return (mainLight.color * _MainLightTint) * (mainLight.shadowAttenuation * phaseMainLight * _Scatterings[_CustomAdditionalLightsCount]);
-#else
-    return float3(0.0, 0.0, 0.0);
 #endif
+    return float3(0.0, 0.0, 0.0);
 }
 
 // Gets the accumulated color from additional lights at one raymarch step.
@@ -243,9 +250,8 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd)
     LIGHT_LOOP_END
 
     return additionalLightsColor;
-#else
-    return float3(0.0, 0.0, 0.0);
 #endif
+    return float3(0.0, 0.0, 0.0);
 }
 
 // Calculates the volumetric fog. Returns the color in the RGB channels and transmittance in alpha.
@@ -305,7 +311,10 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight);
         float3 additionalLightsColor = GetStepAdditionalLightsColor(uv, currPosWS, rd);
 
-        float3 stepColor = (apvColor + reflectionProbesColor + mainLightColor + additionalLightsColor + environmentColor) * density;
+        float3 stepColor = (apvColor + reflectionProbesColor + mainLightColor + additionalLightsColor) * density;
+
+// extinction is absortion * density, interval is stepsisze accounting jotter?
+        //real OpticalDepthHomogeneousMedium(real extinction, real intervalLength);
 
         float stepAttenuation = exp(minusStepSizeTimesAbsortion * density);
         float transmittanceFactor = (1.0 - stepAttenuation) / max(density * _Absortion, FLOAT_GREATER_EPSILON);
