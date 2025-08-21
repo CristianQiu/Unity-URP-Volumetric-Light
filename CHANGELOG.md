@@ -3,19 +3,22 @@
 ## [0.6.0] - 2025-XX-XX
 
 This is the biggest update to date and it is intended to make this package the best free URP volumetric fog asset for Unity 6.1+.
-This update may NOT be compatible with your project or could require re-tweaking of settings if you are using a previous version of this package already, read with care:
+This update may be destructive if you are upgrading from 0.5.6 or sooner and may NOT be compatible with your project, read with care:
 
-* Unity 6.1 and above is required.
+* Unity 6.1 or above is required.
 * Compatibility mode as alternate path for rendergraph is no longer supported.
 * Shader model 4.5+ is now required, which means WebGL no longer has the partial support it had.
-* Made fundamental changes on how the raymarching steps work. Quality and precision have been increased, with a minimal hit on performance. Indoor scenes in enclosed environments (rooms, corridors, etc) and orthographic and top down perspective cameras should benefit the most from the improvements in quality. When upgrading from 0.5.6, it may be needed to retweak the maximum steps or the new minimum step size parameter. Due to precision changes, it may be possible that scattered light or attenuation look slightly different now.
+* Made fundamental changes on how the raymarching steps work. Quality and precision have been generally increased, with a minimal hit on performance. Indoor scenes in enclosed environments (rooms, corridors, etc) and orthographic and top down perspective cameras should benefit the most from the improvements in quality. When upgrading from 0.5.6, it may be needed to retweak the maximum steps or the new minimum step size parameter. Due to precision changes, it may be possible that scattered light or attenuation look slightly different now.
 * Performance will be much more steady/stable and not depend so much on the current view now.
 * Added option to render either at half, or quarter resolution. Quarter resolution works extremely well on 4k resolution and/or when additional features (noise, apv, etc) are needed.
 * Added option to sample a 3D noise texture to add variation to fog. A texture is included in the package, you can find it in 'Packages->URP Volumetric Fog->Textures->Noise'
+* Added option to distort the previous noise to give even more details. A texture is included in the package, you can find it in 'Packages->URP Volumetric Fog->Textures->Distortion'. Performance wise this option is quite expensive and should be used with care.
 * Added option for reflection probes sampling option. This option requires Forward+ or Deferred+ rendering path and it is currently ignored otherwise.
-* Added reprojection. Reprojection requires Unity's motion vectors (they are added automatically when reprojection is enabled) to be rendered and considers the option set in the volume for motion blur, where "camera" or "camera + object" motion vectors can be output.
+* Added reprojection. Reprojection requires Unity's motion vectors (added automatically when reprojection is enabled) to be rendered and considers the option set in the volume for motion blur, where "camera" or "camera + object" motion vectors can be output.
 * All new additions to the volume have tooltips that you can read, just like the existing parameters.
+* Reordered and renamed some volume elements to have less "groups" and changed their defaults to make more sense. You may have to tweak your values.
 * Changed the falloff going from the base height to the maximum height of the fog to be more appealing.
+* Changed the falloff of the light radius parameter.
 
 ## [0.5.6] - 2025-05-09
 

@@ -22,35 +22,41 @@
 
 #define FOG_HEIGHT_FALLOFF 10.0
 
-int _FrameCount;
-uint _CustomAdditionalLightsCount;
-float _Distance;
-float _BaseHeight;
-float _MaximumHeight;
-float _GroundHeight;
-float _Density;
-float _Absortion;
+    int _FrameCount;
+    uint _CustomAdditionalLightsCount;
+    float _Distance;
+    float _BaseHeight;
+    float _MaximumHeight;
+    float _GroundHeight;
+    float _Density;
+    float _Absortion;
+    float3 _MainLightTint;
 #if _APV_CONTRIBUTION
-    #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
-float _APVContributionWeight;
-    #endif
+#if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
+    float _APVContributionWeight;
+#endif
 #endif
 #if _CLUSTER_LIGHT_LOOP && _REFLECTION_PROBES_CONTRIBUTION
-float _ReflectionProbesContributionWeight;
+    float _ReflectionProbesContributionWeight;
 #endif
-float3 _Tint;
 #if _NOISE
-TEXTURE3D(_NoiseTexture);
-float _NoiseFrequency;
-float2 _NoiseMinMax;
-float3 _NoiseVelocity;
+    TEXTURE3D(_NoiseTexture);
+    float _NoiseFrequency;
+    float2 _NoiseMinMax;
+    float3 _NoiseVelocity;
 #endif
-int _MaximumSteps;
-float _MinimumStepSize;
+#if _NOISE_DISTORTION
+    TEXTURE3D(_DistortionTexture);
+    float _DistortionFrequency;
+    float3 _DistortionIntensity;
+    float3 _DistortionVelocity;
+#endif
+    int _MaximumSteps;
+    float _MinimumStepSize;
 
-float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
-float _Scatterings[MAX_VISIBLE_LIGHTS + 1];
-float _RadiiSq[MAX_VISIBLE_LIGHTS];
+    float _Anisotropies[MAX_VISIBLE_LIGHTS + 1];
+    float _Scatterings[MAX_VISIBLE_LIGHTS + 1];
+    float _RadiiSq[MAX_VISIBLE_LIGHTS];
 
 // Computes the ray origin, direction, and returns the reconstructed world position for orthographic projection.
 float3 ComputeOrthographicParams(float2 uv, float depth, out float3 ro, out float3 rd)
@@ -119,9 +125,16 @@ float GetMainLightPhase(float3 rd)
 // Gets the noise value based on the world position.
 float GetNoise(float3 posWS)
 {
+    float3 distortion = float3(0.0, 0.0, 0.0);
+
+#if _NOISE_DISTORTION
+    float3 uvwDistortion = (posWS * _DistortionFrequency) + (_Time.y * _DistortionVelocity);
+    distortion = SAMPLE_TEXTURE3D_LOD(_DistortionTexture, sampler_LinearRepeat, uvwDistortion, 0).rgb;
+    distortion *= _DistortionIntensity;
+#endif
 #if _NOISE
-    float3 uvw = (posWS * _NoiseFrequency) + (_Time.y * _NoiseVelocity);
-    float noise = SAMPLE_TEXTURE3D_LOD(_NoiseTexture, sampler_LinearRepeat, uvw, 0).r;
+    float3 uvwNoise = (posWS * _NoiseFrequency) + (_Time.y * _NoiseVelocity) + distortion;
+    float noise = SAMPLE_TEXTURE3D_LOD(_NoiseTexture, sampler_LinearRepeat, uvwNoise, 0).r;
     noise = RemapSaturate(0.0, 1.0, _NoiseMinMax.x, _NoiseMinMax.y, noise);
     return noise;
 #else
@@ -178,7 +191,7 @@ float3 GetStepMainLightColor(float3 currPosWS, float phaseMainLight)
 #if _LIGHT_COOKIES
     mainLight.color *= SampleMainLightCookie(currPosWS);
 #endif
-    return (mainLight.color * _Tint) * (mainLight.shadowAttenuation * phaseMainLight * _Scatterings[_CustomAdditionalLightsCount]);
+    return (mainLight.color * _MainLightTint) * (mainLight.shadowAttenuation * phaseMainLight * _Scatterings[_CustomAdditionalLightsCount]);
 #else
     return float3(0.0, 0.0, 0.0);
 #endif
