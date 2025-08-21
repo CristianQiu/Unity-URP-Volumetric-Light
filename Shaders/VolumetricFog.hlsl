@@ -291,7 +291,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         float density = GetFogDensity(currPosWS);
                     
         UNITY_BRANCH
-        if (density <= 0.0)
+        if (density <= 0.001)
         {
             dist += stepSize;
             continue;
@@ -303,9 +303,9 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         float3 additionalLightsColor = GetStepAdditionalLightsColor(uv, currPosWS, rd);
 
         float stepAttenuation = exp(minusStepSizeTimesAbsortion * density);
-        float delta = 1.0 - stepAttenuation;
+        float transmittanceFactor = (1.0 - stepAttenuation) / max(density * _Absortion, FLOAT_GREATER_EPSILON);
 
-        float3 stepColor = (apvColor + reflectionProbesColor + mainLightColor + additionalLightsColor) * (delta * transmittance);
+        float3 stepColor = (apvColor + reflectionProbesColor + mainLightColor + additionalLightsColor) * transmittance * transmittanceFactor * density;
         volumetricFogColor += stepColor;
 
         transmittance *= stepAttenuation;

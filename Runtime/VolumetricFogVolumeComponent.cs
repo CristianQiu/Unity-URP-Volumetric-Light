@@ -20,7 +20,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("The world height at which the fog will have no density at all.")]
 	public FloatParameter maximumHeight = new FloatParameter(50.0f, true);
 	[Tooltip("Below this world height, fog will have no density at all.")]
-	public FloatParameter groundHeight = new FloatParameter(-10000.0f);
+	public FloatParameter groundHeight = new FloatParameter(-100000.0f);
 
 	[Header("Lighting")]
 	[Tooltip("How dense is the fog.")]
