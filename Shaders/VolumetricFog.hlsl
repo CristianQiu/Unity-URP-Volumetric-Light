@@ -273,8 +273,8 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
     float minusStepSizeTimesAbsortion = -stepSize * _Absortion;
                 
     float3 volumetricFogColor = float3(0.0, 0.0, 0.0);
-    float transmittance = 1.0;
     float3 environmentColor = _GlossyEnvironmentColor.rgb;
+    float transmittance = 1.0;
 
     UNITY_LOOP
     for (int i = 0; i < actualSteps; ++i)
@@ -302,17 +302,13 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight);
         float3 additionalLightsColor = GetStepAdditionalLightsColor(uv, currPosWS, rd);
 
-        float3 stepColor = (apvColor + reflectionProbesColor + mainLightColor + additionalLightsColor) * density;
-
-// extinction is absortion * density, interval is stepsisze accounting jotter?
-        //real OpticalDepthHomogeneousMedium(real extinction, real intervalLength);
-
         float stepAttenuation = exp(minusStepSizeTimesAbsortion * density);
-        float transmittanceFactor = (1.0 - stepAttenuation) / max(density * _Absortion, FLOAT_GREATER_EPSILON);
+        float delta = 1.0 - stepAttenuation;
 
-        volumetricFogColor += (stepColor * (transmittance * transmittanceFactor));
+        float3 stepColor = (apvColor + reflectionProbesColor + mainLightColor + additionalLightsColor) * (delta * transmittance);
+        volumetricFogColor += stepColor;
+
         transmittance *= stepAttenuation;
-
         dist += stepSize;
 
         // TODO: Break out when transmittance reaches low threshold and remap the transmittance when doing so.

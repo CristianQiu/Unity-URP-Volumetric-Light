@@ -54,7 +54,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("The size of noise. Lower values mean higher frequency noise.")]
 	public FloatParameter noiseScale = new FloatParameter(5.0f);
 	[Tooltip("These values alter how the noise carves into fog. Decrease the minimum value to accentuate holes and increase the maximum value accentuate the distance between the minimum and maximum value, increasing the contrast in noise.")]
-	public FloatRangeParameter noiseMinMax = new FloatRangeParameter(new Vector2(-0.333f, 0.666f), -1.0f, 1.0f);
+	public FloatRangeParameter noiseMinMax = new FloatRangeParameter(new Vector2(-0.5f, 2.5f), -2.5f, 2.5f);
 	[Tooltip("The speed of noise in each axii.")]
 	public Vector3Parameter noiseVelocity = new Vector3Parameter(new Vector3(0.1f, -0.15f, -0.05f));
 	[Tooltip("The 3D texture used to add distortion to the original noise. The distortion needs to be in the RGB channel of the texture. You can use your own texture or find the provided one with the package in 'Packages -> URP Volumetric Fog -> Textures -> Distortion'.")]
