@@ -127,15 +127,6 @@ float GetNoise(float3 posWS)
 {
     float3 distortion = float3(0.0, 0.0, 0.0);
 
-#if _NOISE
-    float noiseHeightFadeStartT = 0.0;
-    float noiseHeightFadedT = 0.25;
-
-    float noiseHeightFadeStart = lerp(_BaseHeight, _MaximumHeight, noiseHeightFadeStartT);
-    float heightNoiseFullFaded = lerp(_BaseHeight, _MaximumHeight, noiseHeightFadedT);
-    float noiseFade = InverseLerp(heightNoiseFullFaded, noiseHeightFadeStart, posWS.y);
-#endif
-
 #if _NOISE_DISTORTION
     float3 uvwDistortion = (posWS * _DistortionFrequency) + (_Time.y * _DistortionVelocity);
     distortion = SAMPLE_TEXTURE3D_LOD(_DistortionTexture, sampler_LinearRepeat, uvwDistortion, 0).rgb;
@@ -145,7 +136,7 @@ float GetNoise(float3 posWS)
     float3 uvwNoise = (posWS * _NoiseFrequency) + (_Time.y * _NoiseVelocity) + distortion;
     float noise = SAMPLE_TEXTURE3D_LOD(_NoiseTexture, sampler_LinearRepeat, uvwNoise, 0).r;
     noise = RemapSaturate(0.0, 1.0, _NoiseMinMax.x, _NoiseMinMax.y, noise);
-    return lerp(1.0, noise, saturate(noiseFade));
+    return noise;
 #endif
  
     return 1.0;
