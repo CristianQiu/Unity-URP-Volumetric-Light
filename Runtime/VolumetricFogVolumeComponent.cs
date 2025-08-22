@@ -129,14 +129,13 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	private void LoadNoiseTextures()
 	{
 #if UNITY_EDITOR
-		// TODO: We are including about 30MB in the build with these textures, besides, the distortion texture does not need the alpha channel.
 		if (noiseMode.value == VolumetricFogNoiseMode.Noise3DTexture || noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures)
 		{
 			if (noiseTexture.value == null)
-				noiseTexture.value = Resources.Load<Texture3D>("Textures/Noise_128x128x128_R32_SFloat");
+				noiseTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Textures/Noise_128x128x128_R32_SFloat");
 
 			if (distortionTexture.value == null && noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures)
-				distortionTexture.value = Resources.Load<Texture3D>("Textures/Distortion_128x128x128_RGBA32_SFloat");
+				distortionTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Textures/Distortion_128x128x128_RGBA32_SFloat");
 		}
 		else
 		{
