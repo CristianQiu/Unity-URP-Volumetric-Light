@@ -4,10 +4,10 @@
 #include "./DeclareDownsampledDepthTexture.hlsl"
 #include "./Utils.hlsl"
 
-#define KERNEL_RADIUS 4
+#define KERNEL_RADIUS 3
 #define BLUR_DEPTH_FALLOFF 0.5
 
-static const float KernelWeights[] = { 0.2026, 0.1790, 0.1240, 0.0672, 0.0285 };
+static const float KernelWeights[] = { 0.2663, 0.2150, 0.1130, 0.0387 };
 
 // Blurs the RGB channels of the given texture using depth aware gaussian blur, which uses the downsampled camera depth to apply weights to the blur.
 // The alpha channel is not blurred so the original value is returned.
