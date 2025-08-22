@@ -26,7 +26,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("How dense is the fog.")]
 	public ClampedFloatParameter density = new ClampedFloatParameter(0.25f, 0.0f, 1.0f);
 	[Tooltip("Value that defines how much the fog attenuates light as distance increases. Lesser values lead to a darker image.")]
-	public MinFloatParameter attenuationDistance = new MinFloatParameter(256.0f, 0.025f);
+	public MinFloatParameter attenuationDistance = new MinFloatParameter(128.0f, 0.025f);
 	[Tooltip("Disabling this will avoid computing the main light contribution to fog.")]
 	public BoolParameter mainLightContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("Higher positive values will make the fog affected by the main light to appear brighter when directly looking to it, while lower negative values will make the fog to appear brighter when looking away from it. The closer the value is closer to 1 or -1, the less the brightness will spread. Most times, positive values higher than 0 and lower than 1 should be used.")]
@@ -52,9 +52,9 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("The 3D texture used to add noise. The noise needs to be in the R channel of the texture. You can use your own texture or find the provided one with the package in 'Packages -> URP Volumetric Fog -> Textures -> Noise'.")]
 	public Texture3DParameter noiseTexture = new Texture3DParameter(null, true);
 	[Tooltip("The size of noise. Lower values mean higher frequency noise.")]
-	public FloatParameter noiseScale = new FloatParameter(5.0f);
+	public FloatParameter noiseScale = new FloatParameter(2.5f);
 	[Tooltip("These values alter how the noise carves into fog. Decrease the minimum value to accentuate holes and increase the maximum value accentuate the distance between the minimum and maximum value, increasing the contrast in noise.")]
-	public FloatRangeParameter noiseMinMax = new FloatRangeParameter(new Vector2(-0.5f, 2.5f), -2.5f, 2.5f);
+	public FloatRangeParameter noiseMinMax = new FloatRangeParameter(new Vector2(-0.75f, 2.5f), -2.5f, 2.5f);
 	[Tooltip("The speed of noise in each axii.")]
 	public Vector3Parameter noiseVelocity = new Vector3Parameter(new Vector3(0.1f, -0.15f, -0.05f));
 	[Tooltip("The 3D texture used to add distortion to the original noise. The distortion needs to be in the RGB channel of the texture. You can use your own texture or find the provided one with the package in 'Packages -> URP Volumetric Fog -> Textures -> Distortion'.")]
@@ -62,7 +62,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("The size of distortion. Lower values mean higher frequency noise.")]
 	public FloatParameter distortionScale = new FloatParameter(5.0f);
 	[Tooltip("The intensity of distortion in each axii.")]
-	public Vector3Parameter distortionIntensity = new Vector3Parameter(new Vector3(1.0f, 1.0f, 1.0f));
+	public Vector3Parameter distortionIntensity = new Vector3Parameter(new Vector3(0.1f, -0.1f, 0.05f));
 	[Tooltip("The velocity of distortion in each axii.")]
 	public Vector3Parameter distortionVelocity = new Vector3Parameter(new Vector3(-0.02f, 0.01f, 0.015f));
 
@@ -132,10 +132,10 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 		if (noiseMode.value == VolumetricFogNoiseMode.Noise3DTexture || noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures)
 		{
 			if (noiseTexture.value == null)
-				noiseTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Textures/Noise_128x128x128_R32_SFloat");
+				noiseTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Packages/com.cqf.urpvolumetricfog/Textures/Noise_128x128x128_R32_SFloat.asset");
 
 			if (distortionTexture.value == null && noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures)
-				distortionTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Textures/Distortion_128x128x128_RGBA32_SFloat");
+				distortionTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Packages/com.cqf.urpvolumetricfog/Textures/Distortion_128x128x128_RGBA32_SFloat.asset");
 		}
 		else
 		{
