@@ -33,23 +33,23 @@ float _Absortion;
 float3 _MainLightTint;
 #if _APV_CONTRIBUTION
     #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
-        float _APVContributionWeight;
+float _APVContributionWeight;
 #endif
     #endif
 #if _CLUSTER_LIGHT_LOOP && _REFLECTION_PROBES_CONTRIBUTION
-    float _ReflectionProbesContributionWeight;
+float _ReflectionProbesContributionWeight;
 #endif
 #if _NOISE
-    TEXTURE3D(_NoiseTexture);
-    float _NoiseFrequency;
-    float2 _NoiseMinMax;
-    float3 _NoiseVelocity;
+TEXTURE3D(_NoiseTexture);
+float _NoiseFrequency;
+float2 _NoiseMinMax;
+float3 _NoiseVelocity;
 #endif
 #if _NOISE_DISTORTION
-    TEXTURE3D(_DistortionTexture);
-    float _DistortionFrequency;
-    float3 _DistortionIntensity;
-    float3 _DistortionVelocity;
+TEXTURE3D(_DistortionTexture);
+float _DistortionFrequency;
+float3 _DistortionIntensity;
+float3 _DistortionVelocity;
 #endif
 int _MaximumSteps;
 float _MinimumStepSize;

@@ -19,23 +19,6 @@ static const float2 Neighborhood[] = {
     float2(-1.0,  1.0), float2(0.0,  1.0), float2(1.0,  1.0)
 };
 
-// From Playdead's INSIDE: https://github.com/playdeadgames/temporal/blob/master/Assets/Shaders/TemporalReprojection.shader
-float4 ClipAABB(float3 aabb_min, float3 aabb_max, float4 p, float4 q)
-{
-    float3 p_clip = 0.5 * (aabb_max + aabb_min);
-    float3 e_clip = 0.5 * (aabb_max - aabb_min) + FLOAT_EPSILON;
-
-    float4 v_clip = q - float4(p_clip, p.w);
-    float3 v_unit = v_clip.xyz / e_clip;
-    float3 a_unit = abs(v_unit);
-    float ma_unit = max(a_unit.x, max(a_unit.y, a_unit.z));
-
-    if (ma_unit > 1.0)
-        return float4(p_clip, p.w) + v_clip / ma_unit;
-    else
-        return q;
-}
-
 // Samples motion vectors for the given UV coordinates. Since we are using the motion to work with the downsampled depth texture, we need to sample the motion vectors following the same checkerboard pattern as the depth texture.
 float2 GetMotion(float2 uv)
 {
@@ -122,6 +105,23 @@ float TestForDepthRejection(float2 uv, float2 prevUv)
     float rejection = InverseLerp(0.0, DEPTH_FULL_REJECTION, depthDiff);
 
     return smoothstep(0.0, 1.0, rejection);
+}
+
+// From Playdead's INSIDE: https://github.com/playdeadgames/temporal/blob/master/Assets/Shaders/TemporalReprojection.shader
+float4 ClipAABB(float3 aabb_min, float3 aabb_max, float4 p, float4 q)
+{
+    float3 p_clip = 0.5 * (aabb_max + aabb_min);
+    float3 e_clip = 0.5 * (aabb_max - aabb_min) + FLOAT_EPSILON;
+
+    float4 v_clip = q - float4(p_clip, p.w);
+    float3 v_unit = v_clip.xyz / e_clip;
+    float3 a_unit = abs(v_unit);
+    float ma_unit = max(a_unit.x, max(a_unit.y, a_unit.z));
+
+    if (ma_unit > 1.0)
+        return float4(p_clip, p.w) + v_clip / ma_unit;
+    else
+        return q;
 }
 
 // Clamps the given history sample to the neighborhood of the current frame center texel and returns it.
