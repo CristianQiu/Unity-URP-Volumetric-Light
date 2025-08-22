@@ -20,29 +20,20 @@ static const float2 Neighborhood[] = {
 };
 
 // From Playdead's INSIDE: https://github.com/playdeadgames/temporal/blob/master/Assets/Shaders/TemporalReprojection.shader
-float4 clip_aabb(float3 aabb_min, float3 aabb_max, float4 p, float4 q)
+float4 ClipAABB(float3 aabb_min, float3 aabb_max, float4 p, float4 q)
 {
-    float4 r = q - p;
-    float3 rmax = aabb_max - p.xyz;
-    float3 rmin = aabb_min - p.xyz;
+    float3 p_clip = 0.5 * (aabb_max + aabb_min);
+    float3 e_clip = 0.5 * (aabb_max - aabb_min) + FLOAT_EPSILON;
 
-    const float eps = FLT_EPS;
+    float4 v_clip = q - float4(p_clip, p.w);
+    float3 v_unit = v_clip.xyz / e_clip;
+    float3 a_unit = abs(v_unit);
+    float ma_unit = max(a_unit.x, max(a_unit.y, a_unit.z));
 
-    if (r.x > rmax.x + eps)
-	    r *= (rmax.x / r.x);
-    if (r.y > rmax.y + eps)
-	    r *= (rmax.y / r.y);
-    if (r.z > rmax.z + eps)
-	    r *= (rmax.z / r.z);
-
-    if (r.x < rmin.x - eps)
-	    r *= (rmin.x / r.x);
-    if (r.y < rmin.y - eps)
-	    r *= (rmin.y / r.y);
-    if (r.z < rmin.z - eps)
-	    r *= (rmin.z / r.z);
-
-    return p + r;
+    if (ma_unit > 1.0)
+        return float4(p_clip, p.w) + v_clip / ma_unit;
+    else
+        return q;
 }
 
 // Samples motion vectors for the given UV coordinates. Since we are using the motion to work with the downsampled depth texture, we need to sample the motion vectors following the same checkerboard pattern as the depth texture.
@@ -158,7 +149,7 @@ float4 NeigborhoodClamp(float2 uv, float4 currentFrameSample, float4 history)
     }
 
 #if USE_CLIPPING
-    return clip_aabb(minSample.xyz, maxSample.xyz, clamp(avg / 9.0, minSample, maxSample), history);
+    return ClipAABB(minSample.xyz, maxSample.xyz, clamp(avg / 9.0, minSample, maxSample), history);
 #else
     return clamp(history, minSample, maxSample);
 #endif
