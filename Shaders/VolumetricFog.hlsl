@@ -22,6 +22,8 @@
 
 #define FOG_HEIGHT_FALLOFF 10.0
 
+float3 _VolumeModifierPos;
+float3 _VolumeModifierParams;
 int _FrameCount;
 uint _CustomAdditionalLightsCount;
 float _Distance;
@@ -145,6 +147,7 @@ float GetNoise(float3 posWS)
 // Gets the fog density at the given world height.
 float GetFogDensity(float3 posWS)
 {
+    UNITY_BRANCH
     if (posWS.y < _GroundHeight || posWS.y > _MaximumHeight)
         return 0.0;
     
@@ -154,6 +157,25 @@ float GetFogDensity(float3 posWS)
     float normalizedDensity = InverseLerp(topFactor, 1.0, relativeExp);
 
     return normalizedDensity * GetNoise(posWS) * _Density;
+}
+
+// Calculates the new density with the volume modifier parameters.
+float CalculateDensityWithVolumeModifier(float originalDensity, float3 posWS)
+{
+    float densityModifier = 1.0;
+    float radiusSq = _VolumeModifierParams.x;
+
+    UNITY_BRANCH
+    if (radiusSq <= 0.0)
+        return originalDensity;
+
+    float3 distToPos = posWS - _VolumeModifierPos;
+    float distToPosMagnitudeSq = dot(distToPos, distToPos);
+    float t = InverseLerp(radiusSq, 0.0, distToPosMagnitudeSq);
+    t = pow(t, _VolumeModifierParams.y);
+
+    densityModifier = _VolumeModifierParams.z;
+    return lerp(originalDensity, originalDensity * densityModifier, t);
 }
 
 // Gets the GI evaluation from the adaptive probe volume at one raymarch step.
@@ -288,7 +310,9 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         // and certain combinations of field of view, raymarching resolution and camera near plane.
         // In those edge cases, it looks so much better, specially when near plane is higher than the minimum (0.01) allowed.
         float3 currPosWS = roNearPlane + rd * dist;
+
         float density = GetFogDensity(currPosWS);
+        density = CalculateDensityWithVolumeModifier(density, currPosWS);
                     
         UNITY_BRANCH
         if (density <= 0.001)

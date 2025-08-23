@@ -75,6 +75,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int VolumetricFogTextureId = Shader.PropertyToID("_VolumetricFogTexture");
 	private static readonly int VolumetricFogHistoryTextureId = Shader.PropertyToID("_VolumetricFogHistoryTexture");
 
+	private static readonly int VolumeModifierPosId = Shader.PropertyToID("_VolumeModifierPos");
+	private static readonly int VolumeModifierParamsId = Shader.PropertyToID("_VolumeModifierParams");
 	private static readonly int FrameCountId = Shader.PropertyToID("_FrameCount");
 	private static readonly int CustomAdditionalLightsCountId = Shader.PropertyToID("_CustomAdditionalLightsCount");
 	private static readonly int DistanceId = Shader.PropertyToID("_Distance");
@@ -380,6 +382,9 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 		UpdateLightsParameters(volumetricFogMaterial, fogVolume, enableMainLightContribution, enableAdditionalLightsContribution, mainLightIndex, visibleLights);
 
+		GetVolumeModifierMaterialProperties(out Vector3 pos, out Vector3 volumeModifierParams);
+		volumetricFogMaterial.SetVector(VolumeModifierPosId, pos);
+		volumetricFogMaterial.SetVector(VolumeModifierParamsId, volumeModifierParams);
 		volumetricFogMaterial.SetInteger(FrameCountId, Time.renderedFrameCount % 64);
 		volumetricFogMaterial.SetInteger(CustomAdditionalLightsCountId, additionalLightsCount);
 		volumetricFogMaterial.SetFloat(DistanceId, fogVolume.distance.value);
@@ -455,6 +460,26 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		{
 			volumetricFogMaterial.SetFloatArray(AnisotropiesArrayId, Anisotropies);
 			volumetricFogMaterial.SetFloatArray(ScatteringsArrayId, Scatterings);
+		}
+	}
+
+	/// <summary>
+	/// Gets the volume modifier parameters as a Vector4.
+	/// </summary>
+	/// <param name="pos"></param>
+	/// <param name="volumeModifierParams"></param>
+	private static void GetVolumeModifierMaterialProperties(out Vector3 pos, out Vector3 volumeModifierParams)
+	{
+		VolumetricFogVolumeModifier volumeModifier = Object.FindAnyObjectByType<VolumetricFogVolumeModifier>(FindObjectsInactive.Exclude);
+
+		pos = Vector3.zero;
+		volumeModifierParams = Vector3.zero;
+
+		if (volumeModifier != null && volumeModifier.isActiveAndEnabled)
+		{
+			pos = volumeModifier.transform.position;
+			float radiusSq = volumeModifier.Radius * volumeModifier.Radius;
+			volumeModifierParams = new Vector3(radiusSq, Mathf.Max(volumeModifier.FallOff, 0.01f), volumeModifier.DensityMultiplier);
 		}
 	}
 

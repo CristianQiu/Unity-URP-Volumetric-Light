@@ -18,14 +18,15 @@ New features:
 * Added option to distort the previous noise to have smoke-like details. A texture is included in the package, you can find it in 'Packages->URP Volumetric Fog->Textures->Distortion'. Both noise textures (40MB alltogether) should only be included in the build if any of your volumes is set to use them at build time.
 * Added option to render either at half, or quarter resolution.
 * Added reprojection. Reprojection requires Unity's motion vectors, which are added automatically when needed. It considers the option set in the volume for motion blur, where "camera" or "camera and object" motion vectors can be output.
+* Added option to add one density volume modifier with an sphere shape. The plan is to add more but there will be a cap for sure, probably in between 4-8.
 
 Additional changes:
 
-* Made fundamental changes on how the raymarching steps work. Quality and precision have been generally increased. Indoor scenes in enclosed environments (rooms, corridors, etc) and orthographic and top down perspective cameras whose position is closer to the ground should benefit the most from the improvements in quality. Generally, a small hit in performance could be taken in exchange for slightly better quality in favorable cases, but performance will be much more steady/stable and not depend so much on the current view now. If you are upgrading from 0.5.6, you will need to tweak the maximum steps and/or minimum step size. I recommend deleting the volume settings and adding it again to start over from defaults.
+* Made fundamental changes on how the raymarching steps work. Quality and precision have been generally increased. Indoor scenes in enclosed environments (rooms, corridors, etc) and orthographic and top down perspective cameras whose position is closer to the ground should benefit the most from the improvements in quality. Generally, a small hit in performance could be taken in exchange for slightly better quality in favorable cases, but performance will be much more steady/stable and not depend so much on the current view now. If you are upgrading from 0.5.6, you will need to tweak the maximum steps and/or minimum step size. It is recommended deleting the volume settings and adding it again to start over from defaults.
 * Increased the maximum scattering parameter for main light from 1 to 16.
 * Changed the falloff going from the base height to the maximum height of the fog to be more appealing.
 * Changed the falloff of the light radius parameter.
-* Each blur iteration is now less aggressive (and slightly more performant as a side effect), so when rendering at quarter resolution at lower resolutions (1080p and below) it does not "overblur" it. Raised the number of maximum iterations that can be set.
+* Each blur iteration is now less aggressive (and slightly more performant as a side effect), so when rendering at quarter resolution at lower resolutions (1080p) it does not "overblur" it. Raised the number of maximum iterations that can be set.
 * Reordered and renamed some volume parameters to have less groups and an easier view overall. Changed many of the default values.
 * All new additions to the volume have tooltips that you can read, just like the existing parameters.
 * Various small improvements both in C# and shader code.

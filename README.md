@@ -9,6 +9,7 @@
 
 * Support for realtime and mixed lights. Main light, spot lights and point lights, including shadows and light cookies for all of them.
 * APV and reflection probes sampling support.
+* Up to one (more to come) density volume modifier with spherical shape.
 * Seamlessly integrated into URP volume system.
 * Perspective and orthographic projection support.
 * Forward, deferred, forward+ and deferred+ rendering paths support. See limitations section. 
@@ -56,8 +57,8 @@ Then you can proceed to install this package:
 There are a few things that I would like to add at some point, as I like coming back to this project from time to time in my spare time.
 Some of which are:
 
-* Further improvements on reprojection and enhanced transparency support.
-* New features: density volumes and self shadowing.
+* Further improvements on reprojection, density volumes and enhanced transparency support.
+* New features: self shadowing.
 * Bug fixing: Do not hesitate to open issues for anything that you find unexpected or buggy.
 
 # Preview
