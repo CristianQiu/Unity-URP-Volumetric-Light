@@ -75,9 +75,9 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int VolumetricFogTextureId = Shader.PropertyToID("_VolumetricFogTexture");
 	private static readonly int VolumetricFogHistoryTextureId = Shader.PropertyToID("_VolumetricFogHistoryTexture");
 
+	private static readonly int FrameCountId = Shader.PropertyToID("_FrameCount");
 	private static readonly int VolumeModifierPosId = Shader.PropertyToID("_VolumeModifierPos");
 	private static readonly int VolumeModifierParamsId = Shader.PropertyToID("_VolumeModifierParams");
-	private static readonly int FrameCountId = Shader.PropertyToID("_FrameCount");
 	private static readonly int CustomAdditionalLightsCountId = Shader.PropertyToID("_CustomAdditionalLightsCount");
 	private static readonly int DistanceId = Shader.PropertyToID("_Distance");
 	private static readonly int BaseHeightId = Shader.PropertyToID("_BaseHeight");
@@ -342,6 +342,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	{
 		VolumetricFogVolumeComponent fogVolume = GetVolumetricFogVolumeComponent();
 
+		bool anyVolumeModifierActive = GetVolumeModifierMaterialProperties(out Vector3 volumeModifierPos, out Vector3 volumeModifierParams);
 		bool enableMainLightContribution = fogVolume.mainLightContribution.value && fogVolume.mainLightScattering.value > 0.0f && mainLightIndex > -1;
 		bool enableAdditionalLightsContribution = fogVolume.additionalLightsContribution.value && additionalLightsCount > 0;
 		bool enableAPVContribution = fogVolume.APVContribution.value && fogVolume.APVContributionWeight.value > 0.0f;
@@ -349,6 +350,11 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		bool enableNoise = fogVolume.noiseMode.value == VolumetricFogNoiseMode.Noise3DTexture && fogVolume.noiseTexture.value != null && fogVolume.noiseScale.value > 0.0f;
 		bool enableDistortion = fogVolume.noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures && fogVolume.distortionTexture.value != null && fogVolume.distortionScale.value > 0.0f;
 		enableNoise = enableNoise || enableDistortion;
+
+		if (anyVolumeModifierActive)
+			volumetricFogMaterial.EnableKeyword("_VOLUME_MODIFIER");
+		else
+			volumetricFogMaterial.DisableKeyword("_VOLUME_MODIFIER");
 
 		if (enableAPVContribution)
 			volumetricFogMaterial.EnableKeyword("_APV_CONTRIBUTION");
@@ -382,10 +388,9 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 		UpdateLightsParameters(volumetricFogMaterial, fogVolume, enableMainLightContribution, enableAdditionalLightsContribution, mainLightIndex, visibleLights);
 
-		GetVolumeModifierMaterialProperties(out Vector3 pos, out Vector3 volumeModifierParams);
-		volumetricFogMaterial.SetVector(VolumeModifierPosId, pos);
-		volumetricFogMaterial.SetVector(VolumeModifierParamsId, volumeModifierParams);
 		volumetricFogMaterial.SetInteger(FrameCountId, Time.renderedFrameCount % 64);
+		volumetricFogMaterial.SetVector(VolumeModifierPosId, volumeModifierPos);
+		volumetricFogMaterial.SetVector(VolumeModifierParamsId, volumeModifierParams);
 		volumetricFogMaterial.SetInteger(CustomAdditionalLightsCountId, additionalLightsCount);
 		volumetricFogMaterial.SetFloat(DistanceId, fogVolume.distance.value);
 		volumetricFogMaterial.SetFloat(BaseHeightId, fogVolume.baseHeight.value);
@@ -464,23 +469,28 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	}
 
 	/// <summary>
-	/// Gets the volume modifier parameters as a Vector4.
+	/// Gets the volume modifier position and parameters and whether the volume modifier is valid and active.
 	/// </summary>
 	/// <param name="pos"></param>
 	/// <param name="volumeModifierParams"></param>
-	private static void GetVolumeModifierMaterialProperties(out Vector3 pos, out Vector3 volumeModifierParams)
+	/// <returns></returns>
+	private static bool GetVolumeModifierMaterialProperties(out Vector3 pos, out Vector3 volumeModifierParams)
 	{
 		VolumetricFogVolumeModifier volumeModifier = Object.FindAnyObjectByType<VolumetricFogVolumeModifier>(FindObjectsInactive.Exclude);
 
 		pos = Vector3.zero;
 		volumeModifierParams = Vector3.zero;
 
-		if (volumeModifier != null && volumeModifier.isActiveAndEnabled)
+		bool valid = volumeModifier != null && volumeModifier.isActiveAndEnabled;
+
+		if (valid)
 		{
 			pos = volumeModifier.transform.position;
 			float radiusSq = volumeModifier.Radius * volumeModifier.Radius;
 			volumeModifierParams = new Vector3(radiusSq, Mathf.Max(volumeModifier.FallOff, 0.01f), volumeModifier.DensityMultiplier);
 		}
+
+		return valid;
 	}
 
 	#endregion

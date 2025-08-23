@@ -22,9 +22,11 @@
 
 #define FOG_HEIGHT_FALLOFF 10.0
 
+int _FrameCount;
+#if _VOLUME_MODIFIER
 float3 _VolumeModifierPos;
 float3 _VolumeModifierParams;
-int _FrameCount;
+#endif
 uint _CustomAdditionalLightsCount;
 float _Distance;
 float _BaseHeight;
@@ -162,6 +164,7 @@ float GetFogDensity(float3 posWS)
 // Calculates the new density with the volume modifier parameters.
 float CalculateDensityWithVolumeModifier(float originalDensity, float3 posWS)
 {
+#if _VOLUME_MODIFIER
     float densityModifier = 1.0;
     float radiusSq = _VolumeModifierParams.x;
 
@@ -176,6 +179,9 @@ float CalculateDensityWithVolumeModifier(float originalDensity, float3 posWS)
 
     densityModifier = _VolumeModifierParams.z;
     return lerp(originalDensity, originalDensity * densityModifier, t);
+#else
+    return originalDensity;
+#endif
 }
 
 // Gets the GI evaluation from the adaptive probe volume at one raymarch step.
@@ -198,8 +204,9 @@ float3 GetStepReflectionProbesEvaluation(float2 uv, float3 currPosWS, float3 rd)
 {
 #if _CLUSTER_LIGHT_LOOP && _REFLECTION_PROBES_CONTRIBUTION
     return CalculateIrradianceFromReflectionProbes(rd, currPosWS, 1.0, uv) * _ReflectionProbesContributionWeight;
-#endif
+#else
     return float3(0.0, 0.0, 0.0);
+#endif
 }
 
 // Gets the main light color at one raymarch step.
@@ -213,8 +220,9 @@ float3 GetStepMainLightColor(float3 currPosWS, float phaseMainLight)
     mainLight.color *= SampleMainLightCookie(currPosWS);
 #endif
     return (mainLight.color * _MainLightTint) * (mainLight.shadowAttenuation * phaseMainLight * _Scatterings[_CustomAdditionalLightsCount]);
-#endif
+#else
     return float3(0.0, 0.0, 0.0);
+#endif
 }
 
 // Gets the accumulated color from additional lights at one raymarch step.
@@ -263,8 +271,9 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd)
     LIGHT_LOOP_END
 
     return additionalLightsColor;
-#endif
+#else
     return float3(0.0, 0.0, 0.0);
+#endif
 }
 
 // Calculates the volumetric fog. Returns the color in the RGB channels and transmittance in alpha.
