@@ -149,7 +149,6 @@ float GetNoise(float3 posWS)
 // Gets the fog density at the given world height.
 float GetFogDensity(float3 posWS)
 {
-    UNITY_BRANCH
     if (posWS.y < _GroundHeight || posWS.y > _MaximumHeight)
         return 0.0;
     
@@ -168,7 +167,6 @@ float CalculateDensityWithVolumeModifier(float originalDensity, float3 posWS)
     float densityModifier = 1.0;
     float radiusSq = _VolumeModifierParams.x;
 
-    UNITY_BRANCH
     if (radiusSq <= 0.0)
         return originalDensity;
 
