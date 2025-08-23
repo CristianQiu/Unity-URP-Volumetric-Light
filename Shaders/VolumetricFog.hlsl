@@ -251,14 +251,16 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd)
         float4 additionalLightPos = _AdditionalLightsPosition[lightIndex];
 #endif
         // This is useful for both spotlights and pointlights. For the latter it is specially true when the point light is inside some geometry and casts shadows.
-        // Gradually reduce additional lights scattering to zero at their origin to try to avoid flicker-aliasing.
+        // Gradually reduce additional lights scattering to zero at their origin to try to avoid noise and flicker-aliasing with high scattering values.
         float3 distToPos = additionalLightPos.xyz - currPosWS;
         float distToPosMagnitudeSq = dot(distToPos, distToPos);
 
-        // Ease out towards the origin of the light to minimize potential seams, specially when the remapping starts taking over.
-        float t = InverseLerp(0.0, _RadiiSq[lightIndex], distToPosMagnitudeSq);
-        float newScattering = 1.0 - pow(1.0 - t, 8.0);
-        
+        // It actually has uses beyond getting rid of noise/aliasing. Allows to make pyramid looking lights for hanging lights where the initial part of the cone needs to be invisible.
+        // Also, using the radius instead of the distance to the plane creates a slightly spherical carve which can be noticed, but sometimes it looks like a detail from the light itself, and its cheaper.
+        float newScattering = smoothstep(0.0, _RadiiSq[lightIndex], distToPosMagnitudeSq);
+        newScattering *= newScattering;
+        newScattering *= _Scatterings[lightIndex];
+
         // If directional lights are also considered as additional lights when more than 1 is used, ignore the previous code when it is a directional light.
         // They store direction in additionalLightPos.xyz and have .w set to 0, while point and spotlights have it set to 1.
         // newScattering = lerp(1.0, newScattering, additionalLightPos.w);
