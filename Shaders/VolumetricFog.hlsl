@@ -295,7 +295,6 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
     float minusStepSizeTimesAbsortion = -stepSize * _Absortion;
                 
     float3 volumetricFogColor = float3(0.0, 0.0, 0.0);
-    float3 environmentColor = _GlossyEnvironmentColor.rgb;
     float transmittance = 1.0;
 
     UNITY_LOOP
