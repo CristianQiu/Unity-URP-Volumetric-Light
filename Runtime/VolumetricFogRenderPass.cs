@@ -14,18 +14,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	#region Definitions
 
 	/// <summary>
-	/// The subpasses the volumetric fog render pass is made of.
-	/// </summary>
-	private enum PassStage : byte
-	{
-		DownsampleDepth,
-		VolumetricFogRender,
-		VolumetricFogReprojection,
-		VolumetricFogBlur,
-		VolumetricFogUpsampleComposition
-	}
-
-	/// <summary>
 	/// Structure to hold all the possible texture handles used by the pass.
 	/// </summary>
 	private struct TextureHandles
@@ -36,6 +24,18 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		public TextureHandle volumetricFogHistoryTarget;
 		public TextureHandle volumetricFogReprojectionTarget;
 		public TextureHandle volumetricFogUpsampleCompositionTarget;
+	}
+
+	/// <summary>
+	/// The subpasses the volumetric fog render pass is made of.
+	/// </summary>
+	private enum PassStage : byte
+	{
+		DownsampleDepth,
+		VolumetricFogRender,
+		VolumetricFogReprojection,
+		VolumetricFogBlur,
+		VolumetricFogUpsampleComposition
 	}
 
 	/// <summary>
@@ -232,8 +232,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 				builder.UseTexture(texHandles.volumetricFogHistoryTarget);
 				builder.UseTexture(texHandles.downsampledCameraDepthTarget);
 				builder.UseTexture(texHandles.prevFrameDownsampledCameraDepthTarget);
-				if (resourceData.motionVectorColor.IsValid())
-					builder.UseTexture(resourceData.motionVectorColor);
+				builder.UseTexture(resourceData.motionVectorColor);
 				builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
 			}
 
@@ -253,7 +252,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			passData.material = volumetricFogMaterial;
 			passData.materialPassIndex = volumetricFogHorizontalBlurPassIndex;
 			passData.materialAdditionalPassIndex = volumetricFogVerticalBlurPassIndex;
-
+			
 			builder.UseTexture(lastFogRenderTarget, AccessFlags.ReadWrite);
 			builder.SetRenderFunc((PassData data, UnsafeGraphContext context) => ExecuteUnsafeBlurPass(data, context));
 		}
