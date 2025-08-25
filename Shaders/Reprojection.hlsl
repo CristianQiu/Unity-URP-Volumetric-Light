@@ -86,7 +86,7 @@ float2 GetMotion(float2 uv)
     return SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_PointClamp, uvs[depthUv]).xy;
 }
 
-// Tests for motion rejection based on the magnitude of the motion vector. Values returned are in the [0, 1] range.
+// Tests for motion rejection based on the motion vector. Values returned are in the [0, 1] range.
 float TestForMotionRejection(float2 motion)
 {
     float motionLength = length(motion);

@@ -21,6 +21,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	private SerializedDataParameter mainLightScattering;
 	private SerializedDataParameter mainLightTint;
 	private SerializedDataParameter additionalLightsContribution;
+	private SerializedDataParameter ambienceColor;
 	private SerializedDataParameter enableAPVContribution;
 	private SerializedDataParameter APVContributionWeight;
 	private SerializedDataParameter enableReflectionProbesContribution;
@@ -67,6 +68,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		mainLightScattering = Unpack(pf.Find(x => x.mainLightScattering));
 		mainLightTint = Unpack(pf.Find(x => x.mainLightTint));
 		additionalLightsContribution = Unpack(pf.Find(x => x.additionalLightsContribution));
+		ambienceColor = Unpack(pf.Find(x => x.ambienceColor));
 		enableAPVContribution = Unpack(pf.Find(x => x.APVContribution));
 		APVContributionWeight = Unpack(pf.Find(x => x.APVContributionWeight));
 		enableReflectionProbesContribution = Unpack(pf.Find(x => x.reflectionProbesContribution));
@@ -125,6 +127,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 			PropertyField(mainLightTint);
 		}
 		PropertyField(additionalLightsContribution);
+		PropertyField(ambienceColor);
 		PropertyField(enableAPVContribution);
 		if (enabledAPVContribution)
 			PropertyField(APVContributionWeight);

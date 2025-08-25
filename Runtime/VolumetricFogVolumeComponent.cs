@@ -37,6 +37,8 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	public ColorParameter mainLightTint = new ColorParameter(Color.white, true, false, true);
 	[Tooltip("Disabling this will avoid computing additional lights contribution to fog.")]
 	public BoolParameter additionalLightsContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
+	[Tooltip("Gives some extra ambience color, as none is considered besides lights, APVs, or reflection probes. Alpha channel determines intensity.")]
+	public ColorParameter ambienceColor = new ColorParameter(Color.black, true, true, true);
 	[Tooltip("When enabled, adaptive probe volumes (APV) will be sampled to contribute to fog.")]
 	public BoolParameter APVContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("A weight factor for the light coming from adaptive probe volumes (APV) when the probe volume contribution is enabled.")]

@@ -86,6 +86,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int DensityId = Shader.PropertyToID("_Density");
 	private static readonly int AbsortionId = Shader.PropertyToID("_Absortion");
 	private static readonly int TintId = Shader.PropertyToID("_MainLightTint");
+	private static readonly int AmbienceColorId = Shader.PropertyToID("_AmbienceColor");
 	private static readonly int APVContributionWeigthId = Shader.PropertyToID("_APVContributionWeight");
 	private static readonly int ReflectionProbesContributionWeightId = Shader.PropertyToID("_ReflectionProbesContributionWeight");
 	private static readonly int NoiseTextureId = Shader.PropertyToID("_NoiseTexture");
@@ -252,7 +253,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			passData.material = volumetricFogMaterial;
 			passData.materialPassIndex = volumetricFogHorizontalBlurPassIndex;
 			passData.materialAdditionalPassIndex = volumetricFogVerticalBlurPassIndex;
-			
+
 			builder.UseTexture(lastFogRenderTarget, AccessFlags.ReadWrite);
 			builder.SetRenderFunc((PassData data, UnsafeGraphContext context) => ExecuteUnsafeBlurPass(data, context));
 		}
@@ -398,6 +399,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		volumetricFogMaterial.SetFloat(DensityId, fogVolume.density.value);
 		volumetricFogMaterial.SetFloat(AbsortionId, 1.0f / fogVolume.attenuationDistance.value);
 		volumetricFogMaterial.SetColor(TintId, fogVolume.mainLightTint.value);
+		volumetricFogMaterial.SetColor(AmbienceColorId, fogVolume.ambienceColor.value);
 		volumetricFogMaterial.SetFloat(APVContributionWeigthId, enableAPVContribution ? fogVolume.APVContributionWeight.value : 0.0f);
 		volumetricFogMaterial.SetFloat(ReflectionProbesContributionWeightId, enableReflectionProbesContribution ? fogVolume.reflectionProbesContributionWeight.value : 0.0f);
 		volumetricFogMaterial.SetTexture(NoiseTextureId, enableNoise ? fogVolume.noiseTexture.value : null);
@@ -468,7 +470,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	}
 
 	/// <summary>
-	/// Gets the volume modifier position and parameters and whether the volume modifier is valid and active.
+	/// Gets the volume modifier position and parameters and whether the volume modifier is valid
+	/// and active.
 	/// </summary>
 	/// <param name="pos"></param>
 	/// <param name="volumeModifierParams"></param>

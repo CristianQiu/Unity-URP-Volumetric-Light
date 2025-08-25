@@ -35,6 +35,7 @@ float _GroundHeight;
 float _Density;
 float _Absortion;
 float3 _MainLightTint;
+float4 _AmbienceColor;
 #if _APV_CONTRIBUTION
     #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
 float _APVContributionWeight;
@@ -327,6 +328,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
             continue;
         }
 
+        float3 ambienceColor = _AmbienceColor.rgb * _AmbienceColor.a; 
         float3 apvColor = GetStepAdaptiveProbeVolumeEvaluation(uv, currPosWS);
         float3 reflectionProbesColor = GetStepReflectionProbesEvaluation(uv, currPosWS, rd);
         float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight);
@@ -335,7 +337,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         float stepAttenuation = exp(minusStepSizeTimesAbsortion * density);
         float transmittanceFactor = (1.0 - stepAttenuation) / max(density * _Absortion, FLOAT_GREATER_EPSILON);
 
-        float3 stepColor = (apvColor + reflectionProbesColor + mainLightColor + additionalLightsColor) * transmittance * transmittanceFactor * density;
+        float3 stepColor = (ambienceColor + apvColor + reflectionProbesColor + mainLightColor + additionalLightsColor) * transmittance * transmittanceFactor * density;
         volumetricFogColor += stepColor;
 
         transmittance *= stepAttenuation;
