@@ -446,7 +446,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 				if (visibleLights[i].light.TryGetComponent(out VolumetricAdditionalLight volumetricLight))
 				{
-					if (volumetricLight.gameObject.activeInHierarchy && volumetricLight.enabled)
+					if (volumetricLight.isActiveAndEnabled)
 					{
 						anisotropy = volumetricLight.Anisotropy;
 						scattering = volumetricLight.Scattering;

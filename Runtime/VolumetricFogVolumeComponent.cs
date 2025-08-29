@@ -105,7 +105,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 		noiseScale.value = Mathf.Max(0.0f, noiseScale.value);
 		distortionScale.value = Mathf.Max(0.0f, distortionScale.value);
 
-		LoadNoiseTextures();
+		SetNoise();
 	}
 
 	#endregion
@@ -126,23 +126,32 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	#region Methods
 
 	/// <summary>
-	/// Loads the default noise and distortion textures if they are not set in the inspector.
+	/// Sets the override state of the noise to match the mode selected and loads the textures when needed.
 	/// </summary>
-	private void LoadNoiseTextures()
+	private void SetNoise()
 	{
 #if UNITY_EDITOR
 		if (noiseMode.value == VolumetricFogNoiseMode.Noise3DTexture || noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures)
 		{
 			if (noiseTexture.value == null)
+			{
 				noiseTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Packages/com.cqf.urpvolumetricfog/Textures/Noise_128x128x128_R32_SFloat.asset");
+				noiseTexture.overrideState = true;
+			}
 
 			if (distortionTexture.value == null && noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures)
+			{
 				distortionTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Packages/com.cqf.urpvolumetricfog/Textures/Distortion_128x128x128_RGBA32_SFloat.asset");
+				distortionTexture.overrideState = true;
+			}
 		}
 		else
 		{
 			noiseTexture.value = null;
 			distortionTexture.value = null;
+
+			noiseTexture.overrideState = false;
+			distortionTexture.overrideState = false;
 		}
 #endif
 	}
