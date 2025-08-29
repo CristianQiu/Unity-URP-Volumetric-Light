@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.5.7] - 2025-05-09
+
+* Fix for Forward+ (and likely Deferred+ too) issue on Metal.
+
 ## [0.5.6] - 2025-05-09
 
 * Minor change to prevent PS5 error reported by user.
