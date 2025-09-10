@@ -393,7 +393,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		{
 			int additionalLightIndex = 0;
 
-			for (int i = 0; i < visibleLights.Length; ++i)
+			for (int i = 0; i < Mathf.Min (visibleLights.Length, UniversalRenderPipeline.maxVisibleAdditionalLights); ++i)
 			{
 				if (i == mainLightIndex)
 					continue;
