@@ -428,10 +428,10 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static void UpdateLightsParameters(Material volumetricFogMaterial, VolumetricFogVolumeComponent fogVolume, bool enableMainLightContribution, bool enableAdditionalLightsContribution, int mainLightIndex, NativeArray<VisibleLight> visibleLights)
 	{
 		// TODO: Forward+ and deferred+ visibleLights.Length is 256. In forward, it is 257 so the main light is considered apart. In deferred it seems to not have any limit (seen 1.6k and beyond).
-		// All rendering paths have maxVisibleAdditionalLights at 256.
-		// For the time being, just assume that if additional lights contribution to fog is enabled, we are either using clustered rendering, or using forward or deferred with, at most, 257 visible lights.
-		int lastIndex = Mathf.Clamp(visibleLights.Length, 0, LightsParametersLength);
-		lastIndex = lastIndex - 1;
+		// All rendering paths have maxVisibleAdditionalLights at 256. For the time being, just
+		// assume that if additional lights contribution to fog is enabled, we are either using
+		// clustered rendering, or using forward or deferred with, at most, 257 visible lights.
+		int lastIndex = Mathf.Clamp(visibleLights.Length, 0, LightsParametersLength) - 1;
 
 		if (enableMainLightContribution && lastIndex >= 0)
 		{
