@@ -1,6 +1,10 @@
 # Changelog
 
-## [0.5.7] - 2025-05-09
+## [0.5.8] - 2025-09-11
+
+* Safety check for array OOB with very high number of lights being visible in the scene.
+
+## [0.5.7] - 2025-08-29
 
 * Fix for Forward+ (and likely Deferred+ too) issue on Metal.
 

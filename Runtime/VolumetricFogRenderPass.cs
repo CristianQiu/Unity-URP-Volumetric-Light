@@ -97,9 +97,11 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int ScatteringsArrayId = Shader.PropertyToID("_Scatterings");
 	private static readonly int RadiiSqArrayId = Shader.PropertyToID("_RadiiSq");
 
-	private static readonly float[] Anisotropies = new float[UniversalRenderPipeline.maxVisibleAdditionalLights + 1];
-	private static readonly float[] Scatterings = new float[UniversalRenderPipeline.maxVisibleAdditionalLights + 1];
-	private static readonly float[] RadiiSq = new float[UniversalRenderPipeline.maxVisibleAdditionalLights];
+	private static int LightsParametersLength = UniversalRenderPipeline.maxVisibleAdditionalLights + 1;
+
+	private static readonly float[] Anisotropies = new float[LightsParametersLength];
+	private static readonly float[] Scatterings = new float[LightsParametersLength];
+	private static readonly float[] RadiiSq = new float[LightsParametersLength];
 
 	private int downsampleDepthPassIndex;
 	private int volumetricFogRenderPassIndex;
@@ -383,17 +385,23 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// <param name="visibleLights"></param>
 	private static void UpdateLightsParameters(Material volumetricFogMaterial, VolumetricFogVolumeComponent fogVolume, bool enableMainLightContribution, bool enableAdditionalLightsContribution, int mainLightIndex, NativeArray<VisibleLight> visibleLights)
 	{
-		if (enableMainLightContribution)
+		// TODO: Forward+ and deferred+ visibleLights.Length is 256. In forward, it is 257 so the main light is considered apart. In deferred it seems to not have any limit (seen 1.6k and beyond).
+		// All rendering paths have maxVisibleAdditionalLights at 256.
+		// For the time being, just assume that if additional lights contribution to fog is enabled, we are either using clustered rendering, or using forward or deferred with, at most, 257 visible lights.
+		int lastIndex = Mathf.Clamp(visibleLights.Length, 0, LightsParametersLength);
+		lastIndex = lastIndex - 1;
+
+		if (enableMainLightContribution && lastIndex >= 0)
 		{
-			Anisotropies[visibleLights.Length - 1] = fogVolume.anisotropy.value;
-			Scatterings[visibleLights.Length - 1] = fogVolume.scattering.value;
+			Anisotropies[lastIndex] = fogVolume.anisotropy.value;
+			Scatterings[lastIndex] = fogVolume.scattering.value;
 		}
 
 		if (enableAdditionalLightsContribution)
 		{
 			int additionalLightIndex = 0;
 
-			for (int i = 0; i < visibleLights.Length; ++i)
+			for (int i = 0; i <= lastIndex; ++i)
 			{
 				if (i == mainLightIndex)
 					continue;
