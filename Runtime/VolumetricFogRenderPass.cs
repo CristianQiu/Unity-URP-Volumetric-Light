@@ -425,17 +425,19 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// <param name="visibleLights"></param>
 	private static void UpdateLightsParameters(Material volumetricFogMaterial, VolumetricFogVolumeComponent fogVolume, bool enableMainLightContribution, bool enableAdditionalLightsContribution, int mainLightIndex, NativeArray<VisibleLight> visibleLights)
 	{
-		if (enableMainLightContribution)
+		int lastIndex = Mathf.Min(visibleLights.Length, UniversalRenderPipeline.maxVisibleAdditionalLights) - 1;
+
+		if (enableMainLightContribution && lastIndex >= 0)
 		{
-			Anisotropies[visibleLights.Length - 1] = fogVolume.mainLightAnisotropy.value;
-			Scatterings[visibleLights.Length - 1] = fogVolume.mainLightScattering.value;
+			Anisotropies[lastIndex] = fogVolume.mainLightAnisotropy.value;
+			Scatterings[lastIndex] = fogVolume.mainLightScattering.value;
 		}
 
 		if (enableAdditionalLightsContribution)
 		{
 			int additionalLightIndex = 0;
 
-			for (int i = 0; i < visibleLights.Length; ++i)
+			for (int i = 0; i <= lastIndex; ++i)
 			{
 				if (i == mainLightIndex)
 					continue;
