@@ -104,9 +104,11 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int ScatteringsArrayId = Shader.PropertyToID("_Scatterings");
 	private static readonly int RadiiSqArrayId = Shader.PropertyToID("_RadiiSq");
 
-	private static readonly float[] Anisotropies = new float[UniversalRenderPipeline.maxVisibleAdditionalLights + 1];
-	private static readonly float[] Scatterings = new float[UniversalRenderPipeline.maxVisibleAdditionalLights + 1];
-	private static readonly float[] RadiiSq = new float[UniversalRenderPipeline.maxVisibleAdditionalLights];
+	private static readonly int LightsParametersLength = UniversalRenderPipeline.maxVisibleAdditionalLights + 1;
+
+	private static readonly float[] Anisotropies = new float[LightsParametersLength];
+	private static readonly float[] Scatterings = new float[LightsParametersLength];
+	private static readonly float[] RadiiSq = new float[LightsParametersLength];
 
 	private int downsampleDepthPassIndex;
 	private int volumetricFogRenderPassIndex;
@@ -425,7 +427,11 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// <param name="visibleLights"></param>
 	private static void UpdateLightsParameters(Material volumetricFogMaterial, VolumetricFogVolumeComponent fogVolume, bool enableMainLightContribution, bool enableAdditionalLightsContribution, int mainLightIndex, NativeArray<VisibleLight> visibleLights)
 	{
-		int lastIndex = Mathf.Min(visibleLights.Length, UniversalRenderPipeline.maxVisibleAdditionalLights) - 1;
+		// TODO: Forward+ and deferred+ visibleLights.Length is 256. In forward, it is 257 so the main light is considered apart. In deferred it seems to not have any limit (seen 1.6k and beyond).
+		// All rendering paths have maxVisibleAdditionalLights at 256.
+		// For the time being, just assume that if additional lights contribution to fog is enabled, we are either using clustered rendering, or using forward or deferred with, at most, 257 visible lights.
+		int lastIndex = Mathf.Clamp(visibleLights.Length, 0, LightsParametersLength);
+		lastIndex = lastIndex - 1;
 
 		if (enableMainLightContribution && lastIndex >= 0)
 		{
@@ -480,6 +486,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// <returns></returns>
 	private static bool GetVolumeModifierMaterialProperties(out Vector3 pos, out Vector3 volumeModifierParams)
 	{
+		// TODO: Implement better volumes (sphere / box) and allow up to 4. This should be the fastest FindObject function, but need a way to cache them.
 		VolumetricFogVolumeModifier volumeModifier = Object.FindAnyObjectByType<VolumetricFogVolumeModifier>(FindObjectsInactive.Exclude);
 
 		pos = Vector3.zero;
@@ -537,6 +544,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		RenderTextureFormat originalColorFormat = cameraTargetDescriptor.colorFormat;
 		Vector2Int originalResolution = new Vector2Int(cameraTargetDescriptor.width, cameraTargetDescriptor.height);
 
+		// TODO: I think there is not any reason left for this to not be a float slider.
 		int downsampleFactor = (int)GetVolumetricFogVolumeComponent().resolution.value;
 
 		cameraTargetDescriptor.width /= downsampleFactor;
