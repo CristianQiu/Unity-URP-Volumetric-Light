@@ -123,14 +123,23 @@ float3 GetStepAdaptiveProbeVolumeEvaluation(float2 uv, float3 posWS, float densi
 }
 
 // Gets the main light color at one raymarch step.
-float3 GetStepMainLightColor(float3 currPosWS, float phaseMainLight, float density)
+float3 GetStepMainLightColor(float3 currPosWS, float phaseMainLight, float density, float distRatio)
 {
 #if _MAIN_LIGHT_CONTRIBUTION_DISABLED
     return float3(0.0, 0.0, 0.0);
 #endif
     Light mainLight = GetMainLight();
-    float4 shadowCoord = TransformWorldToShadowCoord(currPosWS);
-    mainLight.shadowAttenuation = VolumetricMainLightRealtimeShadow(shadowCoord);
+    
+    // Optimization 3: Shadow Sampling LOD
+    // Skip shadow sampling in the first 20% of raymarch distance (near camera)
+    // Near-camera fog is typically thin, shadows less noticeable
+    UNITY_BRANCH
+    if (distRatio > 0.2)
+    {
+        float4 shadowCoord = TransformWorldToShadowCoord(currPosWS);
+        mainLight.shadowAttenuation = VolumetricMainLightRealtimeShadow(shadowCoord);
+    }
+    
 #if _LIGHT_COOKIES
     mainLight.color *= SampleMainLightCookie(currPosWS);
 #endif
@@ -138,7 +147,7 @@ float3 GetStepMainLightColor(float3 currPosWS, float phaseMainLight, float densi
 }
 
 // Gets the accumulated color from additional lights at one raymarch step.
-float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, float density)
+float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, float density, float distRatio)
 {
 #if _ADDITIONAL_LIGHTS_CONTRIBUTION_DISABLED
     return float3(0.0, 0.0, 0.0);
@@ -156,21 +165,46 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd, floa
         UNITY_BRANCH
         if (_Scatterings[lightIndex] > 0.0)
         {
-            Light additionalLight = GetAdditionalPerObjectLight(lightIndex, currPosWS);
-            additionalLight.shadowAttenuation = VolumetricAdditionalLightRealtimeShadow(lightIndex, currPosWS, additionalLight.direction);
-#if _LIGHT_COOKIES
-            additionalLight.color *= SampleAdditionalLightCookie(lightIndex, currPosWS);
-#endif
             // See universal\ShaderLibrary\RealtimeLights.hlsl - GetAdditionalPerObjectLight.
 #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
             float4 additionalLightPos = _AdditionalLightsBuffer[lightIndex].position;
+            float4 additionalLightAttenuation = _AdditionalLightsBuffer[lightIndex].attenuation;
 #else
             float4 additionalLightPos = _AdditionalLightsPosition[lightIndex];
+            float4 additionalLightAttenuation = _AdditionalLightsAttenuation[lightIndex];
+#endif
+            
+            // Optimization 2: Per-Ray Light Culling
+            // Skip light evaluation if outside its influence radius
+            // URP stores 1.0 / (range * range) in attenuation.x
+            float3 distToPos = additionalLightPos.xyz - currPosWS;
+            float distToPosMagnitudeSq = dot(distToPos, distToPos);
+            
+            // Cull lights outside their range (skip directional lights with w == 0)
+            // Handle infinite range lights (attenuation.x == 0)
+            UNITY_BRANCH
+            if (additionalLightPos.w > 0.0 && additionalLightAttenuation.x > 0.0)
+            {
+                float lightRangeSq = 1.0 / additionalLightAttenuation.x;
+                if (distToPosMagnitudeSq > lightRangeSq)
+                    continue;
+            }
+            
+            Light additionalLight = GetAdditionalPerObjectLight(lightIndex, currPosWS);
+            
+            // Optimization 3: Shadow Sampling LOD
+            // Skip shadow sampling in the first 20% of raymarch distance (near camera)
+            UNITY_BRANCH
+            if (distRatio > 0.2)
+            {
+                additionalLight.shadowAttenuation = VolumetricAdditionalLightRealtimeShadow(lightIndex, currPosWS, additionalLight.direction);
+            }
+            
+#if _LIGHT_COOKIES
+            additionalLight.color *= SampleAdditionalLightCookie(lightIndex, currPosWS);
 #endif
             // This is useful for both spotlights and pointlights. For the latter it is specially true when the point light is inside some geometry and casts shadows.
             // Gradually reduce additional lights scattering to zero at their origin to try to avoid flicker-aliasing.
-            float3 distToPos = additionalLightPos.xyz - currPosWS;
-            float distToPosMagnitudeSq = dot(distToPos, distToPos);
             float newScattering = smoothstep(0.0, _RadiiSq[lightIndex], distToPosMagnitudeSq) ;
             newScattering *= newScattering;
             newScattering *= _Scatterings[lightIndex];
@@ -232,16 +266,26 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         float stepAttenuation = exp(minusStepLengthTimesAbsortion * density);
         transmittance *= stepAttenuation;
 
+        // Optimization 1: Early Transmittance Exit
+        // Terminate raymarching when fog becomes fully opaque (transmittance < 1%)
+        // This eliminates wasted iterations on invisible contributions
+        UNITY_BRANCH
+        if (transmittance < 0.01)
+        {
+            transmittance = 0.0;
+            break;
+        }
+
+        // Calculate distance ratio for LOD optimizations
+        float distRatio = dist / _Distance;
+        
         float3 apvColor = GetStepAdaptiveProbeVolumeEvaluation(uv, currPosWS, density);
-        float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight, density);
-        float3 additionalLightsColor = GetStepAdditionalLightsColor(uv, currPosWS, rd, density);
+        float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight, density, distRatio);
+        float3 additionalLightsColor = GetStepAdditionalLightsColor(uv, currPosWS, rd, density, distRatio);
         
         // TODO: Additional contributions? Reflection probes, etc...
         float3 stepColor = apvColor + mainLightColor + additionalLightsColor;
         volumetricFogColor += (stepColor * (transmittance * stepLength));
-        
-        // TODO: Break out when transmittance reaches low threshold and remap the transmittance when doing so.
-        // It does not make sense right now because the fog does not properly support transparency, so having dense fog leads to issues.
     }
 
     return float4(volumetricFogColor, transmittance);
