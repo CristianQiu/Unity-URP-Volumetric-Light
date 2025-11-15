@@ -47,7 +47,7 @@ public sealed class VolumetricFogRendererFeature : ScriptableRendererFeature
 
 		if (shouldAddVolumetricFogRenderPass)
 		{
-			volumetricFogRenderPass.ConfigurePassForTick();
+			volumetricFogRenderPass.ConfigurePass();
 			renderer.EnqueuePass(volumetricFogRenderPass);
 		}
 	}

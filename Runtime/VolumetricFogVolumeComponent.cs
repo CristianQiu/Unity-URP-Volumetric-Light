@@ -8,6 +8,7 @@ using UnityEngine.Rendering.Universal;
 [VolumeComponentMenu("Custom/Volumetric Fog")]
 [VolumeRequiresRendererFeatures(typeof(VolumetricFogRendererFeature))]
 [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+[DisplayInfo(name = "Volumetric Fog", order = 0)]
 public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcessComponent
 {
 	#region Public Attributes
@@ -27,6 +28,8 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	public ClampedFloatParameter density = new ClampedFloatParameter(0.25f, 0.0f, 1.0f);
 	[Tooltip("Value that defines how much the fog attenuates light as distance increases. Lesser values lead to a darker image.")]
 	public MinFloatParameter attenuationDistance = new MinFloatParameter(128.0f, 0.025f);
+	[Tooltip("Gives some extra ambience color, as none is considered besides lights, APVs, or reflection probes. Alpha channel determines intensity.")]
+	public ColorParameter ambienceColor = new ColorParameter(Color.black, true, true, true);
 	[Tooltip("Disabling this will avoid computing the main light contribution to fog.")]
 	public BoolParameter mainLightContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("Higher positive values will make the fog affected by the main light to appear brighter when directly looking to it, while lower negative values will make the fog to appear brighter when looking away from it. The closer the value is closer to 1 or -1, the less the brightness will spread. Most times, positive values higher than 0 and lower than 1 should be used.")]
@@ -37,8 +40,6 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	public ColorParameter mainLightTint = new ColorParameter(Color.white, true, false, true);
 	[Tooltip("Disabling this will avoid computing additional lights contribution to fog.")]
 	public BoolParameter additionalLightsContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
-	[Tooltip("Gives some extra ambience color, as none is considered besides lights, APVs, or reflection probes. Alpha channel determines intensity.")]
-	public ColorParameter ambienceColor = new ColorParameter(Color.black, true, true, true);
 	[Tooltip("When enabled, adaptive probe volumes (APV) will be sampled to contribute to fog.")]
 	public BoolParameter APVContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("A weight factor for the light coming from adaptive probe volumes (APV) when the probe volume contribution is enabled.")]
@@ -71,8 +72,8 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Header("Misc. & Quality")]
 	[Tooltip("The URP render pass event to render the volumetric fog.")]
 	public VolumetricFogRenderPassEventParameter renderPassEvent = new VolumetricFogRenderPassEventParameter(VolumetricFogConstants.DefaultVolumetricFogRenderPassEvent);
-	[Tooltip("Resolution used to render the volumetric fog. At half resolution, 1/4 of the pixels are rendered. At quarter resolution, 1/16 of the pixels are rendered.")]
-	public VolumetricFogResolutionParameter resolution = new VolumetricFogResolutionParameter(VolumetricFogConstants.DefaultResolution);
+	[Tooltip("Resolution multiplier to render the volumetric fog at. At 0.25, 1/16 of the pixels are rendered. At 0.5, 1/4 of the pixels are rendered.")]
+	public ClampedFloatParameter resolution = new ClampedFloatParameter(0.5f, 0.25f, 0.5f);
 	[Tooltip("The maximum raymarching steps per pixel. Greater values will increase the fog quality at the expense of performance.")]
 	public ClampedIntParameter maximumSteps = new ClampedIntParameter(24, 4, 128);
 	[Tooltip("This value is used to clamp and modify the maximum steps under certain circumstances. It helps to further tune down the maximum steps when there is no need for that many steps depending on the view. Lower values will decrease performance while enhancing quality.")]
@@ -83,15 +84,6 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	public BoolParameter reprojection = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("Disabling this will completely remove any feature from the volumetric fog from being rendered at all.")]
 	public BoolParameter enabled = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
-
-	#endregion
-
-	#region Initialization Methods
-
-	public VolumetricFogVolumeComponent() : base()
-	{
-		displayName = "Volumetric Fog";
-	}
 
 	#endregion
 

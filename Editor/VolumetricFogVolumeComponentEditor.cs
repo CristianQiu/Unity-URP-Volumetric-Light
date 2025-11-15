@@ -16,12 +16,12 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
 	private SerializedDataParameter density;
 	private SerializedDataParameter attenuationDistance;
+	private SerializedDataParameter ambienceColor;
 	private SerializedDataParameter mainLightContribution;
 	private SerializedDataParameter mainLightAnisotropy;
 	private SerializedDataParameter mainLightScattering;
 	private SerializedDataParameter mainLightTint;
 	private SerializedDataParameter additionalLightsContribution;
-	private SerializedDataParameter ambienceColor;
 	private SerializedDataParameter enableAPVContribution;
 	private SerializedDataParameter APVContributionWeight;
 	private SerializedDataParameter enableReflectionProbesContribution;
@@ -63,12 +63,12 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
 		density = Unpack(pf.Find(x => x.density));
 		attenuationDistance = Unpack(pf.Find(x => x.attenuationDistance));
+		ambienceColor = Unpack(pf.Find(x => x.ambienceColor));
 		mainLightContribution = Unpack(pf.Find(x => x.mainLightContribution));
 		mainLightAnisotropy = Unpack(pf.Find(x => x.mainLightAnisotropy));
 		mainLightScattering = Unpack(pf.Find(x => x.mainLightScattering));
 		mainLightTint = Unpack(pf.Find(x => x.mainLightTint));
 		additionalLightsContribution = Unpack(pf.Find(x => x.additionalLightsContribution));
-		ambienceColor = Unpack(pf.Find(x => x.ambienceColor));
 		enableAPVContribution = Unpack(pf.Find(x => x.APVContribution));
 		APVContributionWeight = Unpack(pf.Find(x => x.APVContributionWeight));
 		enableReflectionProbesContribution = Unpack(pf.Find(x => x.reflectionProbesContribution));
@@ -119,6 +119,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 
 		PropertyField(density);
 		PropertyField(attenuationDistance);
+		PropertyField(ambienceColor);
 		PropertyField(mainLightContribution);
 		if (enabledMainLightContribution)
 		{
@@ -127,7 +128,6 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 			PropertyField(mainLightTint);
 		}
 		PropertyField(additionalLightsContribution);
-		PropertyField(ambienceColor);
 		PropertyField(enableAPVContribution);
 		if (enabledAPVContribution)
 			PropertyField(APVContributionWeight);

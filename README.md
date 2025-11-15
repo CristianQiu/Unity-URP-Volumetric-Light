@@ -1,18 +1,18 @@
 # Requirements
 
-* Unity 6.1 or above.
+* Unity 6.3 or above.
 * URP.
 * Render graph.
 * Shader model 4.5 or above.
 
 # Features
 
-* Support for realtime and mixed lights. Main light, spot lights and point lights, including shadows and light cookies for all of them.
-* APV and reflection probes sampling support.
+* Support for realtime and mixed lights. Main light, spot and point lights, including shadows and light cookies for all of them.
+* APV and reflection probes contribution support.
 * Up to one (more to come) density volume modifier with spherical shape.
-* Seamlessly integrated into URP volume system.
 * Perspective and orthographic projection support.
-* Forward, deferred, forward+ and deferred+ rendering paths support. See limitations section. 
+* Seamlessly integrated into URP volume system.
+* Forward, deferred, forward+ and deferred+ rendering paths support. See limitations section.
 * Verified in DirectX11, DirectX12, OpenGLES3, OpenGLCore and Vulkan.
 * Single pass VR rendering support. This is verified by users, since I do not work on VR.
 
@@ -48,16 +48,15 @@ Then you can proceed to install this package:
 * Not tested on consoles spectrum (Playstation, Xbox, Switch) but very likely to work. PS5 has been verified by users as of v0.5.6.
 * Multipass VR rendering is not supported.
 
-# Known Bugs
+# Known issues
 
 * There is an issue with volumetric shadows from lights when "Transparent Receive Shadows" is off in the URP Renderer. If you are having issues with volumetric shadows from lights you may need to turn the setting on. See https://github.com/CristianQiu/Unity-URP-Volumetric-Light/issues/10.
 
 # TODO
 
 There are a few things that I would like to add at some point, as I like coming back to this project from time to time in my spare time.
-Some of which are:
 
-* Further improvements on reprojection, density volumes and enhanced transparency support.
+* Further improvements on density volumes and enhanced transparency support.
 * New features: self shadowing.
 * Bug fixing: Do not hesitate to open issues for anything that you find unexpected or buggy.
 

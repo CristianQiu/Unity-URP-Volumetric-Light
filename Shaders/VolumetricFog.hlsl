@@ -1,6 +1,22 @@
 #ifndef VOLUMETRIC_FOG_INCLUDED
 #define VOLUMETRIC_FOG_INCLUDED
 
+#if _APV_CONTRIBUTION
+    #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
+        #define VOLUMETRIC_FOG_APV 1
+    #else
+        #define VOLUMETRIC_FOG_APV 0
+    #endif
+#else
+    #define VOLUMETRIC_FOG_APV 0
+#endif
+
+#if _CLUSTER_LIGHT_LOOP && _REFLECTION_PROBES_CONTRIBUTION
+    #define VOLUMETRIC_FOG_REFLECTION_PROBES 1
+#else
+    #define VOLUMETRIC_FOG_REFLECTION_PROBES 0
+#endif
+
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Macros.hlsl"
@@ -8,19 +24,17 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Random.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/VolumeRendering.hlsl"
-#if _APV_CONTRIBUTION
-    #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
-        #include "Packages/com.unity.render-pipelines.core/Runtime/Lighting/ProbeVolume/ProbeVolume.hlsl"
-    #endif
+#if VOLUMETRIC_FOG_APV
+#include "Packages/com.unity.render-pipelines.core/Runtime/Lighting/ProbeVolume/ProbeVolume.hlsl"
 #endif
-#if _CLUSTER_LIGHT_LOOP && _REFLECTION_PROBES_CONTRIBUTION
-    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/GlobalIllumination.hlsl"
+#if VOLUMETRIC_FOG_REFLECTION_PROBES
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/GlobalIllumination.hlsl"
 #endif
 #include "./DeclareDownsampledDepthTexture.hlsl"
 #include "./VolumetricShadows.hlsl"
 #include "./Utils.hlsl"
 
-#define FOG_HEIGHT_FALLOFF 10.0
+#define FOG_HEIGHT_FALLOFF 0.2
 
 int _FrameCount;
 #if _VOLUME_MODIFIER
@@ -34,14 +48,12 @@ float _MaximumHeight;
 float _GroundHeight;
 float _Density;
 float _Absortion;
-float3 _MainLightTint;
 float4 _AmbienceColor;
-#if _APV_CONTRIBUTION
-    #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
+float3 _MainLightTint;
+#if VOLUMETRIC_FOG_APV
 float _APVContributionWeight;
 #endif
-    #endif
-#if _CLUSTER_LIGHT_LOOP && _REFLECTION_PROBES_CONTRIBUTION
+#if VOLUMETRIC_FOG_REFLECTION_PROBES
 float _ReflectionProbesContributionWeight;
 #endif
 #if _NOISE
@@ -152,7 +164,13 @@ float GetFogDensity(float3 posWS)
 {
     if (posWS.y < _GroundHeight || posWS.y > _MaximumHeight)
         return 0.0;
-    
+
+    float t = saturate((posWS.y - _BaseHeight) / (_MaximumHeight - _BaseHeight));
+    t = pow(t, FOG_HEIGHT_FALLOFF);
+    t = 1.0 - t;
+
+    return _Density * t;    
+
     float range = abs(_MaximumHeight - _BaseHeight);
     float topFactor = exp(-range / FOG_HEIGHT_FALLOFF);
     float relativeExp = exp(-(posWS.y - _BaseHeight) / FOG_HEIGHT_FALLOFF);
@@ -186,22 +204,19 @@ float CalculateDensityWithVolumeModifier(float originalDensity, float3 posWS)
 // Gets the GI evaluation from the adaptive probe volume at one raymarch step.
 float3 GetStepAdaptiveProbeVolumeEvaluation(float2 uv, float3 posWS)
 {
+#if VOLUMETRIC_FOG_APV
     float3 apvDiffuseGI = float3(0.0, 0.0, 0.0);
-    
-#if _APV_CONTRIBUTION
-    #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
-        EvaluateAdaptiveProbeVolume(posWS, uv * _ScreenSize.xy, apvDiffuseGI);
-        apvDiffuseGI = apvDiffuseGI * _APVContributionWeight;
-    #endif
+    EvaluateAdaptiveProbeVolume(posWS, uv * _ScreenSize.xy, apvDiffuseGI);
+    return apvDiffuseGI * _APVContributionWeight;
+#else
+    return float3(0.0, 0.0, 0.0);
 #endif
- 
-    return apvDiffuseGI;
 }
 
 // Gets the reflection probe evaluation at one raymarch step.
 float3 GetStepReflectionProbesEvaluation(float2 uv, float3 currPosWS, float3 rd)
 {
-#if _CLUSTER_LIGHT_LOOP && _REFLECTION_PROBES_CONTRIBUTION
+#if VOLUMETRIC_FOG_REFLECTION_PROBES
     return CalculateIrradianceFromReflectionProbes(rd, currPosWS, 1.0, uv) * _ReflectionProbesContributionWeight;
 #else
     return float3(0.0, 0.0, 0.0);
@@ -267,7 +282,6 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd)
             float phase = CornetteShanksPhaseFunction(_Anisotropies[lightIndex], dot(rd, additionalLight.direction));
             additionalLightsColor += (additionalLight.color * (additionalLight.shadowAttenuation * additionalLight.distanceAttenuation * phase * newScattering));
         }
-        
     LIGHT_LOOP_END
 
     return additionalLightsColor;
@@ -330,11 +344,11 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         }
 
         float3 ambienceColor = _AmbienceColor.rgb * _AmbienceColor.a; 
-        float3 apvColor = GetStepAdaptiveProbeVolumeEvaluation(uv, currPosWS);
-        float3 reflectionProbesColor = GetStepReflectionProbesEvaluation(uv, currPosWS, rd);
         float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight);
         float3 additionalLightsColor = GetStepAdditionalLightsColor(uv, currPosWS, rd);
-
+        float3 apvColor = GetStepAdaptiveProbeVolumeEvaluation(uv, currPosWS);
+        float3 reflectionProbesColor = GetStepReflectionProbesEvaluation(uv, currPosWS, rd);
+        
         float stepAttenuation = exp(minusStepSizeTimesAbsortion * density);
         float transmittanceFactor = (1.0 - stepAttenuation) / max(density * _Absortion, FLOAT_GREATER_EPSILON);
 

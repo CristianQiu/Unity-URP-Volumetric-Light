@@ -2,8 +2,9 @@
 
 ## [0.6.0] - 2025-XX-XX
 
-This is the biggest update to date and it is intended to make this package the best FREE URP volumetric fog asset available for Unity 6.1+.
-Although most values will be kept, this update is destructive due to fundamental changes. Make sure you have a backup or version control system. If you are upgrading from 0.5.6 or sooner it may NOT be compatible with your project, read with care:
+This is the biggest update to date and it is intended to make this package the best free URP volumetric fog asset available for Unity 6.1+.
+Although most values will be kept, this update is destructive due to fundamental changes. Make sure you have a backup or version control system.
+If you are upgrading from any previous version, it may not be compatible with your project, read with care:
 
 New requirements:
 
@@ -13,16 +14,16 @@ New requirements:
 
 New features:
 
-* Added option for reflection probes sampling option. This option requires Forward+ or Deferred+ rendering path and it is ignored otherwise.
+* Added option for reflection probes contribution. This option requires Forward+ or Deferred+ rendering path and it is ignored otherwise.
 * Added option to sample a 3D noise texture to add variation to fog. A texture is included in the package, you can find it in 'Packages->URP Volumetric Fog->Textures->Noise'.
-* Added option to distort the previous noise to have smoke-like details. A texture is included in the package, you can find it in 'Packages->URP Volumetric Fog->Textures->Distortion'. Both noise textures (40MB alltogether) should only be included in the build if any of your volumes is set to use them at build time.
-* Added option to render either at half, or quarter resolution.
+* Added option to distort the previous noise to have smoke-like details. A texture is included in the package, you can find it in 'Packages->URP Volumetric Fog->Textures->Distortion'. Both noise textures (~40MB alltogether) should only be included in the build if any of your volumes is set to use them at build time.
+* Added option to render anywhere in between half and quarter resolution.
 * Added reprojection. Reprojection requires Unity's motion vectors, which are added automatically when needed. It considers the option set in the volume for motion blur, where "camera" or "camera and object" motion vectors can be output.
 * Added option to add one density volume modifier with an sphere shape. The plan is to add more but there will be a cap for sure, probably in between 4-8.
 
 Additional changes:
 
-* Made fundamental changes on how the raymarching steps work. Quality and precision have been generally increased. Indoor scenes in enclosed environments (rooms, corridors, etc) and orthographic and top down perspective cameras whose position is closer to the ground should benefit the most from the improvements in quality. Generally, a small hit in performance could be taken in exchange for slightly better quality in favorable cases, but performance will be much more steady/stable and not depend so much on the current view now. If you are upgrading from 0.5.6, you will need to tweak the maximum steps and/or minimum step size. It is recommended deleting the volume settings and adding it again to start over from defaults.
+* Made fundamental changes on how the raymarching steps work. Quality and precision have been generally increased. Indoor scenes in enclosed environments (rooms, corridors, etc) and orthographic and top down perspective cameras whose position is closer to the ground should benefit the most from the improvements in quality. Generally, a small hit in performance could be taken in exchange for slightly better quality in favorable cases, but performance will be much more steady/stable and not depend so much on the current view now. If you are upgrading from a previous version, you will need to tweak the maximum steps and/or minimum step size. It is recommended deleting the volume settings and adding it again to start over from defaults.
 * Increased the maximum scattering parameter for main light from 1 to 16.
 * Changed the falloff going from the base height to the maximum height of the fog to be more appealing in an exponential fashion.
 * Slightly changed the radius falloff of additional lights.
@@ -60,11 +61,11 @@ Additional changes:
 
 ## [0.5.2] - 2025-02-23
 
-* Removed empty version dependency as it was throwing errors. User should make sure that they have URP package installed before installing the volumetric light package to avoid console errors.
+* Removed empty version dependency as it was throwing errors. Users should make sure that they have URP package installed before installing the volumetric light package to avoid console errors.
 
 ## [0.5.1] - 2025-02-16
 
-* Solved error in the scattering falloff that made additional lights scattering to be stronger than it should. You may have to retweak your additional lights scattering. [Sorry :(]
+* Solved error in the scattering falloff that made additional lights scattering to be stronger than it should. You may have to retweak your additional lights scattering.
 * Reduced noise at certain, extreme combinations of near plane, camera field of view, fog density and light scattering.
 * Exposed render pass event field in the volume settings. Overriding can still happen per volume.  
 * Replaced obsolete method by its newest version in non RG path in Unity 6.
@@ -125,7 +126,7 @@ The main light settings are still configured in the volume, as it should still b
 ## [0.3.0] - 2024-10-06
 
 * Added custom editor for the volumetric fog volume, which should slightly improve the usage. Added ground height parameter that allows fog to not be rendered below a certain height, for slightly better compatibility with transparencies like an ocean.
-The color tint now only affects the main light color which makes more sense. Many volume parameters have now a descriptive tooltip.
+* The color tint now only affects the main light color which makes more sense. Many volume parameters have now a descriptive tooltip.
 
 ## [0.2.1] - 2024-10-02
 
@@ -133,7 +134,7 @@ The color tint now only affects the main light color which makes more sense. Man
 
 ## [0.2.0] - 2024-09-27
 
-* Mostly code cleanup and minor fixes regarding compatibility through different versions from 2022 to Unity 6. Tested with no warnings or errors in 2022.3.47f1, 2023.1.20f1, 2023.2.20f1 and 6000.0.18f1. Removed code referencing to a 2023.3 beta version which ultimately became Unity 6, so this package should not work any longer with 2023.3 beta versions : just upgrade to Unity 6.
+* Mostly code cleanup and minor fixes regarding compatibility through different versions from 2022 to Unity 6. Tested with no warnings or errors in 2022.3.47f1, 2023.1.20f1, 2023.2.20f1 and 6000.0.18f1. Removed code referencing to a 2023.3 beta version which ultimately became Unity 6, so this package should not work any longer with 2023.3 beta versions: just upgrade to Unity 6.
 
 ## [0.1.7] - 2024-09-22
 
@@ -153,7 +154,7 @@ The color tint now only affects the main light color which makes more sense. Man
 
 ## [0.1.3] - 2024-07-07
 
-* Updated some texts referencing old Unity 2023.3 beta to replace them by Unity 6 to make it clear that this package should work on Unity 6. Tested in Unity 6000.0.9f1. 
+* Updated some texts referencing an old Unity 2023.3 beta to replace them by Unity 6 to make it clear that this package should work on Unity 6. Tested in Unity 6000.0.9f1. 
 * No other functional changes were made.
 
 ## [0.1.2] - 2024-02-12

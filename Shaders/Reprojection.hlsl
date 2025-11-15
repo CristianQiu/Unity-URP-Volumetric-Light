@@ -3,7 +3,7 @@
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 #include "./DeclareDownsampledDepthTexture.hlsl"
-#include "./DeclarePrevFrameDownsampledDepthTexture.hlsl"
+#include "./DeclarePreviousFrameDownsampledDepthTexture.hlsl"
 #include "./Utils.hlsl"
 
 #define MOTION_FULL_REJECTION 0.025
@@ -99,7 +99,7 @@ float TestForMotionRejection(float2 motion)
 float TestForDepthRejection(float2 uv, float2 prevUv)
 {
     float currDepth = LinearEyeDepthConsiderProjection(SampleDownsampledSceneDepth(uv));
-    float prevDepth = LinearEyeDepthConsiderProjection(SamplePrevFrameDownsampledSceneDepth(prevUv));
+    float prevDepth = LinearEyeDepthConsiderProjection(SamplePreviousFrameDownsampledSceneDepth(prevUv));
 
     float depthDiff = abs(prevDepth - currDepth);
     float rejection = InverseLerp(0.0, DEPTH_FULL_REJECTION, depthDiff);
@@ -111,7 +111,7 @@ float TestForDepthRejection(float2 uv, float2 prevUv)
 float4 ClipAABB(float3 aabb_min, float3 aabb_max, float4 p, float4 q)
 {
     float3 p_clip = 0.5 * (aabb_max + aabb_min);
-    float3 e_clip = 0.5 * (aabb_max - aabb_min) + FLOAT_EPSILON;
+    float3 e_clip = 0.5 * (aabb_max - aabb_min) + FLOAT_GREATER_EPSILON;
 
     float4 v_clip = q - float4(p_clip, p.w);
     float3 v_unit = v_clip.xyz / e_clip;

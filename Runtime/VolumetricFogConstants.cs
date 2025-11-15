@@ -22,16 +22,6 @@ public enum VolumetricFogRenderPassEvent
 }
 
 /// <summary>
-/// Rendering resolution that the volumetric fog will use to render the fog, by downsampling the
-/// depth texture first.
-/// </summary>
-public enum VolumetricFogResolution : byte
-{
-	Half = 2,
-	Quarter = 4,
-}
-
-/// <summary>
 /// Constant definitions for the volumetric fog.
 /// </summary>
 public static class VolumetricFogConstants
@@ -40,6 +30,4 @@ public static class VolumetricFogConstants
 
 	public const RenderPassEvent DefaultRenderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
 	public const VolumetricFogRenderPassEvent DefaultVolumetricFogRenderPassEvent = (VolumetricFogRenderPassEvent)DefaultRenderPassEvent;
-
-	public const VolumetricFogResolution DefaultResolution = VolumetricFogResolution.Half;
 }

@@ -64,14 +64,14 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	#region Private Attributes
 
 	private const string DownsampledCameraDepthRTName = "_DownsampledCameraDepth";
-	private const string PrevFrameDownsampledCameraDepthRTName = "_PrevFrameDownsampledCameraDepth";
+	private const string PrevFrameDownsampledCameraDepthRTName = "_PreviousFrameDownsampledCameraDepth";
 	private const string VolumetricFogRenderRTName = "_VolumetricFog";
 	private const string VolumetricFogHistoryRTName = "_VolumetricFogHistory";
 	private const string VolumetricFogReprojectionRTName = "_VolumetricFogReprojection";
 	private const string VolumetricFogUpsampleCompositionRTName = "_VolumetricFogUpsampleComposition";
 
 	private static readonly int DownsampledCameraDepthTextureId = Shader.PropertyToID("_DownsampledCameraDepthTexture");
-	private static readonly int PrevFrameDownsampledCameraDepthTextureId = Shader.PropertyToID("_PrevFrameDownsampledCameraDepthTexture");
+	private static readonly int PrevFrameDownsampledCameraDepthTextureId = Shader.PropertyToID("_PreviousFrameDownsampledCameraDepthTexture");
 	private static readonly int VolumetricFogTextureId = Shader.PropertyToID("_VolumetricFogTexture");
 	private static readonly int VolumetricFogHistoryTextureId = Shader.PropertyToID("_VolumetricFogHistoryTexture");
 
@@ -85,8 +85,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int GroundHeightId = Shader.PropertyToID("_GroundHeight");
 	private static readonly int DensityId = Shader.PropertyToID("_Density");
 	private static readonly int AbsortionId = Shader.PropertyToID("_Absortion");
-	private static readonly int TintId = Shader.PropertyToID("_MainLightTint");
 	private static readonly int AmbienceColorId = Shader.PropertyToID("_AmbienceColor");
+	private static readonly int TintId = Shader.PropertyToID("_MainLightTint");
 	private static readonly int APVContributionWeigthId = Shader.PropertyToID("_APVContributionWeight");
 	private static readonly int ReflectionProbesContributionWeightId = Shader.PropertyToID("_ReflectionProbesContributionWeight");
 	private static readonly int NoiseTextureId = Shader.PropertyToID("_NoiseTexture");
@@ -125,7 +125,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 
 	private ProfilingSampler downsampleDepthProfilingSampler;
 
-	private bool isReprojectionEnabledForTick;
+	private bool isReprojectionEnabled;
 
 	#endregion
 
@@ -178,9 +178,10 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		UniversalLightData lightData = frameData.Get<UniversalLightData>();
 		UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
 
-		TextureHandles texHandles = CreateRenderGraphTextures(renderGraph, cameraData);
+		bool doReprojection = isReprojectionEnabled && resourceData.motionVectorColor.IsValid();
+		TextureHandles texHandles = CreateRenderGraphTextureHandles(renderGraph, resourceData, doReprojection);
 
-		if (!isReprojectionEnabledForTick)
+		if (!doReprojection)
 		{
 			prevFrameDownsampledCameraDepthRTHandle?.Release();
 			volumetricFogHistoryRTHandle?.Release();
@@ -218,7 +219,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
 		}
 
-		if (isReprojectionEnabledForTick)
+		if (doReprojection)
 		{
 			using (IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass("Volumetric Fog Reprojection Pass", out PassData passData, profilingSampler))
 			{
@@ -239,11 +240,12 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 				builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
 			}
 
+			// TODO: There is a built in system for history textures, but I have no idea if it has any advantage over manual management. https://docs.unity3d.com/6000.3/Documentation/Manual/urp/render-graph-add-textures-to-camera-history.html
 			RenderGraphUtils.AddCopyPass(renderGraph, texHandles.downsampledCameraDepthTarget, texHandles.prevFrameDownsampledCameraDepthTarget, "Downsampled Depth Copy Pass");
 			RenderGraphUtils.AddCopyPass(renderGraph, texHandles.volumetricFogReprojectionTarget, texHandles.volumetricFogHistoryTarget, "Volumetric Fog History Copy Pass");
 		}
 
-		TextureHandle lastFogRenderTarget = isReprojectionEnabledForTick ? texHandles.volumetricFogReprojectionTarget : texHandles.volumetricFogRenderTarget;
+		TextureHandle lastFogRenderTarget = doReprojection ? texHandles.volumetricFogReprojectionTarget : texHandles.volumetricFogRenderTarget;
 
 		using (IUnsafeRenderGraphBuilder builder = renderGraph.AddUnsafePass("Volumetric Fog Blur Pass", out PassData passData, profilingSampler))
 		{
@@ -353,40 +355,13 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		bool enableDistortion = fogVolume.noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures && fogVolume.distortionTexture.value != null && fogVolume.distortionScale.value > 0.0f;
 		enableNoise = enableNoise || enableDistortion;
 
-		if (anyVolumeModifierActive)
-			volumetricFogMaterial.EnableKeyword("_VOLUME_MODIFIER");
-		else
-			volumetricFogMaterial.DisableKeyword("_VOLUME_MODIFIER");
-
-		if (enableAPVContribution)
-			volumetricFogMaterial.EnableKeyword("_APV_CONTRIBUTION");
-		else
-			volumetricFogMaterial.DisableKeyword("_APV_CONTRIBUTION");
-
-		if (enableReflectionProbesContribution)
-			volumetricFogMaterial.EnableKeyword("_REFLECTION_PROBES_CONTRIBUTION");
-		else
-			volumetricFogMaterial.DisableKeyword("_REFLECTION_PROBES_CONTRIBUTION");
-
-		if (enableMainLightContribution)
-			volumetricFogMaterial.EnableKeyword("_MAIN_LIGHT_CONTRIBUTION");
-		else
-			volumetricFogMaterial.DisableKeyword("_MAIN_LIGHT_CONTRIBUTION");
-
-		if (enableAdditionalLightsContribution)
-			volumetricFogMaterial.EnableKeyword("_ADDITIONAL_LIGHTS_CONTRIBUTION");
-		else
-			volumetricFogMaterial.DisableKeyword("_ADDITIONAL_LIGHTS_CONTRIBUTION");
-
-		if (enableNoise)
-			volumetricFogMaterial.EnableKeyword("_NOISE");
-		else
-			volumetricFogMaterial.DisableKeyword("_NOISE");
-
-		if (enableDistortion)
-			volumetricFogMaterial.EnableKeyword("_NOISE_DISTORTION");
-		else
-			volumetricFogMaterial.DisableKeyword("_NOISE_DISTORTION");
+		CoreUtils.SetKeyword(volumetricFogMaterial, "_VOLUME_MODIFIER", anyVolumeModifierActive);
+		CoreUtils.SetKeyword(volumetricFogMaterial, "_APV_CONTRIBUTION", enableAPVContribution);
+		CoreUtils.SetKeyword(volumetricFogMaterial, "_REFLECTION_PROBES_CONTRIBUTION", enableReflectionProbesContribution);
+		CoreUtils.SetKeyword(volumetricFogMaterial, "_MAIN_LIGHT_CONTRIBUTION", enableMainLightContribution);
+		CoreUtils.SetKeyword(volumetricFogMaterial, "_ADDITIONAL_LIGHTS_CONTRIBUTION", enableAdditionalLightsContribution);
+		CoreUtils.SetKeyword(volumetricFogMaterial, "_NOISE", enableNoise);
+		CoreUtils.SetKeyword(volumetricFogMaterial, "_NOISE_DISTORTION", enableDistortion);
 
 		UpdateLightsParameters(volumetricFogMaterial, fogVolume, enableMainLightContribution, enableAdditionalLightsContribution, mainLightIndex, visibleLights);
 
@@ -400,8 +375,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		volumetricFogMaterial.SetFloat(GroundHeightId, fogVolume.groundHeight.value);
 		volumetricFogMaterial.SetFloat(DensityId, fogVolume.density.value);
 		volumetricFogMaterial.SetFloat(AbsortionId, 1.0f / fogVolume.attenuationDistance.value);
-		volumetricFogMaterial.SetColor(TintId, fogVolume.mainLightTint.value);
 		volumetricFogMaterial.SetColor(AmbienceColorId, fogVolume.ambienceColor.value);
+		volumetricFogMaterial.SetColor(TintId, fogVolume.mainLightTint.value);
 		volumetricFogMaterial.SetFloat(APVContributionWeigthId, enableAPVContribution ? fogVolume.APVContributionWeight.value : 0.0f);
 		volumetricFogMaterial.SetFloat(ReflectionProbesContributionWeightId, enableReflectionProbesContribution ? fogVolume.reflectionProbesContributionWeight.value : 0.0f);
 		volumetricFogMaterial.SetTexture(NoiseTextureId, enableNoise ? fogVolume.noiseTexture.value : null);
@@ -509,15 +484,17 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	#region Methods
 
 	/// <summary>
-	/// Configures the volumetric fog render pass for the tick, before adding the pass to the renderer.
+	/// Configures the volumetric fog render pass for the render tick, before adding the pass to the renderer.
 	/// </summary>
-	public void ConfigurePassForTick()
+	public void ConfigurePass()
 	{
-		renderPassEvent = (RenderPassEvent)GetVolumetricFogVolumeComponent().renderPassEvent.value;
-		isReprojectionEnabledForTick = GetVolumetricFogVolumeComponent().reprojection.value;
+		VolumetricFogVolumeComponent fogVolume = GetVolumetricFogVolumeComponent();
 
-		ScriptableRenderPassInput passInputs = isReprojectionEnabledForTick ? (ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Motion) : ScriptableRenderPassInput.Depth;
-		ConfigureInput(passInputs);
+		// TODO: Reprojection does weird things in the scene view, but disabling it in the scene view makes the game view to not work correctly when both the scene and game view are seen at the same time.
+		renderPassEvent = (RenderPassEvent)fogVolume.renderPassEvent.value;
+		isReprojectionEnabled = fogVolume.reprojection.value;
+
+		ConfigureInput(isReprojectionEnabled ? (ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Motion) : ScriptableRenderPassInput.Depth);
 	}
 
 	/// <summary>
@@ -530,47 +507,53 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	}
 
 	/// <summary>
-	/// Creates and returns all the necessary render graph textures.
+	/// Creates and returns all the necessary render graph texture handles.
 	/// </summary>
 	/// <param name="renderGraph"></param>
-	/// <param name="cameraData"></param>
+	/// <param name="resourceData"></param>
+	/// <param name="doReprojection"></param>
 	/// <returns></returns>
-	private TextureHandles CreateRenderGraphTextures(RenderGraph renderGraph, UniversalCameraData cameraData)
+	private TextureHandles CreateRenderGraphTextureHandles(RenderGraph renderGraph, UniversalResourceData resourceData, bool doReprojection)
 	{
-		// TODO: This pattern should not be used https://discussions.unity.com/t/introduction-of-render-graph-in-the-universal-render-pipeline-urp/930355/602
-		RenderTextureDescriptor cameraTargetDescriptor = cameraData.cameraTargetDescriptor;
-		cameraTargetDescriptor.depthBufferBits = (int)DepthBits.None;
+		TextureDesc cameraColorDescriptor = renderGraph.GetTextureDesc(resourceData.cameraColor);
+		GraphicsFormat originalColorFormat = cameraColorDescriptor.colorFormat;
+		Vector2Int originalResolution = new Vector2Int(cameraColorDescriptor.width, cameraColorDescriptor.height);
 
-		RenderTextureFormat originalColorFormat = cameraTargetDescriptor.colorFormat;
-		Vector2Int originalResolution = new Vector2Int(cameraTargetDescriptor.width, cameraTargetDescriptor.height);
+		float resolutionMultiplier = GetVolumetricFogVolumeComponent().resolution.value;
 
-		// TODO: I think there is not any reason left for this to not be a float slider.
-		int downsampleFactor = (int)GetVolumetricFogVolumeComponent().resolution.value;
-
-		cameraTargetDescriptor.width /= downsampleFactor;
-		cameraTargetDescriptor.height /= downsampleFactor;
-		cameraTargetDescriptor.graphicsFormat = GraphicsFormat.R32_SFloat;
+		cameraColorDescriptor.name = DownsampledCameraDepthRTName;
+		cameraColorDescriptor.width = Mathf.RoundToInt((float)cameraColorDescriptor.width * resolutionMultiplier);
+		cameraColorDescriptor.height = Mathf.RoundToInt((float)cameraColorDescriptor.height * resolutionMultiplier);
+		cameraColorDescriptor.colorFormat = GraphicsFormat.R32_SFloat;
+		cameraColorDescriptor.wrapMode = TextureWrapMode.Clamp;
+		cameraColorDescriptor.filterMode = FilterMode.Point;
+		cameraColorDescriptor.clearBuffer = false;
 		TextureHandles texHandles = new TextureHandles();
-		texHandles.downsampledCameraDepthTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, DownsampledCameraDepthRTName, false);
-		if (isReprojectionEnabledForTick)
+		texHandles.downsampledCameraDepthTarget = renderGraph.CreateTexture(cameraColorDescriptor);
+
+		if (doReprojection)
 		{
-			RenderingUtils.ReAllocateHandleIfNeeded(ref prevFrameDownsampledCameraDepthRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: PrevFrameDownsampledCameraDepthRTName);
+			RenderingUtils.ReAllocateHandleIfNeeded(ref prevFrameDownsampledCameraDepthRTHandle, cameraColorDescriptor, PrevFrameDownsampledCameraDepthRTName);
 			texHandles.prevFrameDownsampledCameraDepthTarget = renderGraph.ImportTexture(prevFrameDownsampledCameraDepthRTHandle);
 		}
 
-		cameraTargetDescriptor.colorFormat = RenderTextureFormat.ARGBHalf;
-		texHandles.volumetricFogRenderTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogRenderRTName, false);
-		if (isReprojectionEnabledForTick)
+		cameraColorDescriptor.colorFormat = GraphicsFormat.R16G16B16A16_SFloat;
+		cameraColorDescriptor.name = VolumetricFogRenderRTName;
+		texHandles.volumetricFogRenderTarget = renderGraph.CreateTexture(cameraColorDescriptor);
+
+		if (doReprojection)
 		{
-			RenderingUtils.ReAllocateHandleIfNeeded(ref volumetricFogHistoryRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogHistoryRTName);
+			RenderingUtils.ReAllocateHandleIfNeeded(ref volumetricFogHistoryRTHandle, cameraColorDescriptor, name: VolumetricFogHistoryRTName);
 			texHandles.volumetricFogHistoryTarget = renderGraph.ImportTexture(volumetricFogHistoryRTHandle);
-			texHandles.volumetricFogReprojectionTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogReprojectionRTName, false);
+			cameraColorDescriptor.name = VolumetricFogReprojectionRTName;
+			texHandles.volumetricFogReprojectionTarget = renderGraph.CreateTexture(cameraColorDescriptor);
 		}
 
-		cameraTargetDescriptor.width = originalResolution.x;
-		cameraTargetDescriptor.height = originalResolution.y;
-		cameraTargetDescriptor.colorFormat = originalColorFormat;
-		texHandles.volumetricFogUpsampleCompositionTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogUpsampleCompositionRTName, false);
+		cameraColorDescriptor.width = originalResolution.x;
+		cameraColorDescriptor.height = originalResolution.y;
+		cameraColorDescriptor.colorFormat = originalColorFormat;
+		cameraColorDescriptor.name = VolumetricFogUpsampleCompositionRTName;
+		texHandles.volumetricFogUpsampleCompositionTarget = renderGraph.CreateTexture(cameraColorDescriptor);
 
 		return texHandles;
 	}
