@@ -2,24 +2,24 @@
 
 ## [0.6.0] - 2025-XX-XX
 
-This is the biggest update to date and it is intended to make this package the best free URP volumetric fog asset available for Unity 6.1+.
-Although most values will be kept, this update is destructive due to fundamental changes. Make sure you have a backup or version control system.
-If you are upgrading from any previous version, it may not be compatible with your project, read with care:
+This is the biggest update to date and it is intended to make this package the best free URP volumetric fog asset available for Unity 6.3 and above.
+Although many setting values will be kept, this update is destructive due to fundamental changes. Make sure that you have a backup or version control system.
+If you are upgrading from any previous version, it may not be compatible with your project.
 
 New requirements:
 
-* Unity 6.1 or above.
+* Unity 6.3 or above.
 * Render graph. Compatibility mode is no longer supported.
-* Shader model 4.5+. WebGL no longer has the partial support it had. WebGPU is available from Unity 6.1 and should work, although it has not been tested.
+* Shader model 4.5+. WebGL no longer has the partial support it had. WebGPU is available from Unity 6.1 and should work, although it has not been tested yet.
 
 New features:
 
-* Added option for reflection probes contribution. This option requires Forward+ or Deferred+ rendering path and it is ignored otherwise.
+* Added option for reflection probes contribution. This option requires Forward+ or Deferred+ rendering path and it is completely ignored otherwise.
 * Added option to sample a 3D noise texture to add variation to fog. A texture is included in the package, you can find it in 'Packages->URP Volumetric Fog->Textures->Noise'.
 * Added option to distort the previous noise to have smoke-like details. A texture is included in the package, you can find it in 'Packages->URP Volumetric Fog->Textures->Distortion'. Both noise textures (~40MB alltogether) should only be included in the build if any of your volumes is set to use them at build time.
 * Added option to render anywhere in between half and quarter resolution.
-* Added reprojection. Reprojection requires Unity's motion vectors, which are added automatically when needed. It considers the option set in the volume for motion blur, where "camera" or "camera and object" motion vectors can be output.
-* Added option to add one density volume modifier with an sphere shape. The plan is to add more but there will be a cap for sure, probably in between 4-8.
+* Added reprojection. Reprojection requires Unity's motion vectors, which are added automatically when needed. It will consider the option set in the volume for motion blur, where "camera" or "camera and object" motion vectors can be output.
+* Added option to add one density volume modifier with an sphere shape. The plan is to add more but there will be a cap for sure, probably around 4.
 
 Additional changes:
 

@@ -103,11 +103,11 @@ public sealed class VolumetricFogRendererFeature : ScriptableRendererFeature
 	/// <returns></returns>
 	private bool ShouldAddVolumetricFogRenderPass(CameraType cameraType)
 	{
-		VolumetricFogVolumeComponent fogVolume = VolumeManager.instance.stack.GetComponent<VolumetricFogVolumeComponent>();
-
 		bool isCameraOk = cameraType != CameraType.Preview && cameraType != CameraType.Reflection;
 		bool areResourcesOk = ValidateResourcesForVolumetricFogRenderPass(false);
 		bool isRenderPassOk = volumetricFogRenderPass != null;
+
+		VolumetricFogVolumeComponent fogVolume = VolumeManager.instance.stack.GetComponent<VolumetricFogVolumeComponent>();
 		bool isFogVolumeOk = fogVolume != null && fogVolume.IsActive();
 
 		return isActive && isCameraOk && areResourcesOk && isRenderPassOk && isFogVolumeOk;

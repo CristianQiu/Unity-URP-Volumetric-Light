@@ -22,9 +22,9 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	private SerializedDataParameter mainLightScattering;
 	private SerializedDataParameter mainLightTint;
 	private SerializedDataParameter additionalLightsContribution;
-	private SerializedDataParameter enableAPVContribution;
+	private SerializedDataParameter APVContribution;
 	private SerializedDataParameter APVContributionWeight;
-	private SerializedDataParameter enableReflectionProbesContribution;
+	private SerializedDataParameter reflectionProbesContribution;
 	private SerializedDataParameter reflectionProbesContributionWeight;
 
 	private SerializedDataParameter noiseMode;
@@ -69,9 +69,9 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		mainLightScattering = Unpack(pf.Find(x => x.mainLightScattering));
 		mainLightTint = Unpack(pf.Find(x => x.mainLightTint));
 		additionalLightsContribution = Unpack(pf.Find(x => x.additionalLightsContribution));
-		enableAPVContribution = Unpack(pf.Find(x => x.APVContribution));
+		APVContribution = Unpack(pf.Find(x => x.APVContribution));
 		APVContributionWeight = Unpack(pf.Find(x => x.APVContributionWeight));
-		enableReflectionProbesContribution = Unpack(pf.Find(x => x.reflectionProbesContribution));
+		reflectionProbesContribution = Unpack(pf.Find(x => x.reflectionProbesContribution));
 		reflectionProbesContributionWeight = Unpack(pf.Find(x => x.reflectionProbesContributionWeight));
 
 		noiseMode = Unpack(pf.Find(x => x.noiseMode));
@@ -107,8 +107,8 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		}
 
 		bool enabledMainLightContribution = mainLightContribution.overrideState.boolValue && mainLightContribution.value.boolValue;
-		bool enabledAPVContribution = enableAPVContribution.overrideState.boolValue && enableAPVContribution.value.boolValue;
-		bool enabledReflectionProbesContribution = enableReflectionProbesContribution.overrideState.boolValue && enableReflectionProbesContribution.value.boolValue;
+		bool enabledAPVContribution = APVContribution.overrideState.boolValue && APVContribution.value.boolValue;
+		bool enabledReflectionProbesContribution = reflectionProbesContribution.overrideState.boolValue && reflectionProbesContribution.value.boolValue;
 		bool enabledNoise = noiseMode.overrideState.boolValue && noiseMode.value.enumValueIndex == (int)VolumetricFogNoiseMode.Noise3DTexture;
 		bool enabledDistortion = noiseMode.overrideState.boolValue && noiseMode.value.enumValueIndex == (int)VolumetricFogNoiseMode.NoiseAndDistortion3DTextures;
 
@@ -128,10 +128,10 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 			PropertyField(mainLightTint);
 		}
 		PropertyField(additionalLightsContribution);
-		PropertyField(enableAPVContribution);
+		PropertyField(APVContribution);
 		if (enabledAPVContribution)
 			PropertyField(APVContributionWeight);
-		PropertyField(enableReflectionProbesContribution);
+		PropertyField(reflectionProbesContribution);
 		if (enabledReflectionProbesContribution)
 			PropertyField(reflectionProbesContributionWeight);
 

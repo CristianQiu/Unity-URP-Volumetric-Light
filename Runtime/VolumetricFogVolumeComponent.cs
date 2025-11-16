@@ -29,7 +29,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("Value that defines how much the fog attenuates light as distance increases. Lesser values lead to a darker image.")]
 	public MinFloatParameter attenuationDistance = new MinFloatParameter(128.0f, 0.025f);
 	[Tooltip("Gives some extra ambience color, as none is considered besides lights, APVs, or reflection probes. Alpha channel determines intensity.")]
-	public ColorParameter ambienceColor = new ColorParameter(Color.black, true, true, true);
+	public ColorParameter ambienceColor = new ColorParameter(Color.black, false, true, true);
 	[Tooltip("Disabling this will avoid computing the main light contribution to fog.")]
 	public BoolParameter mainLightContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("Higher positive values will make the fog affected by the main light to appear brighter when directly looking to it, while lower negative values will make the fog to appear brighter when looking away from it. The closer the value is closer to 1 or -1, the less the brightness will spread. Most times, positive values higher than 0 and lower than 1 should be used.")]
@@ -37,7 +37,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("Higher values will make fog affected by the main light to appear brighter.")]
 	public ClampedFloatParameter mainLightScattering = new ClampedFloatParameter(0.75f, 0.0f, 16.0f);
 	[Tooltip("A multiplier color to tint the main light fog.")]
-	public ColorParameter mainLightTint = new ColorParameter(Color.white, true, false, true);
+	public ColorParameter mainLightTint = new ColorParameter(Color.white, false, false, true);
 	[Tooltip("Disabling this will avoid computing additional lights contribution to fog.")]
 	public BoolParameter additionalLightsContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("When enabled, adaptive probe volumes (APV) will be sampled to contribute to fog.")]

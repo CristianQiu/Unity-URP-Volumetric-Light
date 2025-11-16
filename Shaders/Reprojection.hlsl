@@ -8,7 +8,6 @@
 
 #define MOTION_FULL_REJECTION 0.025
 #define DEPTH_FULL_REJECTION 1.0
-#define USE_CLIPPING 1
 
 TEXTURE2D_X(_MotionVectorTexture);
 float4 _MotionVectorTexture_TexelSize;
@@ -19,7 +18,7 @@ static const float2 Neighborhood[] = {
     float2(-1.0,  1.0), float2(0.0,  1.0), float2(1.0,  1.0)
 };
 
-// Samples motion vectors for the given UV coordinates. Since we are using the motion to work with the downsampled depth texture, we need to sample the motion vectors following the same checkerboard pattern as the depth texture.
+// Samples motion vectors for the given UV coordinates. Since we are using the motion to work with the downsampled depth texture, we need to sample the motion vectors following the same checkerboard pattern as the downsampled depth texture.
 float2 GetMotion(float2 uv)
 {
     float4 depths = GATHER_RED_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, uv);
@@ -107,32 +106,11 @@ float TestForDepthRejection(float2 uv, float2 prevUv)
     return smoothstep(0.0, 1.0, rejection);
 }
 
-// From Playdead's INSIDE: https://github.com/playdeadgames/temporal/blob/master/Assets/Shaders/TemporalReprojection.shader
-float4 ClipAABB(float3 aabb_min, float3 aabb_max, float4 p, float4 q)
-{
-    float3 p_clip = 0.5 * (aabb_max + aabb_min);
-    float3 e_clip = 0.5 * (aabb_max - aabb_min) + FLOAT_GREATER_EPSILON;
-
-    float4 v_clip = q - float4(p_clip, p.w);
-    float3 v_unit = v_clip.xyz / e_clip;
-    float3 a_unit = abs(v_unit);
-    float ma_unit = max(a_unit.x, max(a_unit.y, a_unit.z));
-
-    if (ma_unit > 1.0)
-        return float4(p_clip, p.w) + v_clip / ma_unit;
-    else
-        return q;
-}
-
 // Clamps the given history sample to the neighborhood of the current frame center texel and returns it.
 float4 NeigborhoodClamp(float2 uv, float4 currentFrameSample, float4 history)
 {
     float4 minSample = currentFrameSample;
     float4 maxSample = currentFrameSample;
-
-#if USE_CLIPPING
-    float4 avg = currentFrameSample;
-#endif
 
     UNITY_UNROLL
     for (int i = 0; i < 8; ++i)
@@ -142,17 +120,9 @@ float4 NeigborhoodClamp(float2 uv, float4 currentFrameSample, float4 history)
 
         minSample = min(minSample, neighborSample);
         maxSample = max(maxSample, neighborSample);
-
-#if USE_CLIPPING
-        avg += neighborSample;
-#endif
     }
 
-#if USE_CLIPPING
-    return ClipAABB(minSample.xyz, maxSample.xyz, clamp(avg / 9.0, minSample, maxSample), history);
-#else
     return clamp(history, minSample, maxSample);
-#endif
 }
 
 // Reprojects information from the history texture to the current frame texture using motion and depth information.

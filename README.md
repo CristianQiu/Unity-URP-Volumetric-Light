@@ -13,7 +13,7 @@
 * Perspective and orthographic projection support.
 * Seamlessly integrated into URP volume system.
 * Forward, deferred, forward+ and deferred+ rendering paths support. See limitations section.
-* Verified in DirectX11, DirectX12, OpenGLES3, OpenGLCore and Vulkan.
+* Verified in DirectX11, DirectX12, OpenGLCore, OpenGLES3, Vulkan and Metal.
 * Single pass VR rendering support. This is verified by users, since I do not work on VR.
 
 # Installation

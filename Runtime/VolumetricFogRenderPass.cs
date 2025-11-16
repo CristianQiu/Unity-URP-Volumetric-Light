@@ -219,6 +219,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
 		}
 
+		//VolumetricFogHistory history = cameraData.historyManager.GetHistoryForWrite<VolumetricFogHistory>();
+
 		if (doReprojection)
 		{
 			using (IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass("Volumetric Fog Reprojection Pass", out PassData passData, profilingSampler))
@@ -490,7 +492,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	{
 		VolumetricFogVolumeComponent fogVolume = GetVolumetricFogVolumeComponent();
 
-		// TODO: Reprojection does weird things in the scene view, but disabling it in the scene view makes the game view to not work correctly when both the scene and game view are seen at the same time.
+		// TODO: Reprojection does weird things in the scene view, but disabling it in the scene view makes the game view to not work correctly.
 		renderPassEvent = (RenderPassEvent)fogVolume.renderPassEvent.value;
 		isReprojectionEnabled = fogVolume.reprojection.value;
 
