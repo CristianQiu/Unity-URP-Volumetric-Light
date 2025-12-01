@@ -178,7 +178,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		UniversalLightData lightData = frameData.Get<UniversalLightData>();
 		UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
 
-		bool doReprojection = isReprojectionEnabled && resourceData.motionVectorColor.IsValid();
+		bool doReprojection = isReprojectionEnabled;
 		TextureHandles texHandles = CreateRenderGraphTextureHandles(renderGraph, resourceData, doReprojection);
 
 		if (!doReprojection)
@@ -218,8 +218,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 				builder.UseTexture(resourceData.additionalShadowsTexture);
 			builder.SetRenderFunc((PassData data, RasterGraphContext context) => ExecutePass(data, context));
 		}
-
-		//VolumetricFogHistory history = cameraData.historyManager.GetHistoryForWrite<VolumetricFogHistory>();
 
 		if (doReprojection)
 		{
@@ -496,7 +494,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		renderPassEvent = (RenderPassEvent)fogVolume.renderPassEvent.value;
 		isReprojectionEnabled = fogVolume.reprojection.value;
 
-		ConfigureInput(isReprojectionEnabled ? (ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Motion) : ScriptableRenderPassInput.Depth);
+		ScriptableRenderPassInput passInput = isReprojectionEnabled ? (ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Motion) : ScriptableRenderPassInput.Depth;
+		ConfigureInput(passInput);
 	}
 
 	/// <summary>
@@ -521,18 +520,18 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		GraphicsFormat originalColorFormat = cameraColorDescriptor.colorFormat;
 		Vector2Int originalResolution = new Vector2Int(cameraColorDescriptor.width, cameraColorDescriptor.height);
 
-		float resolutionMultiplier = GetVolumetricFogVolumeComponent().resolution.value;
+		float resolutionFactor = GetVolumetricFogVolumeComponent().resolutionFactor.value;
 
 		cameraColorDescriptor.name = DownsampledCameraDepthRTName;
-		cameraColorDescriptor.width = Mathf.RoundToInt((float)cameraColorDescriptor.width * resolutionMultiplier);
-		cameraColorDescriptor.height = Mathf.RoundToInt((float)cameraColorDescriptor.height * resolutionMultiplier);
+		cameraColorDescriptor.width = Mathf.RoundToInt((float)cameraColorDescriptor.width * resolutionFactor);
+		cameraColorDescriptor.height = Mathf.RoundToInt((float)cameraColorDescriptor.height * resolutionFactor);
 		cameraColorDescriptor.colorFormat = GraphicsFormat.R32_SFloat;
 		cameraColorDescriptor.wrapMode = TextureWrapMode.Clamp;
 		cameraColorDescriptor.filterMode = FilterMode.Point;
 		cameraColorDescriptor.clearBuffer = false;
+
 		TextureHandles texHandles = new TextureHandles();
 		texHandles.downsampledCameraDepthTarget = renderGraph.CreateTexture(cameraColorDescriptor);
-
 		if (doReprojection)
 		{
 			RenderingUtils.ReAllocateHandleIfNeeded(ref prevFrameDownsampledCameraDepthRTHandle, cameraColorDescriptor, PrevFrameDownsampledCameraDepthRTName);
@@ -542,7 +541,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		cameraColorDescriptor.colorFormat = GraphicsFormat.R16G16B16A16_SFloat;
 		cameraColorDescriptor.name = VolumetricFogRenderRTName;
 		texHandles.volumetricFogRenderTarget = renderGraph.CreateTexture(cameraColorDescriptor);
-
 		if (doReprojection)
 		{
 			RenderingUtils.ReAllocateHandleIfNeeded(ref volumetricFogHistoryRTHandle, cameraColorDescriptor, name: VolumetricFogHistoryRTName);

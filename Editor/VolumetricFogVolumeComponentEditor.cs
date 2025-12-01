@@ -38,7 +38,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	private SerializedDataParameter distortionVelocity;
 
 	private SerializedDataParameter renderPassEvent;
-	private SerializedDataParameter resolution;
+	private SerializedDataParameter resolutionFactor;
 	private SerializedDataParameter maximumSteps;
 	private SerializedDataParameter minimumStepSize;
 	private SerializedDataParameter blurIterations;
@@ -85,7 +85,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		distortionVelocity = Unpack(pf.Find(x => x.distortionVelocity));
 
 		renderPassEvent = Unpack(pf.Find(x => x.renderPassEvent));
-		resolution = Unpack(pf.Find(x => x.resolution));
+		resolutionFactor = Unpack(pf.Find(x => x.resolutionFactor));
 		maximumSteps = Unpack(pf.Find(x => x.maximumSteps));
 		minimumStepSize = Unpack(pf.Find(x => x.minimumStepSize));
 		blurIterations = Unpack(pf.Find(x => x.blurIterations));
@@ -152,7 +152,7 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		}
 
 		PropertyField(renderPassEvent);
-		PropertyField(resolution);
+		PropertyField(resolutionFactor);
 		PropertyField(maximumSteps);
 		PropertyField(minimumStepSize);
 		PropertyField(blurIterations);

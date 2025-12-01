@@ -9,10 +9,13 @@ public sealed class VolumetricFogVolumeModifier : MonoBehaviour
 
 	private static readonly Color DebugColor = Color.chartreuse;
 
+	[Tooltip("The radius of the sphere volume.")]
 	[Min(0.0f)]
 	[SerializeField] private float radius = 2.5f;
+	[Tooltip("Falloff between the density specified in the volume and the density modified by this volume.")]
 	[Min(0.0f)]
 	[SerializeField] private float fallOff = 0.05f;
+	[Tooltip("A multiplier for the fog density specified in the volume.")]
 	[Min(0.0f)]
 	[SerializeField] private float densityMultiplier = 10.0f;
 

@@ -26,8 +26,10 @@ public enum VolumetricFogRenderPassEvent
 /// </summary>
 public static class VolumetricFogConstants
 {
-	public const VolumetricFogNoiseMode DefaultVolumetricFogNoiseMode = VolumetricFogNoiseMode.None;
+	public const float MaxScatteringMultiplier = 16.0f;
+	public const float MaxAdditionalLightRadius = 1.0f;
 
+	public const VolumetricFogNoiseMode DefaultVolumetricFogNoiseMode = VolumetricFogNoiseMode.None;
 	public const RenderPassEvent DefaultRenderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
 	public const VolumetricFogRenderPassEvent DefaultVolumetricFogRenderPassEvent = (VolumetricFogRenderPassEvent)DefaultRenderPassEvent;
 }

@@ -32,10 +32,10 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	public ColorParameter ambienceColor = new ColorParameter(Color.black, false, true, true);
 	[Tooltip("Disabling this will avoid computing the main light contribution to fog.")]
 	public BoolParameter mainLightContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
-	[Tooltip("Higher positive values will make the fog affected by the main light to appear brighter when directly looking to it, while lower negative values will make the fog to appear brighter when looking away from it. The closer the value is closer to 1 or -1, the less the brightness will spread. Most times, positive values higher than 0 and lower than 1 should be used.")]
+	[Tooltip("The scattering distribution. The closer the value is to 1 or -1, the less the light will spread through fog and the brighter it will be towards the light origin.")]
 	public ClampedFloatParameter mainLightAnisotropy = new ClampedFloatParameter(0.4f, -1.0f, 1.0f);
 	[Tooltip("Higher values will make fog affected by the main light to appear brighter.")]
-	public ClampedFloatParameter mainLightScattering = new ClampedFloatParameter(0.75f, 0.0f, 16.0f);
+	public ClampedFloatParameter mainLightScattering = new ClampedFloatParameter(0.75f, 0.0f, VolumetricFogConstants.MaxScatteringMultiplier);
 	[Tooltip("A multiplier color to tint the main light fog.")]
 	public ColorParameter mainLightTint = new ColorParameter(Color.white, false, false, true);
 	[Tooltip("Disabling this will avoid computing additional lights contribution to fog.")]
@@ -72,14 +72,14 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Header("Misc. & Quality")]
 	[Tooltip("The URP render pass event to render the volumetric fog.")]
 	public VolumetricFogRenderPassEventParameter renderPassEvent = new VolumetricFogRenderPassEventParameter(VolumetricFogConstants.DefaultVolumetricFogRenderPassEvent);
-	[Tooltip("Resolution multiplier to render the volumetric fog at. At 0.25, 1/16 of the pixels are rendered. At 0.5, 1/4 of the pixels are rendered.")]
-	public ClampedFloatParameter resolution = new ClampedFloatParameter(0.5f, 0.25f, 0.5f);
+	[Tooltip("Resolution multiplier factor to render the volumetric fog at. At 0.25, 1/16 of the pixels are rendered. At 0.5, 1/4 of the pixels are rendered.")]
+	public ClampedFloatParameter resolutionFactor = new ClampedFloatParameter(0.5f, 0.25f, 0.5f);
 	[Tooltip("The maximum raymarching steps per pixel. Greater values will increase the fog quality at the expense of performance.")]
 	public ClampedIntParameter maximumSteps = new ClampedIntParameter(24, 4, 128);
 	[Tooltip("This value is used to clamp and modify the maximum steps under certain circumstances. It helps to further tune down the maximum steps when there is no need for that many steps depending on the view. Lower values will decrease performance while enhancing quality.")]
 	public ClampedFloatParameter minimumStepSize = new ClampedFloatParameter(0.25f, 0.2f, 2.0f);
 	[Tooltip("The number of times that the fog texture will be blurred. Higher values lead to softer volumetric god rays at the cost of some performance.")]
-	public ClampedIntParameter blurIterations = new ClampedIntParameter(2, 1, 6);
+	public ClampedIntParameter blurIterations = new ClampedIntParameter(2, 1, 8);
 	[Tooltip("Reprojection uses information from previous frames to make the fog more stable, but can cause ghosting under certain circumstances. Unity's motion vectors are rendered when this option is enabled.")]
 	public BoolParameter reprojection = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("Disabling this will completely remove any feature from the volumetric fog from being rendered at all.")]
@@ -122,30 +122,31 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	/// </summary>
 	private void SetNoise()
 	{
-#if UNITY_EDITOR
-		if (noiseMode.value == VolumetricFogNoiseMode.Noise3DTexture || noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures)
+		if (Application.isEditor && !Application.isPlaying)
 		{
-			if (noiseTexture.value == null)
+			if (noiseMode.value == VolumetricFogNoiseMode.Noise3DTexture || noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures)
 			{
-				noiseTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Packages/com.cqf.urpvolumetricfog/Textures/Noise_128x128x128_R32_SFloat.asset");
-				noiseTexture.overrideState = true;
-			}
+				if (noiseTexture.value == null)
+				{
+					noiseTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Packages/com.cqf.urpvolumetricfog/Textures/Noise_128x128x128_R32_SFloat.asset");
+					noiseTexture.overrideState = true;
+				}
 
-			if (distortionTexture.value == null && noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures)
+				if (distortionTexture.value == null && noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures)
+				{
+					distortionTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Packages/com.cqf.urpvolumetricfog/Textures/Distortion_128x128x128_RGBA32_SFloat.asset");
+					distortionTexture.overrideState = true;
+				}
+			}
+			else
 			{
-				distortionTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Packages/com.cqf.urpvolumetricfog/Textures/Distortion_128x128x128_RGBA32_SFloat.asset");
-				distortionTexture.overrideState = true;
+				noiseTexture.value = null;
+				distortionTexture.value = null;
+
+				noiseTexture.overrideState = false;
+				distortionTexture.overrideState = false;
 			}
 		}
-		else
-		{
-			noiseTexture.value = null;
-			distortionTexture.value = null;
-
-			noiseTexture.overrideState = false;
-			distortionTexture.overrideState = false;
-		}
-#endif
 	}
 
 	#endregion

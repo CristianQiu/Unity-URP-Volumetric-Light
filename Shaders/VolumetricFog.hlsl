@@ -34,8 +34,6 @@
 #include "./VolumetricShadows.hlsl"
 #include "./Utils.hlsl"
 
-#define FOG_HEIGHT_FALLOFF 0.2
-
 int _FrameCount;
 #if _VOLUME_MODIFIER
 float3 _VolumeModifierPos;
@@ -166,17 +164,13 @@ float GetFogDensity(float3 posWS)
         return 0.0;
 
     float t = saturate((posWS.y - _BaseHeight) / (_MaximumHeight - _BaseHeight));
-    t = pow(t, FOG_HEIGHT_FALLOFF);
+    
     t = 1.0 - t;
+    float dist = abs(_MaximumHeight - posWS.y);
+    float heightFog = exp(-dist);
 
-    return _Density * t;    
-
-    float range = abs(_MaximumHeight - _BaseHeight);
-    float topFactor = exp(-range / FOG_HEIGHT_FALLOFF);
-    float relativeExp = exp(-(posWS.y - _BaseHeight) / FOG_HEIGHT_FALLOFF);
-    float normalizedDensity = InverseLerp(topFactor, 1.0, relativeExp);
-
-    return normalizedDensity * GetNoise(posWS) * _Density;
+    return (1 / exp(-heightFog)) * _Density;
+    //return t * GetNoise(posWS) * _Density;
 }
 
 // Calculates the new density with the volume modifier parameters.

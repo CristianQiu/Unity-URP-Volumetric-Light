@@ -11,14 +11,14 @@ public sealed class VolumetricAdditionalLight : MonoBehaviour
 {
 	#region Private Attributes
 
-	[Tooltip("The scattering distribution. The closer the value is closer to 1 or -1, the less the light will spread. Most times, positive values higher than 0 and lower than 1 should be used.")]
+	[Tooltip("The scattering distribution. The closer the value is to 1 or -1, the less the light will spread through fog and the brighter it will be towards the light origin.")]
 	[Range(-1.0f, 1.0f)]
 	[SerializeField] private float anisotropy = 0.25f;
 	[Tooltip("Higher values will make fog affected by this light to appear brighter.")]
-	[Range(0.0f, 16.0f)]
+	[Range(0.0f, VolumetricFogConstants.MaxScatteringMultiplier)]
 	[SerializeField] private float scattering = 1.0f;
-	[Tooltip("Sets a falloff radius for this light. A higher value reduces noise towards the origin of the light.")]
-	[Range(0.0f, 1.0f)]
+	[Tooltip("Sets a falloff radius for this light. A higher value reduces fog noisiness towards the origin of the light.")]
+	[Range(0.0f, VolumetricFogConstants.MaxAdditionalLightRadius)]
 	[SerializeField] private float radius = 0.0f;
 
 	#endregion
@@ -34,13 +34,13 @@ public sealed class VolumetricAdditionalLight : MonoBehaviour
 	public float Scattering
 	{
 		get { return scattering; }
-		set { scattering = Mathf.Clamp(value, 0.0f, 16.0f); }
+		set { scattering = Mathf.Clamp(value, 0.0f, VolumetricFogConstants.MaxScatteringMultiplier); }
 	}
 
 	public float Radius
 	{
 		get { return radius; }
-		set { radius = Mathf.Clamp01(value); }
+		set { radius = Mathf.Clamp(value, 0.0f, VolumetricFogConstants.MaxAdditionalLightRadius); }
 	}
 
 	#endregion
