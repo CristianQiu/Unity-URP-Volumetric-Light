@@ -65,11 +65,11 @@ Some of which are (in no particular order):
 
 # Preview
 
+Using it in an upcoming [tower defense](https://www.youtube.com/watch?v=ND5eoEOw47E) I am working on <br><br>
+![TD](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Towers.gif)
+
 Sponza <br><br>
 ![Sponza](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Sponza.gif)
 
 URP Japanese Garden<br><br>
 ![Garden](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Garden.gif)
-
-URP Terminal<br><br>
-![Terminal](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Terminal.gif)
