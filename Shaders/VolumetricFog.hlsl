@@ -164,13 +164,10 @@ float GetFogDensity(float3 posWS)
         return 0.0;
 
     float t = saturate((posWS.y - _BaseHeight) / (_MaximumHeight - _BaseHeight));
-    
     t = 1.0 - t;
-    float dist = abs(_MaximumHeight - posWS.y);
-    float heightFog = exp(-dist);
-
-    return (1 / exp(-heightFog)) * _Density;
-    //return t * GetNoise(posWS) * _Density;
+    t = lerp(t, 0.0, posWS.y < _GroundHeight);
+    
+    return t * GetNoise(posWS) * _Density;
 }
 
 // Calculates the new density with the volume modifier parameters.

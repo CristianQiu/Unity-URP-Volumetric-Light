@@ -25,7 +25,6 @@ Additional changes:
 
 * Made fundamental changes on how the raymarching steps work. Quality and precision have been generally increased. Indoor scenes in enclosed environments (rooms, corridors, etc) and orthographic and top down perspective cameras whose position is closer to the ground should benefit the most from the improvements in quality. Generally, a small hit in performance could be taken in exchange for slightly better quality in favorable cases, but performance will be much more steady/stable and not depend so much on the current view now. If you are upgrading from a previous version, you will need to tweak the maximum steps and/or minimum step size. It is recommended deleting the volume settings and adding it again to start over from defaults.
 * Increased the maximum scattering parameter for main light from 1 to 16.
-* Changed the falloff going from the base height to the maximum height of the fog to be more appealing in an exponential fashion.
 * Slightly changed the radius falloff of additional lights.
 * Each blur iteration is now less aggressive (and slightly more performant as a side effect), so when rendering at quarter resolution at lower resolutions (1080p) it does not "overblur" it. Raised the number of maximum iterations that can be set.
 * Reordered and renamed some volume parameters to have less groups and an easier view overall. Changed many of the default values.

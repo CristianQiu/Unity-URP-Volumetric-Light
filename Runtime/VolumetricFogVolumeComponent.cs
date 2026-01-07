@@ -122,6 +122,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	/// </summary>
 	private void SetNoise()
 	{
+#if UNITY_EDITOR
 		if (Application.isEditor && !Application.isPlaying)
 		{
 			if (noiseMode.value == VolumetricFogNoiseMode.Noise3DTexture || noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures)
@@ -147,6 +148,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 				distortionTexture.overrideState = false;
 			}
 		}
+#endif
 	}
 
 	#endregion
