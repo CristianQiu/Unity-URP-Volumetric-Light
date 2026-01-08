@@ -68,7 +68,7 @@ Some of which are (in no particular order):
 Using it in a [Tower Defense](https://www.youtube.com/watch?v=ND5eoEOw47E) I am working on as an indie dev <br><br>
 ![TD](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Towers.gif)
 
-I am also working alongside Siesta Games studio to implement it in Empire in Decay, a roguelike deckbuilder chess-like game that will be released this year.
+I am also working alongside Siesta Games studio to implement it in [Empire in Decay](https://store.steampowered.com/app/3345260/Empire_in_Decay/?utm_source=github&utm_campaign=cristianqiu&utm_medium=urp-volumetric-light), a roguelike deckbuilder chess-like game that will be released this year.
 I also plan to release a new version in the future with some of the stuff that we used in the game.
 You can play the [demo and wishlist](https://store.steampowered.com/app/3345260/Empire_in_Decay/?utm_source=github&utm_campaign=cristianqiu&utm_medium=urp-volumetric-light) it now! <br><br>
 ![Empire In Decay](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/EiDFog2.gif)
