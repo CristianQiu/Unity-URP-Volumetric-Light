@@ -65,12 +65,9 @@ Some of which are (in no particular order):
 
 # Preview
 
-Using it in a [Tower Defense](https://www.youtube.com/watch?v=ND5eoEOw47E) I am working on as an indie dev. <br><br>
+Using it in a [Tower Defense](https://www.youtube.com/watch?v=ND5eoEOw47E) I am working on as an indie dev <br><br>
 ![TD](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Towers.gif)
 
 I am also working alongside Siesta Games studio to implement it in Empire in Decay, a roguelike chess-like game with cards and factions that will be released this year. You can play the [demo](https://store.steampowered.com/app/3749290/Empire_in_Decay_Demo/) or [wishlist](https://store.steampowered.com/app/3345260/Empire_in_Decay/) it now! <br><br>
 ![Empire In Decay](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/EiDFog2.gif)
 ![Empire In Decay](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/EiDFog.gif)
-
-And finally, showcase in Sponza <br><br>
-![Sponza](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Sponza.gif)
