@@ -42,7 +42,7 @@ Then you can proceed to install this package:
 
 * Multipass VR rendering is not supported.
 * WebGL is not supported. See https://github.com/CristianQiu/Unity-URP-Volumetric-Light/issues/7.
-* Not tested on consoles spectrum (Playstation, Xbox, Switch) but very likely to work. PS5 has been verified by users (v0.5.6).
+* Not tested on Switch 1/2 and PS4 consoles. Verified by users in Steam Deck, Xbox One/XSX and PS5 as of v0.5.6.
 * Transparent objects are not blended correctly with fog.
 * Fully baked lights are not supported.
 * Fog is only rendered up to a certain distance from the camera.
@@ -68,6 +68,8 @@ Some of which are (in no particular order):
 Using it in a [Tower Defense](https://www.youtube.com/watch?v=ND5eoEOw47E) I am working on as an indie dev <br><br>
 ![TD](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Towers.gif)
 
-I am also working alongside Siesta Games studio to implement it in Empire in Decay, a roguelike chess-like game with cards and factions that will be released this year. You can play the [demo and wishlist](https://store.steampowered.com/app/3345260/Empire_in_Decay/?utm_source=github&utm_campaign=cristianqiu&utm_medium=urp-volumetric-light) it now! <br><br>
+I am also working alongside Siesta Games studio to implement it in Empire in Decay, a roguelike deckbuilder chess-like game that will be released this year.
+I also plan to release a new version in the future with some of the stuff that we used in the game.
+You can play the [demo and wishlist](https://store.steampowered.com/app/3345260/Empire_in_Decay/?utm_source=github&utm_campaign=cristianqiu&utm_medium=urp-volumetric-light) it now! <br><br>
 ![Empire In Decay](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/EiDFog2.gif)
 ![Empire In Decay](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/EiDFog.gif)
