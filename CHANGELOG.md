@@ -1,19 +1,20 @@
 # Changelog
 
-## [0.6.0] - 2025-XX-XX
+## [0.6.0] - 2026-XX-XX
 
-This is the biggest update to date and it is intended to make this package the best free URP volumetric fog asset available for Unity 6.3 and above.
+This is the biggest update to date and it is intended to make this package the best free URP volumetric fog asset available for Unity 6000.3 LTS and above.
 Although many setting values will be kept, this update is destructive due to fundamental changes. Make sure that you have a backup or version control system.
 If you are upgrading from any previous version, it may not be compatible with your project.
 
 New requirements:
 
-* Unity 6.3 or above.
+* Unity 6000.3 LTS or above.
 * Render graph. Compatibility mode is no longer supported.
 * Shader model 4.5+. WebGL no longer has the partial support it had. WebGPU is available from Unity 6.1 and should work, although it has not been tested yet.
 
 New features:
 
+* Added ambience color. This color can be used to fake GI with one color and has no impact on performance, as opposed to APV contribution.
 * Added option for reflection probes contribution. This option requires Forward+ or Deferred+ rendering path and it is completely ignored otherwise.
 * Added option to sample a 3D noise texture to add variation to fog. A texture is included in the package, you can find it in 'Packages->URP Volumetric Fog->Textures->Noise'.
 * Added option to distort the previous noise to have smoke-like details. A texture is included in the package, you can find it in 'Packages->URP Volumetric Fog->Textures->Distortion'. Both noise textures (~40MB alltogether) should only be included in the build if any of your volumes is set to use them at build time.
@@ -29,7 +30,7 @@ Additional changes:
 * Each blur iteration is now less aggressive (and slightly more performant as a side effect), so when rendering at quarter resolution at lower resolutions (1080p) it does not "overblur" it. Raised the number of maximum iterations that can be set.
 * Reordered and renamed some volume parameters to have less groups and an easier view overall. Changed many of the default values.
 * All new additions to the volume have tooltips that you can read, just like the existing parameters.
-* Several minor improvements both in C# and shader code.
+* Several improvements both in C# and shader code.
 
 ## [0.5.8] - 2025-09-11
 

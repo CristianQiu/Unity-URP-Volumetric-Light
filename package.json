@@ -2,7 +2,7 @@
   "name": "com.cqf.urpvolumetricfog",
   "version": "0.6.0",
   "displayName": "URP Volumetric Fog",
-  "description": "Volumetric fog for Unity 6.3 and above. Integrated into URP's volume system and render graph. Supports all types of lights, including shadows and cookies.",
+  "description": "Volumetric fog for Unity 6000.3 LTS and above. Integrated into URP's volume system and render graph. Supports all types of lights, including shadows and cookies.",
   "unity": "6000.3",
   "unityRelease": "0f1",
   "keywords": [

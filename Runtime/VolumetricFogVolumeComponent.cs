@@ -123,7 +123,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	private void SetNoise()
 	{
 #if UNITY_EDITOR
-		if (Application.isEditor && !Application.isPlaying)
+		if (!Application.isPlaying)
 		{
 			if (noiseMode.value == VolumetricFogNoiseMode.Noise3DTexture || noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures)
 			{

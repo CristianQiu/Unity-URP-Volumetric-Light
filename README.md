@@ -1,6 +1,6 @@
 # Requirements
 
-* Unity 6.3 or above.
+* Unity 6000.3 LTS or above.
 * URP.
 * Render graph.
 * Shader model 4.5 or above.
@@ -13,8 +13,9 @@
 * Perspective and orthographic projection support.
 * Seamlessly integrated into URP volume system.
 * Forward, deferred, forward+ and deferred+ rendering paths support. See limitations section.
-* Verified in DirectX11, DirectX12, OpenGLCore, OpenGLES3, Vulkan and Metal.
+* Console support: PS5, Xbox One, XSX and Steam Deck have been verified by users already as of v0.6.0.
 * Single pass VR rendering support. This is verified by users, since I do not work on VR.
+* Verified in DirectX11, DirectX12, OpenGLCore, OpenGLES3, Vulkan and Metal.
 
 # Installation
 
@@ -45,7 +46,6 @@ Then you can proceed to install this package:
 * It may be possible to notice more noise in some light regions at certain view angles.
 * Transparent objects are not blended correctly with fog.
 * When using forward or deferred rendering path, performance can be heavily affected when adding multiple additional lights. Using forward+ or deferred+ is highly recommended for best performance when support for additional lights is needed.
-* Not tested on consoles spectrum (Playstation, Xbox, Switch) but very likely to work. PS5 has been verified by users as of v0.5.6.
 * Multipass VR rendering is not supported.
 
 # Known issues
@@ -62,11 +62,11 @@ There are a few things that I would like to add at some point, as I like coming 
 
 # Preview
 
-Sponza <br><br>
-![Sponza](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Sponza.gif)
+Using it in a [Tower Defense](https://www.youtube.com/watch?v=ND5eoEOw47E) I am working on as an indie dev <br><br>
+![TD](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Towers.gif)
 
-URP Japanese Garden<br><br>
-![Garden](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Garden.gif)
-
-URP Terminal<br><br>
-![Terminal](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Terminal.gif)
+I am also working alongside Siesta Games studio to implement it in [Empire in Decay](https://store.steampowered.com/app/3345260/Empire_in_Decay/?utm_source=github&utm_campaign=cristianqiu&utm_medium=urp-volumetric-light), a roguelike deckbuilder chess-like game that will be released this year.
+I also plan to release a new version in the future with some of the stuff that we used in the game.
+You can play the [demo and wishlist](https://store.steampowered.com/app/3345260/Empire_in_Decay/?utm_source=github&utm_campaign=cristianqiu&utm_medium=urp-volumetric-light) it now! <br><br>
+![Empire In Decay](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/EiDFog2.gif)
+![Empire In Decay](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/EiDFog.gif)
