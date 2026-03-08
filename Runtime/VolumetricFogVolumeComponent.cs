@@ -8,7 +8,7 @@ using UnityEngine.Rendering.Universal;
 [VolumeComponentMenu("Custom/Volumetric Fog")]
 [VolumeRequiresRendererFeatures(typeof(VolumetricFogRendererFeature))]
 [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
-[DisplayInfo(name = "Volumetric Fog", order = 0)]
+[DisplayInfo(name = "Volumetric Fog")]
 public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcessComponent
 {
 	#region Public Attributes
