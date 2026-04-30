@@ -28,8 +28,8 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	public ClampedFloatParameter density = new ClampedFloatParameter(0.25f, 0.0f, 1.0f);
 	[Tooltip("Value that defines how much the fog attenuates light as distance increases. Lesser values lead to a darker image.")]
 	public MinFloatParameter attenuationDistance = new MinFloatParameter(128.0f, 0.025f);
-	[Tooltip("Gives some extra ambience color, as none is considered besides lights, APVs, or reflection probes. Alpha channel determines intensity.")]
-	public ColorParameter ambienceColor = new ColorParameter(Color.black, false, true, true);
+	[Tooltip("Gives some extra ambience color, as none is considered besides lights, APVs, or reflection probes.")]
+	public ColorParameter ambienceColor = new ColorParameter(Color.black, false, false, true);
 	[Tooltip("Disabling this will avoid computing the main light contribution to fog.")]
 	public BoolParameter mainLightContribution = new BoolParameter(false, BoolParameter.DisplayType.Checkbox, true);
 	[Tooltip("The scattering distribution. The closer the value is to 1 or -1, the less the light will spread through fog and the brighter it will be towards the light origin.")]

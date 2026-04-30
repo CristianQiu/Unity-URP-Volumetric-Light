@@ -334,7 +334,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
             continue;
         }
 
-        float3 ambienceColor = _AmbienceColor.rgb * _AmbienceColor.a; 
+        float3 ambienceColor = _AmbienceColor.rgb; 
         float3 mainLightColor = GetStepMainLightColor(currPosWS, phaseMainLight);
         float3 additionalLightsColor = GetStepAdditionalLightsColor(uv, currPosWS, rd);
         float3 apvColor = GetStepAdaptiveProbeVolumeEvaluation(uv, currPosWS);

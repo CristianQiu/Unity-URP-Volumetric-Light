@@ -14,7 +14,7 @@ New requirements:
 
 New features:
 
-* Added ambience color. This color can be used to fake GI with one color and has no impact on performance, as opposed to APV contribution.
+* Added ambience color. This color can be used to fake GI with one color and has no meaningful impact on performance, as opposed to APV contribution.
 * Added option for reflection probes contribution. This option requires Forward+ or Deferred+ rendering path and it is completely ignored otherwise.
 * Added option to sample a 3D noise texture to add variation to fog. A texture is included in the package, you can find it in 'Packages->URP Volumetric Fog->Textures->Noise'.
 * Added option to distort the previous noise to have smoke-like details. A texture is included in the package, you can find it in 'Packages->URP Volumetric Fog->Textures->Distortion'. Both noise textures (~40MB alltogether) should only be included in the build if any of your volumes is set to use them at build time.

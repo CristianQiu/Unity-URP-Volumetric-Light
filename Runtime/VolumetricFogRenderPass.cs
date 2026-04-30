@@ -241,8 +241,8 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			}
 
 			// TODO: There is a built in system for history textures, but I have no idea if it has any advantage over manual management. https://docs.unity3d.com/6000.3/Documentation/Manual/urp/render-graph-add-textures-to-camera-history.html
-			RenderGraphUtils.AddCopyPass(renderGraph, texHandles.downsampledCameraDepthTarget, texHandles.prevFrameDownsampledCameraDepthTarget, "Downsampled Depth Copy Pass");
 			RenderGraphUtils.AddCopyPass(renderGraph, texHandles.volumetricFogReprojectionTarget, texHandles.volumetricFogHistoryTarget, "Volumetric Fog History Copy Pass");
+			RenderGraphUtils.AddCopyPass(renderGraph, texHandles.downsampledCameraDepthTarget, texHandles.prevFrameDownsampledCameraDepthTarget, "Downsampled Depth Copy Pass");
 		}
 
 		TextureHandle lastFogRenderTarget = doReprojection ? texHandles.volumetricFogReprojectionTarget : texHandles.volumetricFogRenderTarget;
