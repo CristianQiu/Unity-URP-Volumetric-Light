@@ -196,6 +196,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		cameraTargetDescriptor.width = originalResolution.x;
 		cameraTargetDescriptor.height = originalResolution.y;
 		cameraTargetDescriptor.colorFormat = originalColorFormat;
+		cameraTargetDescriptor.graphicsFormat = renderingData.cameraData.cameraTargetDescriptor.graphicsFormat;
 		ReAllocateIfNeeded(ref volumetricFogUpsampleCompositionRTHandle, cameraTargetDescriptor, wrapMode: TextureWrapMode.Clamp, name: VolumetricFogUpsampleCompositionRTName);
 	}
 
@@ -473,6 +474,7 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		cameraTargetDescriptor.width = originalResolution.x;
 		cameraTargetDescriptor.height = originalResolution.y;
 		cameraTargetDescriptor.colorFormat = originalColorFormat;
+		cameraTargetDescriptor.graphicsFormat = cameraData.cameraTargetDescriptor.graphicsFormat;
 		volumetricFogUpsampleCompositionTarget = UniversalRenderer.CreateRenderGraphTexture(renderGraph, cameraTargetDescriptor, VolumetricFogUpsampleCompositionRTName, false);
 	}
 
