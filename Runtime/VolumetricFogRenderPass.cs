@@ -462,7 +462,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	/// <returns></returns>
 	private static bool GetVolumeModifierMaterialProperties(out Vector3 pos, out Vector3 volumeModifierParams)
 	{
-		// TODO: Implement better volumes (sphere / box) and allow up to 4. This should be the fastest FindObject function, but need a way to cache them.
 		VolumetricFogVolumeModifier volumeModifier = Object.FindAnyObjectByType<VolumetricFogVolumeModifier>(FindObjectsInactive.Exclude);
 
 		pos = Vector3.zero;

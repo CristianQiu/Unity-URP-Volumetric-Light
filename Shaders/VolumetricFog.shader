@@ -151,6 +151,7 @@ Shader "Hidden/VolumetricFog"
             ZWrite Off
             Cull Off
             Blend Off
+            // Blend One SrcAlpha , Zero One
 
             HLSLPROGRAM
 
