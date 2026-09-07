@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.91] - 2026-09-07
+
+* Add note for supported 6000.6 version.
+* Fix rendertarget format in [Metal](https://github.com/CristianQiu/Unity-URP-Volumetric-Light/issues/42#issue-5056342282).
+
 ## [0.5.9] - 2026-03-21
 
 * Removed warning displayed in versions starting from 6000.3. Add support to 6000.4.

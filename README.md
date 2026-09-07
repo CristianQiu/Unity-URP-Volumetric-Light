@@ -1,6 +1,6 @@
 # Requirements
 
-Any Unity version posterior to 2022.3 LTS (included), up to Unity 6000.5.
+Any Unity version posterior to 2022.3 LTS (included), up to Unity 6000.6.
 
 # Features
 
