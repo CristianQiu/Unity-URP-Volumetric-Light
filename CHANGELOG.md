@@ -8,9 +8,8 @@ If you are upgrading from any previous version, it may not be compatible with yo
 
 New requirements:
 
-* Unity 6000.3 LTS or above.
-* Render graph. Compatibility mode is no longer supported.
-* Shader model 4.5+. WebGL no longer has the partial support it had. WebGPU is available from Unity 6.1 and should work, although it has not been tested yet.
+* Unity 6000.7 LTS or above.
+* Shader model 4.5+. WebGL no longer has the partial support it had. WebGPU is available from Unity 6.1 and should work, although I have not tested it yet.
 
 New features:
 

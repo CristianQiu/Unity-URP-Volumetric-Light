@@ -25,6 +25,11 @@ half VolumetricMainLightRealtimeShadow(float4 shadowCoord)
     return half(1.0);
 #endif
 
+#if (UNITY_PLATFORM_META_QUEST)
+    if (shadowCoord.z < 0.0 || any(saturate(shadowCoord.xy) != shadowCoord.xy))
+        return half(1.0);
+#endif
+    
 #if defined(_MAIN_LIGHT_SHADOWS_SCREEN) && !defined(_SURFACE_TYPE_TRANSPARENT)
     return SampleScreenSpaceShadowmap(shadowCoord);
 #else
@@ -51,12 +56,7 @@ half VolumetricAdditionalLightRealtimeShadow(int lightIndex, float3 positionWS, 
         shadowSliceIndex += cubeFaceOffset;
     }
 
-    #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
-        float4 shadowCoord = mul(_AdditionalLightsWorldToShadow_SSBO[shadowSliceIndex], float4(positionWS, 1.0));
-    #else
-        float4 shadowCoord = mul(_AdditionalLightsWorldToShadow[shadowSliceIndex], float4(positionWS, 1.0));
-    #endif
-
+    float4 shadowCoord = mul(_AdditionalLightsWorldToShadow[shadowSliceIndex], float4(positionWS, 1.0));
     return VolumetricSampleShadowmap(TEXTURE2D_ARGS(_AdditionalLightsShadowmapTexture, sampler_LinearClampCompare), shadowCoord, GetAdditionalLightShadowSamplingData(lightIndex), shadowParams, true);
 #else
     return half(1.0);

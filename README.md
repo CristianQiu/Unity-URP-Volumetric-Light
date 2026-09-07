@@ -1,8 +1,7 @@
 # Requirements
 
-* Unity 6000.3 LTS or above.
+* Unity 6000.7 LTS or above.
 * URP.
-* Render graph.
 * Shader model 4.5 or above.
 
 # Features

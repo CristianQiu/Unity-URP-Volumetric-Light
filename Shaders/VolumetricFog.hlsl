@@ -250,12 +250,8 @@ float3 GetStepAdditionalLightsColor(float2 uv, float3 currPosWS, float3 rd)
 #if _LIGHT_COOKIES
             additionalLight.color *= SampleAdditionalLightCookie(lightIndex, currPosWS);
 #endif
-            // See universal\ShaderLibrary\RealtimeLights.hlsl - GetAdditionalPerObjectLight.
-#if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
-            float4 additionalLightPos = _AdditionalLightsBuffer[lightIndex].position;
-#else
             float4 additionalLightPos = _AdditionalLightsPosition[lightIndex];
-#endif
+    
             // This is useful for both spotlights and pointlights. For the latter it is specially true when the point light is inside some geometry and casts shadows.
             // Gradually reduce additional lights scattering to zero at their origin to try to avoid noise and flicker-aliasing with high scattering values.
             float3 distToPos = additionalLightPos.xyz - currPosWS;
