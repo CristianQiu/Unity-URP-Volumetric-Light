@@ -25,7 +25,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 
 	[Header("Lighting")]
 	[Tooltip("How dense is the fog.")]
-	public ClampedFloatParameter density = new ClampedFloatParameter(0.25f, 0.0f, 1.0f);
+	public ClampedFloatParameter density = new ClampedFloatParameter(0.1f, 0.0f, 1.0f);
 	[Tooltip("Value that defines how much the fog attenuates light as distance increases. Lesser values lead to a darker image.")]
 	public MinFloatParameter attenuationDistance = new MinFloatParameter(128.0f, 0.025f);
 	[Tooltip("Gives some extra ambience color, as none is considered besides lights, APVs, or reflection probes.")]
@@ -35,7 +35,7 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("The scattering distribution. The closer the value is to 1 or -1, the less the light will spread through fog and the brighter it will be towards the light origin.")]
 	public ClampedFloatParameter mainLightAnisotropy = new ClampedFloatParameter(0.4f, -1.0f, 1.0f);
 	[Tooltip("Higher values will make fog affected by the main light to appear brighter.")]
-	public ClampedFloatParameter mainLightScattering = new ClampedFloatParameter(0.75f, 0.0f, VolumetricFogConstants.MaxScatteringMultiplier);
+	public ClampedFloatParameter mainLightScattering = new ClampedFloatParameter(1.0f, 0.0f, VolumetricFogConstants.MaxScatteringMultiplier);
 	[Tooltip("A multiplier color to tint the main light fog.")]
 	public ColorParameter mainLightTint = new ColorParameter(Color.white, false, false, true);
 	[Tooltip("Disabling this will avoid computing additional lights contribution to fog.")]
@@ -55,11 +55,11 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	[Tooltip("The 3D texture used to add noise. The noise needs to be in the R channel of the texture. You can use your own texture or find the provided one with the package in 'Packages -> URP Volumetric Fog -> Textures -> Noise'.")]
 	public Texture3DParameter noiseTexture = new Texture3DParameter(null, true);
 	[Tooltip("The size of noise. Lower values mean higher frequency noise.")]
-	public FloatParameter noiseScale = new FloatParameter(2.5f);
+	public FloatParameter noiseScale = new FloatParameter(8.0f);
 	[Tooltip("These values alter how the noise carves into fog. Decrease the minimum value to accentuate holes and increase the maximum value accentuate the distance between the minimum and maximum value, increasing the contrast in noise.")]
 	public FloatRangeParameter noiseMinMax = new FloatRangeParameter(new Vector2(-0.75f, 2.5f), -2.5f, 2.5f);
 	[Tooltip("The speed of noise in each axii.")]
-	public Vector3Parameter noiseVelocity = new Vector3Parameter(new Vector3(0.1f, -0.15f, -0.05f));
+	public Vector3Parameter noiseVelocity = new Vector3Parameter(new Vector3(0.03f, -0.075f, 0.04f));
 
 	[Header("Misc. & Quality")]
 	[Tooltip("The URP render pass event to render the volumetric fog.")]
@@ -116,9 +116,11 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 #if UNITY_EDITOR
 		if (!Application.isPlaying)
 		{
-			if (noiseMode.value == VolumetricFogNoiseMode.Noise3DTexture && noiseTexture.value == null)
+			if (noiseMode.value == VolumetricFogNoiseMode.Noise3DTexture)
 			{
-				noiseTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Packages/com.cqf.urpvolumetricfog/Textures/Noise_128x128x128_R32_SFloat.asset");
+				if (noiseTexture.value == null)
+					noiseTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Packages/com.cqf.urpvolumetricfog/Textures/Noise_128x128x128_R32_SFloat.asset");
+				
 				noiseTexture.overrideState = true;
 			}
 			else
