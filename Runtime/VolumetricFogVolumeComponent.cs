@@ -60,14 +60,6 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 	public FloatRangeParameter noiseMinMax = new FloatRangeParameter(new Vector2(-0.75f, 2.5f), -2.5f, 2.5f);
 	[Tooltip("The speed of noise in each axii.")]
 	public Vector3Parameter noiseVelocity = new Vector3Parameter(new Vector3(0.1f, -0.15f, -0.05f));
-	[Tooltip("The 3D texture used to add distortion to the original noise. The distortion needs to be in the RGB channel of the texture. You can use your own texture or find the provided one with the package in 'Packages -> URP Volumetric Fog -> Textures -> Distortion'.")]
-	public Texture3DParameter distortionTexture = new Texture3DParameter(null, true);
-	[Tooltip("The size of distortion. Lower values mean higher frequency noise.")]
-	public FloatParameter distortionScale = new FloatParameter(5.0f);
-	[Tooltip("The intensity of distortion in each axii.")]
-	public Vector3Parameter distortionIntensity = new Vector3Parameter(new Vector3(0.1f, -0.1f, 0.05f));
-	[Tooltip("The velocity of distortion in each axii.")]
-	public Vector3Parameter distortionVelocity = new Vector3Parameter(new Vector3(-0.02f, 0.01f, 0.015f));
 
 	[Header("Misc. & Quality")]
 	[Tooltip("The URP render pass event to render the volumetric fog.")]
@@ -95,7 +87,6 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 		baseHeight.value = Mathf.Min(baseHeight.value, maximumHeight.value);
 
 		noiseScale.value = Mathf.Max(0.0f, noiseScale.value);
-		distortionScale.value = Mathf.Max(0.0f, distortionScale.value);
 
 		SetNoise();
 	}
@@ -125,27 +116,15 @@ public sealed class VolumetricFogVolumeComponent : VolumeComponent, IPostProcess
 #if UNITY_EDITOR
 		if (!Application.isPlaying)
 		{
-			if (noiseMode.value == VolumetricFogNoiseMode.Noise3DTexture || noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures)
+			if (noiseMode.value == VolumetricFogNoiseMode.Noise3DTexture && noiseTexture.value == null)
 			{
-				if (noiseTexture.value == null)
-				{
-					noiseTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Packages/com.cqf.urpvolumetricfog/Textures/Noise_128x128x128_R32_SFloat.asset");
-					noiseTexture.overrideState = true;
-				}
-
-				if (distortionTexture.value == null && noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures)
-				{
-					distortionTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Packages/com.cqf.urpvolumetricfog/Textures/Distortion_128x128x128_RGBA32_SFloat.asset");
-					distortionTexture.overrideState = true;
-				}
+				noiseTexture.value = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture3D>("Packages/com.cqf.urpvolumetricfog/Textures/Noise_128x128x128_R32_SFloat.asset");
+				noiseTexture.overrideState = true;
 			}
 			else
 			{
 				noiseTexture.value = null;
-				distortionTexture.value = null;
-
 				noiseTexture.overrideState = false;
-				distortionTexture.overrideState = false;
 			}
 		}
 #endif

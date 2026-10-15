@@ -8,7 +8,6 @@
 
 * Support for realtime and mixed lights. Main light, spot and point lights, including shadows and light cookies for all of them.
 * APV and reflection probes contribution support.
-* Up to one (more to come) density volume modifier with spherical shape.
 * Perspective and orthographic projection support.
 * Seamlessly integrated into URP volume system.
 * Forward, deferred, forward+ and deferred+ rendering paths support. See limitations section.
@@ -51,13 +50,15 @@ Then you can proceed to install this package:
 
 * There is an issue with volumetric shadows from lights when "Transparent Receive Shadows" is off in the URP Renderer. If you are having issues with volumetric shadows from lights you may need to turn the setting on. See https://github.com/CristianQiu/Unity-URP-Volumetric-Light/issues/10.
 
-# TODO
+# Future work
 
 There are a few things that I would like to add at some point, as I like coming back to this project from time to time in my spare time.
 
-* Further improvements on density volumes and enhanced transparency support.
-* New features: self shadowing.
+* Density volumes
+* Enhanced transparency support.
+* Self shadowing.
 * Bug fixing: Do not hesitate to open issues for anything that you find unexpected or buggy.
+* Support for all the Unity versions coming (7 and beyond).
 
 # Preview
 
@@ -65,7 +66,6 @@ Using it in a [Tower Defense](https://www.youtube.com/watch?v=ND5eoEOw47E) I am 
 ![TD](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/Towers.gif)
 
 I am also working alongside Siesta Games studio to implement it in [Empire in Decay](https://store.steampowered.com/app/3345260/Empire_in_Decay/?utm_source=github&utm_campaign=cristianqiu&utm_medium=urp-volumetric-light), a roguelike deckbuilder chess-like game that will be released this year.
-I also plan to release a new version in the future with some of the stuff that we used in the game.
 You can play the [demo and wishlist](https://store.steampowered.com/app/3345260/Empire_in_Decay/?utm_source=github&utm_campaign=cristianqiu&utm_medium=urp-volumetric-light) it now! <br><br>
 ![Empire In Decay](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/EiDFog2.gif)
 ![Empire In Decay](https://github.com/CristianQiu/Unity-Packages-Gifs/blob/main/URP-Volumetric-Light/EiDFog.gif)

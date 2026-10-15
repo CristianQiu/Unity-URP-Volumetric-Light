@@ -35,10 +35,6 @@
 #include "./Utils.hlsl"
 
 int _FrameCount;
-#if _VOLUME_MODIFIER
-float3 _VolumeModifierPos;
-float3 _VolumeModifierParams;
-#endif
 uint _CustomAdditionalLightsCount;
 float _Distance;
 float _BaseHeight;
@@ -59,12 +55,6 @@ TEXTURE3D(_NoiseTexture);
 float _NoiseFrequency;
 float2 _NoiseMinMax;
 float3 _NoiseVelocity;
-#endif
-#if _NOISE_DISTORTION
-TEXTURE3D(_DistortionTexture);
-float _DistortionFrequency;
-float3 _DistortionIntensity;
-float3 _DistortionVelocity;
 #endif
 int _MaximumSteps;
 float _MinimumStepSize;
@@ -140,15 +130,8 @@ float GetMainLightPhase(float3 rd)
 // Gets the noise value based on the world position.
 float GetNoise(float3 posWS)
 {
-    float3 distortion = float3(0.0, 0.0, 0.0);
-
-#if _NOISE_DISTORTION
-    float3 uvwDistortion = (posWS * _DistortionFrequency) + (_Time.y * _DistortionVelocity);
-    distortion = SAMPLE_TEXTURE3D_LOD(_DistortionTexture, sampler_LinearRepeat, uvwDistortion, 0).rgb;
-    distortion *= _DistortionIntensity;
-#endif
 #if _NOISE
-    float3 uvwNoise = (posWS * _NoiseFrequency) + (_Time.y * _NoiseVelocity) + distortion;
+    float3 uvwNoise = (posWS * _NoiseFrequency) + (_Time.y * _NoiseVelocity);
     float noise = SAMPLE_TEXTURE3D_LOD(_NoiseTexture, sampler_LinearRepeat, uvwNoise, 0).r;
     noise = RemapSaturate(0.0, 1.0, _NoiseMinMax.x, _NoiseMinMax.y, noise);
     return noise;
@@ -168,28 +151,6 @@ float GetFogDensity(float3 posWS)
     t = lerp(t, 0.0, posWS.y < _GroundHeight);
     
     return t * GetNoise(posWS) * _Density;
-}
-
-// Calculates the new density with the volume modifier parameters.
-float CalculateDensityWithVolumeModifier(float originalDensity, float3 posWS)
-{
-#if _VOLUME_MODIFIER
-    float densityModifier = 1.0;
-    float radiusSq = _VolumeModifierParams.x;
-
-    if (radiusSq <= 0.0)
-        return originalDensity;
-
-    float3 distToPos = posWS - _VolumeModifierPos;
-    float distToPosMagnitudeSq = dot(distToPos, distToPos);
-    float t = InverseLerp(radiusSq, 0.0, distToPosMagnitudeSq);
-    t = pow(t, _VolumeModifierParams.y);
-
-    densityModifier = _VolumeModifierParams.z;
-    return lerp(originalDensity, originalDensity * densityModifier, t);
-#else
-    return originalDensity;
-#endif
 }
 
 // Gets the GI evaluation from the adaptive probe volume at one raymarch step.
@@ -319,9 +280,7 @@ float4 VolumetricFog(float2 uv, float2 positionCS)
         // and certain combinations of field of view, raymarching resolution and camera near plane.
         // In those edge cases, it looks so much better, specially when near plane is higher than the minimum (0.01) allowed.
         float3 currPosWS = roNearPlane + rd * dist;
-
         float density = GetFogDensity(currPosWS);
-        density = CalculateDensityWithVolumeModifier(density, currPosWS);
                     
         UNITY_BRANCH
         if (density <= 0.001)

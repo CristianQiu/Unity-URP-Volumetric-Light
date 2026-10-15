@@ -32,10 +32,6 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 	private SerializedDataParameter noiseScale;
 	private SerializedDataParameter noiseMinMax;
 	private SerializedDataParameter noiseVelocity;
-	private SerializedDataParameter distortionTexture;
-	private SerializedDataParameter distortionScale;
-	private SerializedDataParameter distortionIntensity;
-	private SerializedDataParameter distortionVelocity;
 
 	private SerializedDataParameter renderPassEvent;
 	private SerializedDataParameter resolutionFactor;
@@ -79,10 +75,6 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		noiseScale = Unpack(pf.Find(x => x.noiseScale));
 		noiseMinMax = Unpack(pf.Find(x => x.noiseMinMax));
 		noiseVelocity = Unpack(pf.Find(x => x.noiseVelocity));
-		distortionTexture = Unpack(pf.Find(x => x.distortionTexture));
-		distortionScale = Unpack(pf.Find(x => x.distortionScale));
-		distortionIntensity = Unpack(pf.Find(x => x.distortionIntensity));
-		distortionVelocity = Unpack(pf.Find(x => x.distortionVelocity));
 
 		renderPassEvent = Unpack(pf.Find(x => x.renderPassEvent));
 		resolutionFactor = Unpack(pf.Find(x => x.resolutionFactor));
@@ -110,7 +102,6 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 		bool enabledAPVContribution = APVContribution.overrideState.boolValue && APVContribution.value.boolValue;
 		bool enabledReflectionProbesContribution = reflectionProbesContribution.overrideState.boolValue && reflectionProbesContribution.value.boolValue;
 		bool enabledNoise = noiseMode.overrideState.boolValue && noiseMode.value.enumValueIndex == (int)VolumetricFogNoiseMode.Noise3DTexture;
-		bool enabledDistortion = noiseMode.overrideState.boolValue && noiseMode.value.enumValueIndex == (int)VolumetricFogNoiseMode.NoiseAndDistortion3DTextures;
 
 		PropertyField(distance);
 		PropertyField(baseHeight);
@@ -136,19 +127,12 @@ public sealed class VolumetricFogVolumeComponentEditor : VolumeComponentEditor
 			PropertyField(reflectionProbesContributionWeight);
 
 		PropertyField(noiseMode);
-		if (enabledNoise || enabledDistortion)
+		if (enabledNoise)
 		{
 			PropertyField(noiseTexture);
 			PropertyField(noiseScale);
 			PropertyField(noiseMinMax);
 			PropertyField(noiseVelocity);
-		}
-		if (enabledDistortion)
-		{
-			PropertyField(distortionTexture);
-			PropertyField(distortionScale);
-			PropertyField(distortionIntensity);
-			PropertyField(distortionVelocity);
 		}
 
 		PropertyField(renderPassEvent);

@@ -7,7 +7,6 @@ public enum VolumetricFogNoiseMode : byte
 {
 	None = 0,
 	Noise3DTexture = 1,
-	NoiseAndDistortion3DTextures = 2
 }
 
 /// <summary>

@@ -76,8 +76,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int VolumetricFogHistoryTextureId = Shader.PropertyToID("_VolumetricFogHistoryTexture");
 
 	private static readonly int FrameCountId = Shader.PropertyToID("_FrameCount");
-	private static readonly int VolumeModifierPosId = Shader.PropertyToID("_VolumeModifierPos");
-	private static readonly int VolumeModifierParamsId = Shader.PropertyToID("_VolumeModifierParams");
 	private static readonly int CustomAdditionalLightsCountId = Shader.PropertyToID("_CustomAdditionalLightsCount");
 	private static readonly int DistanceId = Shader.PropertyToID("_Distance");
 	private static readonly int BaseHeightId = Shader.PropertyToID("_BaseHeight");
@@ -93,10 +91,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	private static readonly int NoiseFrequencyId = Shader.PropertyToID("_NoiseFrequency");
 	private static readonly int NoiseMinMaxId = Shader.PropertyToID("_NoiseMinMax");
 	private static readonly int NoiseVelocityId = Shader.PropertyToID("_NoiseVelocity");
-	private static readonly int DistortionTextureId = Shader.PropertyToID("_DistortionTexture");
-	private static readonly int DistortionFrequencyId = Shader.PropertyToID("_DistortionFrequency");
-	private static readonly int DistortionIntensityId = Shader.PropertyToID("_DistortionIntensity");
-	private static readonly int DistortionVelocityId = Shader.PropertyToID("_DistortionVelocity");
 	private static readonly int MaximumStepsId = Shader.PropertyToID("_MaximumSteps");
 	private static readonly int MinimumStepSizeId = Shader.PropertyToID("_MinimumStepSize");
 
@@ -346,28 +340,21 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 	{
 		VolumetricFogVolumeComponent fogVolume = GetVolumetricFogVolumeComponent();
 
-		bool anyVolumeModifierActive = GetVolumeModifierMaterialProperties(out Vector3 volumeModifierPos, out Vector3 volumeModifierParams);
 		bool enableMainLightContribution = fogVolume.mainLightContribution.value && fogVolume.mainLightScattering.value > 0.0f && mainLightIndex > -1;
 		bool enableAdditionalLightsContribution = fogVolume.additionalLightsContribution.value && additionalLightsCount > 0;
 		bool enableAPVContribution = fogVolume.APVContribution.value && fogVolume.APVContributionWeight.value > 0.0f;
 		bool enableReflectionProbesContribution = fogVolume.reflectionProbesContribution.value && fogVolume.reflectionProbesContributionWeight.value > 0.0f;
 		bool enableNoise = fogVolume.noiseMode.value == VolumetricFogNoiseMode.Noise3DTexture && fogVolume.noiseTexture.value != null && fogVolume.noiseScale.value > 0.0f;
-		bool enableDistortion = fogVolume.noiseMode.value == VolumetricFogNoiseMode.NoiseAndDistortion3DTextures && fogVolume.distortionTexture.value != null && fogVolume.distortionScale.value > 0.0f;
-		enableNoise = enableNoise || enableDistortion;
 
-		CoreUtils.SetKeyword(volumetricFogMaterial, "_VOLUME_MODIFIER", anyVolumeModifierActive);
 		CoreUtils.SetKeyword(volumetricFogMaterial, "_APV_CONTRIBUTION", enableAPVContribution);
 		CoreUtils.SetKeyword(volumetricFogMaterial, "_REFLECTION_PROBES_CONTRIBUTION", enableReflectionProbesContribution);
 		CoreUtils.SetKeyword(volumetricFogMaterial, "_MAIN_LIGHT_CONTRIBUTION", enableMainLightContribution);
 		CoreUtils.SetKeyword(volumetricFogMaterial, "_ADDITIONAL_LIGHTS_CONTRIBUTION", enableAdditionalLightsContribution);
 		CoreUtils.SetKeyword(volumetricFogMaterial, "_NOISE", enableNoise);
-		CoreUtils.SetKeyword(volumetricFogMaterial, "_NOISE_DISTORTION", enableDistortion);
 
 		UpdateLightsParameters(volumetricFogMaterial, fogVolume, enableMainLightContribution, enableAdditionalLightsContribution, mainLightIndex, visibleLights);
 
 		volumetricFogMaterial.SetInteger(FrameCountId, Time.renderedFrameCount % 64);
-		volumetricFogMaterial.SetVector(VolumeModifierPosId, volumeModifierPos);
-		volumetricFogMaterial.SetVector(VolumeModifierParamsId, volumeModifierParams);
 		volumetricFogMaterial.SetInteger(CustomAdditionalLightsCountId, additionalLightsCount);
 		volumetricFogMaterial.SetFloat(DistanceId, fogVolume.distance.value);
 		volumetricFogMaterial.SetFloat(BaseHeightId, fogVolume.baseHeight.value);
@@ -383,10 +370,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 		volumetricFogMaterial.SetFloat(NoiseFrequencyId, enableNoise ? (1.0f / fogVolume.noiseScale.value) : float.MaxValue);
 		volumetricFogMaterial.SetVector(NoiseMinMaxId, enableNoise ? new Vector2(fogVolume.noiseMinMax.value.x, fogVolume.noiseMinMax.value.y) : Vector2.zero);
 		volumetricFogMaterial.SetVector(NoiseVelocityId, enableNoise ? fogVolume.noiseVelocity.value : Vector3.zero);
-		volumetricFogMaterial.SetTexture(DistortionTextureId, enableDistortion ? fogVolume.distortionTexture.value : null);
-		volumetricFogMaterial.SetFloat(DistortionFrequencyId, enableDistortion ? (1.0f / fogVolume.distortionScale.value) : float.MaxValue);
-		volumetricFogMaterial.SetVector(DistortionIntensityId, enableDistortion ? fogVolume.distortionIntensity.value : Vector3.zero);
-		volumetricFogMaterial.SetVector(DistortionVelocityId, enableDistortion ? fogVolume.distortionVelocity.value : Vector3.zero);
 		volumetricFogMaterial.SetInteger(MaximumStepsId, fogVolume.maximumSteps.value);
 		volumetricFogMaterial.SetFloat(MinimumStepSizeId, fogVolume.minimumStepSize.value);
 	}
@@ -451,32 +434,6 @@ public sealed class VolumetricFogRenderPass : ScriptableRenderPass
 			volumetricFogMaterial.SetFloatArray(AnisotropiesArrayId, Anisotropies);
 			volumetricFogMaterial.SetFloatArray(ScatteringsArrayId, Scatterings);
 		}
-	}
-
-	/// <summary>
-	/// Gets the volume modifier position and parameters and whether the volume modifier is valid
-	/// and active.
-	/// </summary>
-	/// <param name="pos"></param>
-	/// <param name="volumeModifierParams"></param>
-	/// <returns></returns>
-	private static bool GetVolumeModifierMaterialProperties(out Vector3 pos, out Vector3 volumeModifierParams)
-	{
-		VolumetricFogVolumeModifier volumeModifier = Object.FindAnyObjectByType<VolumetricFogVolumeModifier>(FindObjectsInactive.Exclude);
-
-		pos = Vector3.zero;
-		volumeModifierParams = Vector3.zero;
-
-		bool valid = volumeModifier != null && volumeModifier.isActiveAndEnabled;
-
-		if (valid)
-		{
-			pos = volumeModifier.transform.position;
-			float radiusSq = volumeModifier.Radius * volumeModifier.Radius;
-			volumeModifierParams = new Vector3(radiusSq, Mathf.Max(volumeModifier.FallOff, 0.01f), volumeModifier.DensityMultiplier);
-		}
-
-		return valid;
 	}
 
 	#endregion

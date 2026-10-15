@@ -2,24 +2,21 @@
 
 ## [0.6.0] - 2026-XX-XX
 
-This is the biggest update to date and it is intended to make this package the best free URP volumetric fog asset available for Unity 6000.3 LTS and above.
-Although many setting values will be kept, this update is destructive due to fundamental changes. Make sure that you have a backup or version control system.
-If you are upgrading from any previous version, it may not be compatible with your project.
+This update is destructive due to fundamental changes. Make sure that you have a backup or version control system.
+If you are upgrading from any previous version, it may not be compatible with your project since the minimum Unity version has been raised.
 
 New requirements:
 
 * Unity 6000.7 LTS or above.
-* Shader model 4.5+. WebGL no longer has the partial support it had. WebGPU is available from Unity 6.1 and should work, although I have not tested it yet.
+* Shader model 4.5+. WebGL no longer has the partial support it had. WebGPU is available from Unity 6.1 and should work, although it has not been tested yet.
 
 New features:
 
 * Added ambience color. This color can be used to fake GI with one color and has no meaningful impact on performance, as opposed to APV contribution.
 * Added option for reflection probes contribution. This option requires Forward+ or Deferred+ rendering path and it is completely ignored otherwise.
 * Added option to sample a 3D noise texture to add variation to fog. A texture is included in the package, you can find it in 'Packages->URP Volumetric Fog->Textures->Noise'.
-* Added option to distort the previous noise to have smoke-like details. A texture is included in the package, you can find it in 'Packages->URP Volumetric Fog->Textures->Distortion'. Both noise textures (~40MB alltogether) should only be included in the build if any of your volumes is set to use them at build time.
 * Added option to render anywhere in between half and quarter resolution.
 * Added reprojection. Reprojection requires Unity's motion vectors, which are added automatically when needed. It will consider the option set in the volume for motion blur, where "camera" or "camera and object" motion vectors can be output.
-* Added option to add one density volume modifier with an sphere shape. The plan is to add more but there will be a cap for sure, probably around 4.
 
 Additional changes:
 
